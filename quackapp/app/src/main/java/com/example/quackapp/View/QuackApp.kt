@@ -6,13 +6,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun quackApp() {
+fun QuackApp() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "UserStart") {
         composable("UserStart") { UserStart(navController) }
         composable("EntrantHome") { EntrantHome(navController) }
-        composable("CampsiteOwnerHome") { CampsiteOwnerHome(navController) }
+        composable("OwnerHome") { OwnerHome(navController) }
 
     }
 }
