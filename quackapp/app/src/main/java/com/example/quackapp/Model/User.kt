@@ -7,7 +7,10 @@ import android.provider.Settings
 /**
  *
  * @property deviceId
- *
+ * @property name
+ * @property email
+ * @property phoneNumber
+ * @property notificationsEnabled
  *
  */
 
