@@ -1,4 +1,4 @@
-package com.example.quackapp
+package com.example.quackapp.View
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
