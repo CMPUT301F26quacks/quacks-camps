@@ -1,4 +1,4 @@
-package com.example.quackapp
+package com.example.quackapp.View
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
