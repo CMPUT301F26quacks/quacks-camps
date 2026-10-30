@@ -17,6 +17,8 @@ import androidx.navigation.NavController
 
 @Composable
 fun UserStart(navController: NavController) {
+
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,

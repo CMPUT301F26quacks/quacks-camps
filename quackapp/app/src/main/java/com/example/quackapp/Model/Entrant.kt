@@ -40,4 +40,14 @@ class Entrant(
     fun getPendingOffers(repository: ReservationRepository = ReservationRepository.getInstance()): List<LotteryOffer> {
         return repository.getPendingOffers(this.deviceId)
     }
+
+    /**
+     * Allows users to opt in or out of receiving notifications (on by default).
+     * US 01.10.01: As an entrant, I want to opt out of receiving notifications.
+     */
+
+    fun toggleNotificationPreference() {
+        notificationsEnabled = !notificationsEnabled
+    }
+    
 }
