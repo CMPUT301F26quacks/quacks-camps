@@ -17,7 +17,6 @@ class Campsite (
     var price: Int,
     var capacity: Int,
     var features: List<String>, // okay..?
-    var maxOccupancy: Int,
     var rating: Double, //in case it averages out weird
     var optionalPromoImage: Uri? = null, //https://developer.android.com/reference/android/net/Uri - referenced to the uploaded image and its null since its optional so it can be empty
     var rules: List<String>,
