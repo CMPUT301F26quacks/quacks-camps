@@ -23,8 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.compose.ui.graphics.Color.Companion.Yellow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,7 +49,7 @@ fun OwnerHome(navController: NavController) {
         FloatingActionButton(
             containerColor = Color(0xFFFF9800),
             contentColor = Color.White,
-            onClick = {  }
+            onClick = { navController.navigate("RegisterCampsite") }
         ) {
             Text(
                 "+",
@@ -71,10 +69,10 @@ fun OwnerHome(navController: NavController) {
             Text("No campsites registered")
         }
         else {
+            // TODO: modify this to accomodate our campsite model class
             LazyColumn {
                 items(campsites) { campsite ->
                     Spacer(modifier = Modifier.height(12.dp))
-
                     Text(
                         text = campsite,
                         fontSize = 24.sp
