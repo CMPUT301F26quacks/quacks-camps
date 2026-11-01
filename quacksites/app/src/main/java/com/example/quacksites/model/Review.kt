@@ -1,7 +1,7 @@
 package com.example.quacksites.model
 
 class Review (
-    var rating: Float,
+    var rating: Float = 0F,
     var feedback: String="",
     var reviewID: String="",
     //associating review w campsite and an entrant based on crc cards
