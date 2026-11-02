@@ -1,6 +1,6 @@
 package com.example.quacksites.model
 
-class CampsiteOwner: User(
+class CampsiteOwner(
     var deviceId: String,
     var name: String = "",
     var email: String = "",
