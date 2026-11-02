@@ -9,17 +9,18 @@ import androidx.compose.material.icons.filled.ManageAccounts
 sealed class NavBarItem(
     val name: String,
     val image: ImageVector,
-
+    val sendsTo: String
 ){
-    object Home:
-        NavBarItem("Home",Icons.Filled.Home)
+    object EntrantHome:
+        NavBarItem("Home",Icons.Filled.Home, "EntrantHome")
 
-    object ActiveCampsites:
-        NavBarItem("Active Campsites", Icons.Filled.Bookmark)
+    object EntrantActiveCampsites:
+        NavBarItem("Active Campsites", Icons.Filled.Bookmark, "EntrantActiveCampsites")
 
-    object Profile:
-        NavBarItem("Profile", Icons.Filled.ManageAccounts)
+    object EntrantProfile:
+        NavBarItem("Profile", Icons.Filled.ManageAccounts, "EntrantProfile")
 
 }
+
 
 

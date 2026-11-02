@@ -12,7 +12,10 @@ fun QuackApp() {
 
     NavHost(navController = navController, startDestination = "UserStart") {
         composable("UserStart") { UserStart(navController) }
+
         composable("EntrantHome") { EntrantHome(navController) }
+        composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
+
         composable("OwnerHome") { OwnerHome(navController) }
 
     }
