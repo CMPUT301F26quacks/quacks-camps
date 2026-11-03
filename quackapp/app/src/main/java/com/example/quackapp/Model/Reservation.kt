@@ -13,7 +13,9 @@ enum class ReservationStatus {
     /** Entrant declined the reservation opportunity. */
     DECLINED,
     /** Entrant or campsite owner cancelled the reservation. */
-    CANCELLED
+    CANCELLED,
+    /** Reservation was completed */
+    COMPLETED
 }
 
 /**
