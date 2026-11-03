@@ -1,5 +1,7 @@
 package com.example.quackapp.model
+import android.net.Uri
 import com.example.quackapp.Model.User
+import kotlin.random.Random
 
 class CampsiteOwner(
     deviceId: String,
@@ -17,7 +19,7 @@ class CampsiteOwner(
     //register campsite
     fun registerCampsite(campsite: Campsite): Campsite {
         campsite.owner = this.name
-        campsite.qrCode = generateQRCode(campsite.name)
+        campsite.qrCode = generateQRCodeID(campsite)
         ownedCampsites.add(campsite)
         return campsite
     }
@@ -63,10 +65,21 @@ class CampsiteOwner(
         ownedLotteries.remove(lottery)
         lottery.status = LotteryStatus.CLOSED
     }
+    //function to generate the unique qr code id for a campsite
+    fun generateQRCodeID(campsite: Campsite): String {
+        val campsiteName = campsite.name
+        val uniqueID = getRandomList(Random)
+        return "campsite/${campsiteName}_${uniqueID.joinToString("")}"
+    }
 
-    //generate qr code - user story
-    fun generateQRCode(campsiteName: String): String {
+    fun generateQRCode(campsite: Campsite): String {
+        //function to actually visually generate the qr code (api)
+        return "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${Uri.encode(generateQRCodeID(campsite))}"    //uri.encode used so the string can be safely passed onto the url or something
+    }
 
+    //helper function to generate a random sequence of 5 nums for the qr code generator
+    fun getRandomList(random: Random): List<Int> = List(5) {
+        random.nextInt(0, 10)
     }
 
 
