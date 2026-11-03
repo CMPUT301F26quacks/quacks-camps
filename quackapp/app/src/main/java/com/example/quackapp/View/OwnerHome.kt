@@ -91,3 +91,5 @@ fun OwnerHome(navController: NavController) {
         }
     }
 }
+
+// TODO: Make a function to display each campsite as a row according to the UI mockup
