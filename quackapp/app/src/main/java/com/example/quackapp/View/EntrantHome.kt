@@ -1,5 +1,4 @@
 package com.example.quackapp.View
-
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
