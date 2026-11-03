@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,9 +48,7 @@ fun UserStart(navController: NavController) {
         DeviceIdGetter.getDeviceId(
 
             onSuccess = {
-
                 deviceId ->
-                Log.d("USER_CHECK", "Looking for device ID: $deviceId")
                 UserRepository.getUser(
                     deviceId = deviceId,
                     onResult = { user ->
@@ -56,8 +57,7 @@ fun UserStart(navController: NavController) {
                     },
 
                     onFail = { exception ->
-                        Log.e("USER_CHECK", "Failed to load user", exception)
-                        userSearchErrorMessage = exception.message ?: "Unable to load user profile"
+                        userSearchErrorMessage = "${exception.javaClass.simpleName}: ${exception.message}"
                     }
                 )
             },
@@ -75,7 +75,17 @@ fun UserStart(navController: NavController) {
         }
 
         !userSearchFinished -> {
-            Text("Checking device ID...")
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Checking device ID...")
+                CircularProgressIndicator(
+                    modifier = Modifier.width(16.dp),
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
         }
 
         currentUser != null -> {
