@@ -1,4 +1,4 @@
-package com.example.quackapp.model
+package com.example.quackapp.Model
 import android.net.Uri
 import com.example.quackapp.Model.User
 import kotlin.random.Random

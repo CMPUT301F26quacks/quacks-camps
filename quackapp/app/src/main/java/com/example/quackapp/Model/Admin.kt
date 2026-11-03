@@ -1,4 +1,4 @@
-package com.example.quackapp.model
+package com.example.quackapp.Model
 
 import com.example.quackapp.Model.User
 
