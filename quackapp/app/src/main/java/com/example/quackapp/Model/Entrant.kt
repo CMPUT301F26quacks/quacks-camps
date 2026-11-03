@@ -57,5 +57,5 @@ class Entrant(
     fun toggleNotificationPreference() {
         notificationsEnabled = !notificationsEnabled
     }
-    
+
 }
