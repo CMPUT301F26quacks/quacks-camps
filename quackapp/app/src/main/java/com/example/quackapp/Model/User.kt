@@ -15,11 +15,11 @@ import android.provider.Settings
  * @property notificationsEnabled User preference for receiving in-app and system notifications.
  */
 open class User(
-    val deviceId: String,
-    val name: String = "",
-    val email: String = "",
-    val phoneNumber: String = "",
-    val notificationsEnabled: Boolean = true
+    var deviceId: String,
+    var name: String = "",
+    var email: String = "",
+    var phoneNumber: String = "",
+    var notificationsEnabled: Boolean = true
 ) {
 
     /**
