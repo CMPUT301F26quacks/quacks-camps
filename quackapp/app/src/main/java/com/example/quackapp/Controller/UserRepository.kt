@@ -44,13 +44,13 @@ object UserRepository {
     }
 
     fun createUser(
-
+        deviceId: String
     ) {
 
         val database = FirebaseFirestore.getInstance()
 
         database.collection("users")
-            .document()
+            .document(deviceId)
     }
 
     fun userExists( //
