@@ -1,0 +1,125 @@
+package com.example.quackapp.Controller
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import com.example.quackapp.Model.Campsite
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
+import com.google.firebase.storage.storage
+import android.net.Uri
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+
+/**
+ * Represents the state of the campsite registration, mostly for the optional
+ * promo image upload.
+ *
+ * The UI observes this to decide what to display (for example, a progress
+ * indicator while [Saving] or an error message for [Error]).
+ */
+sealed interface SaveStatus {
+    object Idle : SaveStatus
+    object Saving : SaveStatus
+    object Success : SaveStatus
+    data class Error(val message: String) : SaveStatus
+}
+
+/**
+ * Controller for the "Register Campsite" screen.
+ *
+ * Holds the form state, validates it, and saves a new [Campsite] to Firestore.
+ * If the user picked a promo image, it is uploaded to Firebase Storage first and
+ * its download URL is stored on the [Campsite] document.
+ *
+ */
+class RegisterCampsiteController: ViewModel(){
+    // Firestore database instance
+    private val db = Firebase.firestore
+
+    // Reference to the campsites collection in Firestore
+    private val campsitesRef = db.collection("campsites")
+
+    // Firebase Storage instance used for promo image uploads
+    private val imgStorage = Firebase.storage
+
+    var name by mutableStateOf("")
+    var location by mutableStateOf("")
+    var price by mutableIntStateOf(0)
+    var capacity by mutableIntStateOf(0)
+    var imageUri by mutableStateOf<Uri?>(null)
+
+    private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
+
+    val status: StateFlow<SaveStatus> = _status
+
+    /**
+     * Validates and adds a new Campsite object to the Firestore.
+     *
+     * Campsite objects may have images which are stored into Storage and can be linked to their campsite object via unique ID
+     */
+    fun addCampsite(){
+        // get the uploaded image's uri
+        val uri = imageUri
+        // Validate fields
+        if (name.isBlank() || location.isBlank() || capacity <= 0 || price <= 0) {
+            _status.value = SaveStatus.Error("Fill in all fields and capacity and price must be non-zero")
+            return
+        }
+
+        // Start a coroutine that allows code to pause and await without freezing UI
+        viewModelScope.launch {
+            // Change status to saving
+            _status.value = SaveStatus.Saving
+            try {
+                // Create database references, any image and campsite object will be linked by their ids (document name)
+                val docRef = campsitesRef.document()
+                val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
+
+                // Upload the image if one was selected
+                var url = ""
+                if (uri != null) {
+                    imageRef.putFile(uri).await()
+                    // get the download url
+                    url = imageRef.downloadUrl.await().toString()
+                }
+                // Make a new campsite object to store
+                val campsite = Campsite(
+                    id = docRef.id,
+                    name = name.trim(),
+                    location = location.trim(),
+                    optionalPromoImage = url,
+                    price = price,
+                    capacity = capacity
+                )
+                // upload to firestore
+                docRef.set(campsite).await()
+                _status.value = SaveStatus.Success
+            }
+            catch (e: Exception) {
+                _status.value = SaveStatus.Error(e.message ?: "Something went wrong")
+            }
+
+        }
+
+    }
+
+    /**
+     * Clears all form fields back to their defaults.
+     *
+     * Typically called after a successful save so the form is ready for a new entry.
+     */
+    fun resetForm() {
+        name = ""
+        location = ""
+        imageUri = null
+        price = 0
+        capacity = 0
+        _status.value = SaveStatus.Idle
+    }
+}
