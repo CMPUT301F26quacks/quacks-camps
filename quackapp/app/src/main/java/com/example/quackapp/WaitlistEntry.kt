@@ -1,12 +1,12 @@
-package com.example.quacksites
+package com.example.quackapp
 
-enum class waitListStatus {WAITING, SELECTED, NOT_SELECTED, CANCELLED}
+enum class WaitlistStatus {WAITING, SELECTED, NOT_SELECTED, CANCELLED}
 
-class waitListEntry(
+class WaitlistEntry(
     val entryId: String,
     val lotteryId: String,
     val entrantId: String,
-    var status: waitListStatus = waitListStatus.WAITING
+    var status: WaitlistStatus = WaitlistStatus.WAITING
     // location
 ) {
 
@@ -16,13 +16,13 @@ class waitListEntry(
     }
     //waitlist status
     fun isWaitListed(): Boolean{
-        return status == waitListStatus.WAITING
+        return status == WaitlistStatus.WAITING
     }
     fun isSelected(): Boolean{
-        return status == waitListStatus.SELECTED
+        return status == WaitlistStatus.SELECTED
     }
     //if entrant wants to cancel/withdraw from the list
     fun cancelEntry() {
-        status = waitListStatus.CANCELLED
+        status = WaitlistStatus.CANCELLED
     }
 }

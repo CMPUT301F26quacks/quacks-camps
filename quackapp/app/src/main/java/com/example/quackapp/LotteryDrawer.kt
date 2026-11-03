@@ -1,11 +1,11 @@
-package com.example.quacksites
+package com.example.quackapp
 
 
-class lotteryDrawer {
-    private val waitlistRepository = waitlistRepository()
+class LotteryDrawer {
+    private val WaitlistRepository = WaitlistRepository()
 
     fun runDrawAndSave(lotteryId: String, maxWinners: Int, onComplete: (List<waitListEntry>) -> Unit) {
-        waitlistRepository.getEntriesForLottery(lotteryId) { entries ->
+        WaitlistRepository.getEntriesForLottery(lotteryId) { entries ->
             val waitlistedEntrants = entries.filter { it.status == waitListStatus.WAITING }
             val shuffled = waitlistedEntrants.shuffled()
 
@@ -16,7 +16,7 @@ class lotteryDrawer {
                     shuffled[i].status = waitListStatus.NOT_SELECTED
                 }
                     // Push updated status back to Firebase
-                waitlistRepository.addEntry(shuffled[i])
+                WaitlistRepository.addEntry(shuffled[i])
             }
             onComplete(shuffled)
         }

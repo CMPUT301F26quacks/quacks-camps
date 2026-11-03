@@ -1,7 +1,7 @@
-package com.example.quacksites
+package com.example.quackapp
 
 // the owner creates the lottery listing
-class lotteryListing(
+class LotteryListing(
     val lotteryId: String,
     val campsiteId: String,
     val ownerId: String,
@@ -15,30 +15,30 @@ class lotteryListing(
 ) {
 
     // validating all values
-    fun validateListing(): validateResult {
+    fun ValidateListing(): ValidateResult {
         if (campsiteId.isBlank()) {
-            return validateResult(false, "Campsite ID cannot be empty.")
+            return ValidateResult(false, "Campsite ID cannot be empty.")
         }
         if (ownerId.isBlank()) { // should be same as the user logged in
-            return validateResult(false, "Owner ID cannot be empty.")
+            return ValidateResult(false, "Owner ID cannot be empty.")
         }
 
         if(waitListCapacity == 0 || waitListCapacity < -1){
-            return validateResult(false, "Waitlist must be greater than 0")
+            return ValidateResult(false, "Waitlist must be greater than 0")
         }
 
         if(registrationStartDate.isBlank() || registrationEndDate.isBlank()){
-            return validateResult(false, "Registration start and end period are required.")
+            return ValidateResult(false, "Registration start and end period are required.")
         }
 
         if(bookingStartDate.isBlank() || bookingEndDate.isBlank()){
-            return validateResult(false, "Booking start and end period are required.")
+            return ValidateResult(false, "Booking start and end period are required.")
         }
 
         if(maxWinners < 1){
-            return validateResult(false, "Max Winners must be atleast 1.")
+            return ValidateResult(false, "Max Winners must be atleast 1.")
         }
-        return validateResult(true, "Valid")
+        return ValidateResult(true, "Valid")
 
     }
 
@@ -54,7 +54,7 @@ class lotteryListing(
         return currentCount >= waitListCapacity
     }
 }
-data class validateResult(
+data class ValidateResult(
     val isValid: Boolean,
     val errorMessage: String
 )
