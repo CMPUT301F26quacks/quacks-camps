@@ -11,6 +11,7 @@ import com.example.quackapp.View.RegisterCampsiteScreen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -37,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButtonDefaults.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +57,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -77,6 +81,7 @@ fun RegisterCampsiteScreen(
     var priceAsString: String by remember { mutableStateOf("") }
     var capacityAsString: String by remember { mutableStateOf("") }
 
+    var newTag: String by remember { mutableStateOf("") }
     val status by viewModel.status.collectAsState()
 
     // launcher for the photo selector
@@ -238,6 +243,7 @@ fun RegisterCampsiteScreen(
         Text("Promotional Image (Optional)")
         Box(
             modifier = Modifier
+                .padding(4.dp)
                 .fillMaxWidth()
                 .height(200.dp)
                 .clip(RoundedCornerShape(12.dp))
@@ -263,21 +269,74 @@ fun RegisterCampsiteScreen(
                 }
             }
         }
-            Button(
-                onClick = { viewModel.addCampsite() },
-                enabled = status !is SaveStatus.Saving,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-                ) {
-                if (status is SaveStatus.Saving) {
-                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                } else {
-                    Text("Submit")
-                }
+        Text("Tags")
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            viewModel.tags.forEach { tag ->
+                Tag(
+                    tag,
+                    tag in viewModel.selectedTags,
+                    onClick = { viewModel.toggleTag(tag) }
+                )
             }
+        }
+        OutlinedTextField(
+            value = newTag,
+            onValueChange = { newTag = it },
+            label = { Text("Add your own tag") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                viewModel.addCustomTag(newTag)
+                newTag = ""
+            }),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.width(8.dp))
+        Button(
+            onClick = {
+                viewModel.addCustomTag(newTag)
+                newTag = ""
+            },
+            colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
+            enabled = newTag.isNotBlank()
+        ) { Text("Add") }
+        Button(
+            onClick = { viewModel.addCampsite() },
+            enabled = status !is SaveStatus.Saving,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
+            ) {
+            if (status is SaveStatus.Saving) {
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                Text("Submit")
+            }
+        }
 
-            (status as? SaveStatus.Error)?.let {
-                Text(it.message, color = MaterialTheme.colorScheme.error)
-            }
+        (status as? SaveStatus.Error)?.let {
+            Text(it.message, color = MaterialTheme.colorScheme.error)
+        }
+    }
+}
+@Composable
+fun Tag(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = if (selected) Color(0xFFFFC107) else Color.Gray,
+    ) {
+        Text(
+            text = text,
+            color = if (selected) Color.Black else Color.White,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+        )
     }
 }

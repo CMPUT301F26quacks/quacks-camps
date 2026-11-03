@@ -58,10 +58,26 @@ class RegisterCampsiteController: ViewModel(){
         private set
     var rules by mutableStateOf(listOf(""))
     var cancellationPolicy by mutableStateOf("")
-    val tags by mutableStateOf(listOf(""))
+    var tags by mutableStateOf(listOf("Pet Friendly", "Smoke Free", "Luxurious", "Back Camping"))
+    var selectedTags by mutableStateOf(setOf<String>())
+        private set
 
+    fun toggleTag(tag: String) {
+        selectedTags = if (tag in selectedTags) selectedTags - tag else selectedTags + tag
+    }
+    fun addCustomTag(raw: String) {
+        val tag = raw.trim()
+        if (tag.isEmpty()) return
+        // Case-insensitive duplicate check
+        val existing = tags.firstOrNull { it.equals(tag, ignoreCase = true) }
+        if (existing == null) {
+            tags = tags + tag
+            selectedTags = selectedTags + tag   // auto-select new tags
+        } else {
+            selectedTags = selectedTags + existing
+        }
+    }
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
-
     val status: StateFlow<SaveStatus> = _status
 
     /**
@@ -104,7 +120,8 @@ class RegisterCampsiteController: ViewModel(){
                     capacity = capacity,
                     cancellationPolicy = cancellationPolicy,
                     features = features,
-                    rules = rules
+                    rules = rules,
+                    tags = tags
                 )
                 // upload to firestore
                 docRef.set(campsite).await()
