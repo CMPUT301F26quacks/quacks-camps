@@ -10,6 +10,7 @@ import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import android.net.Uri
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +54,11 @@ class RegisterCampsiteController: ViewModel(){
     var price by mutableIntStateOf(0)
     var capacity by mutableIntStateOf(0)
     var imageUri by mutableStateOf<Uri?>(null)
+    var features by mutableStateOf(listOf(""))
+        private set
+    var rules by mutableStateOf(listOf(""))
+    var cancellationPolicy by mutableStateOf("")
+    val tags by mutableStateOf(listOf(""))
 
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
 
@@ -95,7 +101,10 @@ class RegisterCampsiteController: ViewModel(){
                     location = location.trim(),
                     optionalPromoImage = url,
                     price = price,
-                    capacity = capacity
+                    capacity = capacity,
+                    cancellationPolicy = cancellationPolicy,
+                    features = features,
+                    rules = rules
                 )
                 // upload to firestore
                 docRef.set(campsite).await()
@@ -121,5 +130,20 @@ class RegisterCampsiteController: ViewModel(){
         price = 0
         capacity = 0
         _status.value = SaveStatus.Idle
+    }
+
+    fun addFeature() { features = features + "" }
+    fun updateFeature(index: Int, value: String) {
+        features = features.toMutableList().also { it[index] = value }
+    }
+    fun removeFeature(index: Int) {
+        features = features.toMutableList().also { it.removeAt(index) }
+    }
+    fun addRule() { rules = rules + "" }
+    fun updateRule(index: Int, value: String) {
+        rules = rules.toMutableList().also { it[index] = value }
+    }
+    fun removeRule(index: Int) {
+        rules = rules.toMutableList().also { it.removeAt(index) }
     }
 }

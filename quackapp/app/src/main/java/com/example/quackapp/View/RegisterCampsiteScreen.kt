@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
@@ -90,52 +92,53 @@ fun RegisterCampsiteScreen(
             capacityAsString = ""
         }
     }
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp)
-    ){
-        Text(
-            text = "Register Campsite",
-            fontSize = 30.sp
-        )
 
-        Button(
-            onClick = {
-                navController.popBackStack()
-            },
-            colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-            modifier = Modifier.testTag("backButton") // for testing
-        ) {
-            Text("Back")
-        }
-    }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+        ){
+            Text(
+                text = "Register Campsite",
+                fontSize = 30.sp
+            )
+
+            Button(
+                onClick = {
+                    navController.popBackStack()
+                },
+                colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
+                modifier = Modifier.testTag("backButton") // for testing
+            ) {
+                Text("Back")
+            }
+        }
+
+        Text("Name")
         OutlinedTextField(
             value = viewModel.name,
             onValueChange = { viewModel.name = it },
             label = { Text("Campsite Name") },
             modifier = Modifier
                 .fillMaxWidth()
-//                .weight(1f)
         )
+        Text("Location")
         OutlinedTextField(
             value = viewModel.location,
             onValueChange = { viewModel.location = it },
             label = { Text("Location") },
             modifier = Modifier
                 .fillMaxWidth()
-//                .weight(1f)
         )
+        Text("Price")
         OutlinedTextField(
             value = priceAsString,
             onValueChange = { input ->
@@ -151,6 +154,7 @@ fun RegisterCampsiteScreen(
             modifier = Modifier
                 .fillMaxWidth()
         )
+        Text("Capacity")
         OutlinedTextField(
             value = capacityAsString,
             onValueChange = { input ->
@@ -166,7 +170,72 @@ fun RegisterCampsiteScreen(
             modifier = Modifier
                 .fillMaxWidth()
         )
+        Text("Cancellation Policy")
+        OutlinedTextField(
+            value = viewModel.cancellationPolicy,
+            onValueChange = { viewModel.cancellationPolicy = it },
+            label = { Text("Policy") },
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+        Text("Amenities/Features")
+        Column() {
+            viewModel.features.forEachIndexed { index, value ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = { viewModel.updateFeature(index, it) },
+                        label = { Text("Amenity #${index + 1}") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = { viewModel.removeFeature(index) },
+                        enabled = viewModel.features.size > 1,
+                        colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
+                        ) { Text("X") }
+                }
+            }
+            Button(
+                onClick = {
+                    viewModel.addFeature()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
+                ) {
+                Text("Add Amenity")
+            }
+        }
+        Text("Rules")
+        Column() {
+            viewModel.rules.forEachIndexed { index, value ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = { viewModel.updateRule(index, it) },
+                        label = { Text("Rule #${index + 1}") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = { viewModel.removeRule(index) },
+                        enabled = viewModel.rules.size > 1,
+                        colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
 
+                        ) { Text("X") }
+                }
+            }
+            Button(
+                onClick = {
+                    viewModel.addRule()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
+                ) {
+                Text("Add Rule")
+            }
+        }
+        Text("Promotional Image (Optional)")
         Box(
             modifier = Modifier
                 .fillMaxWidth()

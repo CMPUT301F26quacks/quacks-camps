@@ -18,7 +18,7 @@ class CampsiteOwner(
     }
     //register campsite
     fun registerCampsite(campsite: Campsite): Campsite {
-        campsite.owner = this.name
+//        campsite.owner = this.name
         campsite.qrCode = generateQRCodeID(campsite)
         ownedCampsites.add(campsite)
         return campsite
