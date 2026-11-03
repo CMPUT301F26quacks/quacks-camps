@@ -5,8 +5,7 @@ class waitListEntry(
     val lotteryId: String,
     val entrantId: String,
     val status: String,
-    val latitude: Double,
-    val longitude: Double
+    // location
 ) {
 
     // validate is all info is valid
