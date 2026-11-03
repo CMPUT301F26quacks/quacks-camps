@@ -1,4 +1,4 @@
-package com.example.quacksites.model
+package com.example.quackapp.model
 
 
 class Message(

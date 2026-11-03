@@ -1,4 +1,4 @@
-package com.example.quacksites.model
+package com.example.quackapp.model
 
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -20,6 +20,7 @@ enum class WaitlistStatus {WAITING, SELECTED, NOT_SELECTED}
 */
 
 class Lottery(
+    var lotteryID: String,
     var registrationPeriodStart: String,
     var registrationPeriodEnd: String,
     var bookingPeriodStart: String,
@@ -27,7 +28,7 @@ class Lottery(
     var numLotteryWinners: Int,
     var optionalWaitlistCapacity: Int? = null, //since optional we use null - idk if this is the best practice tho
     var waitlist: List<String> = listOf(), //list of entrants
-    var status: LotteryStatus = LotteryStatus.OPEN
+    var status: LotteryStatus = LotteryStatus.CLOSED
 
 )
 
