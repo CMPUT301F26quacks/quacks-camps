@@ -1,15 +1,14 @@
-package com.example.quacksites.model
+package com.example.quackapp.model
 
 import android.net.Uri
 
 class Campsite (
-    /*-name, owner, location, price, capacity,
+    /*name, owner, location, price, capacity,
     features, max occupancy, rating,
     optional promotional image, rules,
-    cancellation policy, availability,
-   , tags,
+    cancellation policy, availability, tags,
    class holds all attributes mentioned in entrant and campsite user stories
-     */
+    */
 
     var name: String ="",
     var owner: String = "",
@@ -22,6 +21,8 @@ class Campsite (
     var rules: List<String>,
     var cancellationPolicy: String, //only mentioned in the entrant's user story - never set on the campsite owner's side
     var availability: List<String>, //I'm assuming it's a list of all da dates
-    var tags: List<String>
+    var tags: List<String>,
+    var qrCode: String = "",
+    var lottery: Lottery? = null //holds lottery property - none if by default campsite not in lottery
 )
 

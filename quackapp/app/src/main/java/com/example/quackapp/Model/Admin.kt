@@ -1,11 +1,13 @@
-package com.example.quacksites.model
+package com.example.quackapp.model
+
+import com.example.quackapp.Model.User
 
 class Admin(
-    var deviceId: String,
-    var name: String = "",
-    var email: String = "",
-    var phoneNumber: String = "",
-    var notificationsEnabled: Boolean = true
-){
+    deviceId: String,
+    name: String = "",
+    email: String = "",
+    phoneNumber: String = "",
+    notificationsEnabled: Boolean = true
+): User(deviceId, name, email, phoneNumber, notificationsEnabled){
 
 }
