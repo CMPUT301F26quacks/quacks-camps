@@ -9,13 +9,15 @@ package com.example.quackapp.Model
  * @property email Email address for correspondence and confirmations.
  * @property phoneNumber Contact phone number.
  * @property notificationsEnabled User preference for receiving in-app and system notifications.
+ * @property roles A list of roles this user has been assigned, ENTRANT, OWNER, and/or ADMIN
  */
 open class User(
-    var deviceId: String,
+    var deviceId: String = "",
     var name: String = "",
     var email: String = "",
     var phoneNumber: String = "",
-    var notificationsEnabled: Boolean = true
+    var notificationsEnabled: Boolean = true,
+    var roles: List<String> = emptyList()
 ) {
 
 }

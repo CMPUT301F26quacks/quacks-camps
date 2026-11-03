@@ -1,5 +1,6 @@
 package com.example.quackapp.View
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,33 +22,42 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Controller.UserRepository
+import com.example.quackapp.Model.User
 
 @Composable
 fun UserStart(navController: NavController) {
 
-    var userExists by remember {
-        mutableStateOf<Boolean?>(null) // null means Firebase is still checking
-    }
+    // Checks for deviceID to determine if new user at app start
+    //var currentUser by remember {
+    //    mutableStateOf<Boolean?>(null) // null means Firebase is still checking
+    //}
 
     // Stores error message if Firebase cannot complete the search
-    var userSearchErrorMessage by remember {
-        mutableStateOf<String?>(null)
-    }
+    var userSearchErrorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Checks the device to get the deviceId when the first screen starts
+    var currentUser by remember { mutableStateOf<User?>(null) }
+
+    var userSearchFinished by remember { mutableStateOf<Boolean>(false) }
+
+    //
     LaunchedEffect(Unit) {
 
         DeviceIdGetter.getDeviceId(
 
             onSuccess = {
-                deviceId -> UserRepository.userExists(
+
+                deviceId ->
+                Log.d("USER_CHECK", "Looking for device ID: $deviceId")
+                UserRepository.getUser(
                     deviceId = deviceId,
-                    onResult = {
-                        exists -> userExists = exists
+                    onResult = { user ->
+                        currentUser = user
+                        userSearchFinished = true
                     },
 
-                    onFail = {
-                        exception -> userSearchErrorMessage = exception.message ?: "Unable to find user profile"
+                    onFail = { exception ->
+                        Log.e("USER_CHECK", "Failed to load user", exception)
+                        userSearchErrorMessage = exception.message ?: "Unable to load user profile"
                     }
                 )
             },
@@ -56,46 +66,58 @@ fun UserStart(navController: NavController) {
                 exception -> userSearchErrorMessage = exception.message ?: "Unable to identify this device"
             }
         )
+
         }
+
     when {
         userSearchErrorMessage != null -> {
             Text("Error: $userSearchErrorMessage")
         }
-    }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "quackSites",
-            fontSize = 24.sp
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                navController.navigate("EntrantHome")
-            }
-
-        ) {
-            Text("I want to register this \n" +
-                    "device as an Entrant ")
+        !userSearchFinished -> {
+            Text("Checking device ID...")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        currentUser != null -> {
+            Text("Welcome back ${currentUser!!.name}\n" + "TEST: ${currentUser!!.roles}")
+        }
 
-        Button(
-            onClick = {
-                navController.navigate("CampsiteOwnerHome")
+        else -> {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "quackSites",
+                    fontSize = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        navController.navigate("EntrantHome")
+                    }
+
+                ) {
+                    Text("I want to register this \n" +
+                            "device as an Entrant ")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        navController.navigate("CampsiteOwnerHome")
+                    }
+
+                ) {
+                    Text("I want to register \n" +
+                            "this device as a \n" +
+                            "Campsite Owner")
+                }
             }
-
-        ) {
-            Text("I want to register \n" +
-                    "this device as a \n" +
-                    "Campsite Owner")
         }
     }
 }
