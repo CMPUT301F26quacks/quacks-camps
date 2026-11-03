@@ -6,14 +6,14 @@ class lotteryDrawer {
 
     fun runDrawAndSave(lotteryId: String, maxWinners: Int, onComplete: (List<waitListEntry>) -> Unit) {
         waitlistRepository.getEntriesForLottery(lotteryId) { entries ->
-            val waitlistedEntrants = entries.filter { it.status.equals("Waitlisted", ignoreCase = true) }
+            val waitlistedEntrants = entries.filter { it.status == waitListStatus.WAITING }
             val shuffled = waitlistedEntrants.shuffled()
 
             for (i in shuffled.indices) {
                 if (i < maxWinners) {
-                    shuffled[i].status = "Selected"
+                    shuffled[i].status = waitListStatus.SELECTED
                 } else {
-                    shuffled[i].status = "Not_Selected"
+                    shuffled[i].status = waitListStatus.NOT_SELECTED
                 }
                     // Push updated status back to Firebase
                 waitlistRepository.addEntry(shuffled[i])
