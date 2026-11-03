@@ -1,20 +1,27 @@
 package com.example.quacksites
-//firebase and change it later
+
+import com.google.firebase.firestore.FirebaseFirestore
+
 class waitlistRepository {
+    private val db = FirebaseFirestore.getInstance()
 
-    private val collection = db.collection("waitlist")
-
-    fun addEntry(entry: waitListEntry): Boolean{
-        if(entry.validateListing().isValid){
-            entries.add(entry) //adds if valid
-            return true
-        }
-        return false //if not valid
+    // Save or update a waitlist entry in Firebase
+    fun addEntry(entry: waitListEntry) {
+        db.collection("waitlists").document(entry.entryId).set(entry)
     }
 
-    fun getEntriesForLottery(
-        lotteryId: String,
-        onResult: (List<waitListEntry) ->){
-
+    // Get all waitlist entries for a specific lottery from Firebase
+    fun getEntriesForLottery(lotteryId: String, callback: (List<waitListEntry>) -> Unit) {
+        db.collection("waitlists")
+            .whereEqualTo("lotteryId", lotteryId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val list = snapshot.toObjects(waitListEntry::class.java)
+                callback(list)
+            }
+            .addOnFailureListener {
+                callback(emptyList())
+            }
     }
 }
+

@@ -4,7 +4,7 @@ class waitListEntry(
     val entryId: String,
     val lotteryId: String,
     val entrantId: String,
-    val status: String,
+    var status: String,
     // location
 ) {
 
