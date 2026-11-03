@@ -6,6 +6,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.sampleCampsites
 
 
 /**
@@ -24,8 +26,12 @@ fun EntrantHome(navController: NavController) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Text("Entrant Home")
-
+            EntrantHomeList(
+                campsites = sampleCampsites,
+                campsiteCardClicked = { campsite ->
+                    // Navigation to the detail screen comes later
+                }
+            )
         }
     }
 }

@@ -30,64 +30,65 @@ import androidx.navigation.NavController
 
 @Composable
 fun OwnerHome(navController: NavController) {
-    var campsites = remember {
+    val campsites = remember {
         mutableStateListOf<String>() // TODO: replace with campsite object
     }
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp)
-    ){
-
-        // title text
-        Text(
-            text = "Campsites",
-            fontSize = 40.sp
-        )
-
-        FloatingActionButton(
-            containerColor = Color(0xFFFF9800),
-            contentColor = Color.White,
-            onClick = { navController.navigate("RegisterCampsite") }
+    OwnerScaffold(navController) { innerPadding ->
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
         ) {
-            Text(
-                "+",
-                fontSize = 18.sp,
 
+            // title text
+            Text(
+                text = "Campsites",
+                fontSize = 40.sp
             )
-        }
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (campsites.isEmpty()){
-            Text("No campsites registered")
-        }
-        else {
-            // TODO: modify this to accomodate our campsite model class
-            LazyColumn {
-                items(campsites) { campsite ->
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = campsite,
-                        fontSize = 24.sp
+
+            FloatingActionButton(
+                containerColor = Color(0xFFFF9800),
+                contentColor = Color.White,
+                onClick = { navController.navigate("RegisterCampsite") }
+            ) {
+                Text(
+                    "+",
+                    fontSize = 18.sp,
+
                     )
-                }
             }
         }
-        Button(
-            onClick = {
-                navController.popBackStack()
-            },
-            colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-            modifier = Modifier.testTag("backButton") // for testing
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Back")
+            if (campsites.isEmpty()) {
+                Text("No campsites registered")
+            } else {
+                // TODO: modify this to accomodate our campsite model class
+                LazyColumn {
+                    items(campsites) { campsite ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = campsite,
+                            fontSize = 24.sp
+                        )
+                    }
+                }
+            }
+            Button(
+                onClick = {
+                    navController.popBackStack()
+                },
+                colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
+                modifier = Modifier.testTag("backButton") // for testing
+            ) {
+                Text("Back")
+            }
         }
     }
 }

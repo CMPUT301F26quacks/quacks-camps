@@ -75,7 +75,7 @@ fun UserStart(navController: NavController) {
 
         Button(
             onClick = {
-                navController.navigate("CampsiteOwnerHome")
+                navController.navigate("OwnerHome")
             },
 
             colors = ButtonDefaults.buttonColors(

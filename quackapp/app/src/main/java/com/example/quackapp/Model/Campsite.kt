@@ -10,15 +10,82 @@ class Campsite (
     class holds all attributes mentioned in entrant and campsite user stories*/
     val id: String = "",
     val name: String ="",
-//    val owner: String = "",
+    val owner: String = "",
     val location: String = "",
     val price: Int,
     val capacity: Int,
 //    var features: List<String>, // okay..?
-//    var rating: Double, //in case it averages out weird
+    var rating: Double, //in case it averages out weird
     val optionalPromoImage: String = "", //https://developer.android.com/reference/android/net/Uri - referenced to the uploaded image and its null since its optional so it can be empty
 //    var rules: List<String>,
 //    var cancellationPolicy: String, //only mentioned in the entrant's user story - never set on the campsite owner's side
 //    var availability: List<String>, //I'm assuming it's a list of all da dates
 //    var tags: List<String>
+)
+
+val sampleCampsites = listOf(
+    Campsite(
+        "2",
+        "Canmore Peak",
+        "Bob",
+        "Canmore",
+        100,
+        5,
+        4.5
+    ),
+    Campsite(
+        "3",
+        "Canmore Ridge",
+        "Bob",
+        "Canmore",
+        80,
+        2,
+        4.0
+    ),
+    Campsite(
+        "4",
+        "Basin Peak",
+        "Bob",
+        "Canmore",
+        150,
+        8,
+        4.7
+    ),
+    Campsite(
+        "5",
+        "Basin Peak",
+        "Bob",
+        "Canmore",
+        150,
+        8,
+        4.7
+    ),
+    Campsite(
+        "6",
+        "Basin Peak",
+        "Bob",
+        "Canmore",
+        150,
+        8,
+        4.7
+    ),
+    Campsite(
+        "7",
+        "Basin Peak",
+        "Bob",
+        "Canmore",
+        150,
+        8,
+        4.7
+    ),
+    Campsite(
+        "8",
+        "Basin Peak",
+        "Bob",
+        "Canmore",
+        150,
+        8,
+        4.7
+    ),
+
 )

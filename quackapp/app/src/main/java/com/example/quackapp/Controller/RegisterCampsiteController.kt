@@ -89,6 +89,7 @@ class RegisterCampsiteController: ViewModel(){
                     url = imageRef.downloadUrl.await().toString()
                 }
                 // Make a new campsite object to store
+                /*
                 val campsite = Campsite(
                     id = docRef.id,
                     name = name.trim(),
@@ -98,7 +99,7 @@ class RegisterCampsiteController: ViewModel(){
                     capacity = capacity
                 )
                 // upload to firestore
-                docRef.set(campsite).await()
+                docRef.set(campsite).await()*/
                 _status.value = SaveStatus.Success
             }
             catch (e: Exception) {

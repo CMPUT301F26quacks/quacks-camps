@@ -30,6 +30,22 @@ sealed class NavBarItem(
     object EntrantProfile:
         NavBarItem("Profile", Icons.Filled.ManageAccounts, "EntrantProfile")
 
+
+    object OwnerHome:
+        NavBarItem("Home",
+                   Icons.Filled.Home,
+                   "OwnerHome")
+
+    object OwnerReservationHistory:
+        NavBarItem("Reservation History",
+                   Icons.Filled.Bookmark,
+                   "OwnerReservationHistory"
+        )
+
+    object OwnerProfile:
+        NavBarItem("Profile",
+                   Icons.Filled.ManageAccounts,
+                   "OwnerProfile")
 }
 
 

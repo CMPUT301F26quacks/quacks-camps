@@ -104,6 +104,9 @@ fun RegisterCampsiteScreen(
         Button(
             onClick = {
                 navController.popBackStack()
+                //android.util.Log.d("OwnerHome", "Back clicked")
+                //val popped = navController.popBackStack()
+                //android.util.Log.d("OwnerHome", "popped = $popped")
             },
             colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
             modifier = Modifier.testTag("backButton") // for testing

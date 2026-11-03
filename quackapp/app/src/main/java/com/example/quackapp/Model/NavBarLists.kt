@@ -14,14 +14,11 @@ object NavBarLists {
         NavBarItem.EntrantProfile
     )
 
-    //Campsite Owner list of icons wanted for Owner Nav Bar to-do
-
-    /*
-    val campsiteOwner = listOf(
-        #TO-DO
+    val owner = listOf(
+        NavBarItem.OwnerHome,
+        NavBarItem.OwnerReservationHistory,
+        NavBarItem.OwnerProfile
     )
-     */
-
 
     //Admin list of icons wanted for Admin Nav Bar to-do
 
