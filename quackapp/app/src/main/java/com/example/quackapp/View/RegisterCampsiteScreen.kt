@@ -57,9 +57,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
@@ -110,10 +113,11 @@ fun RegisterCampsiteScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(top = 8.dp)
         ){
             Text(
                 text = "Register Campsite",
-                fontSize = 30.sp
+                fontSize = 32.sp
             )
 
             Button(
@@ -126,8 +130,14 @@ fun RegisterCampsiteScreen(
                 Text("Back")
             }
         }
-
-        Text("Name")
+        Text("* signifies required field", color = Color.Red)
+        Text(text = buildAnnotatedString {
+            append("Name ")
+            withStyle(style = SpanStyle(color = Color.Red)) {
+                append("*")
+            }
+            }
+        )
         OutlinedTextField(
             value = viewModel.name,
             onValueChange = { viewModel.name = it },
@@ -136,7 +146,13 @@ fun RegisterCampsiteScreen(
                 .fillMaxWidth()
                 .testTag("nameField")
         )
-        Text("Location")
+        Text(text = buildAnnotatedString {
+            append("Location ")
+            withStyle(style = SpanStyle(color = Color.Red)) {
+                append("*")
+            }
+        }
+        )
         OutlinedTextField(
             value = viewModel.location,
             onValueChange = { viewModel.location = it },
@@ -145,7 +161,13 @@ fun RegisterCampsiteScreen(
                 .fillMaxWidth()
                 .testTag("locationField")
         )
-        Text("Price")
+        Text(text = buildAnnotatedString {
+            append("Price ")
+            withStyle(style = SpanStyle(color = Color.Red)) {
+                append("*")
+            }
+        }
+        )
         OutlinedTextField(
             value = priceAsString,
             onValueChange = { input ->
@@ -162,7 +184,13 @@ fun RegisterCampsiteScreen(
                 .fillMaxWidth()
                 .testTag("priceField")
         )
-        Text("Capacity")
+        Text(text = buildAnnotatedString {
+            append("Capacity ")
+            withStyle(style = SpanStyle(color = Color.Red)) {
+                append("*")
+            }
+        }
+        )
         OutlinedTextField(
             value = capacityAsString,
             onValueChange = { input ->
@@ -317,7 +345,17 @@ fun RegisterCampsiteScreen(
             colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
             enabled = newTag.isNotBlank(),
             modifier = Modifier.testTag("addTagButton")
-        ) { Text("Add") }
+        ) {
+            Text("Add")
+        }
+
+        (status as? SaveStatus.Error)?.let {
+            Text(
+                it.message,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 18.sp
+            )
+        }
         Button(
             onClick = { viewModel.addCampsite() },
             enabled = status !is SaveStatus.Saving,
@@ -333,9 +371,7 @@ fun RegisterCampsiteScreen(
             }
         }
 
-        (status as? SaveStatus.Error)?.let {
-            Text(it.message, color = MaterialTheme.colorScheme.error)
-        }
+
     }
 }
 @Composable

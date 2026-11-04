@@ -88,9 +88,6 @@ fun UserStart(navController: NavController) {
             }
         }
 
-        currentUser != null -> {
-            Text("Welcome back ${currentUser!!.name}\n" + "TEST: ${currentUser!!.roles}")
-        }
 
         else -> {
             Column(
@@ -98,6 +95,7 @@ fun UserStart(navController: NavController) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                currentUser?.let { Text("Welcome back ${it.deviceId}") }
                 Text(
                     text = "quackSites",
                     fontSize = 24.sp
