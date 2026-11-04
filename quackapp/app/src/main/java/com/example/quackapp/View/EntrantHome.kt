@@ -21,11 +21,13 @@ import com.example.quackapp.Model.sampleCampsites
 fun EntrantHome(navController: NavController) {
 
     EntrantScaffold(navController) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            //SearchBar(sampleCampsites)
             EntrantHomeList(
                 campsites = sampleCampsites,
                 campsiteCardClicked = { campsite ->
