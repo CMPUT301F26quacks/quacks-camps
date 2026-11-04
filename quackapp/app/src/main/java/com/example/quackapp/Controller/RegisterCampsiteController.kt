@@ -104,7 +104,8 @@ class RegisterCampsiteController: ViewModel(){
                     capacity = capacity,
                     cancellationPolicy = cancellationPolicy,
                     features = features,
-                    rules = rules
+                    rules = rules,
+                    tags = tags
                 )
                 // upload to firestore
                 docRef.set(campsite).await()

@@ -11,14 +11,14 @@ class Campsite (
     val id: String = "",
     val name: String ="",
     val location: String = "",
-    val price: Int,
-    val capacity: Int,
+    val price: Int = 0,
+    val capacity: Int = 0,
     val optionalPromoImage: String = "", //https://developer.android.com/reference/android/net/Uri - referenced to the uploaded image and its null since its optional so it can be empty
 
-    var features: List<String>,
-    var rules: List<String>,
-    var cancellationPolicy: String, //only mentioned in the entrant's user story - never set on the campsite owner's side
-    var tags: List<String>
+    var features: List<String> = emptyList(),
+    var rules: List<String> = emptyList(),
+    var cancellationPolicy: String = "", //only mentioned in the entrant's user story - never set on the campsite owner's side
+    var tags: List<String> = emptyList()
 //    val owner: String = "",
 ){
     var rating: Double = 0.00
