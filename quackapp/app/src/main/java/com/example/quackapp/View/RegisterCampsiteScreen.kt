@@ -134,6 +134,7 @@ fun RegisterCampsiteScreen(
             label = { Text("Campsite Name") },
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("nameField")
         )
         Text("Location")
         OutlinedTextField(
@@ -142,6 +143,7 @@ fun RegisterCampsiteScreen(
             label = { Text("Location") },
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("locationField")
         )
         Text("Price")
         OutlinedTextField(
@@ -158,6 +160,7 @@ fun RegisterCampsiteScreen(
             label = { Text("Price per night") },
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("priceField")
         )
         Text("Capacity")
         OutlinedTextField(
@@ -174,6 +177,7 @@ fun RegisterCampsiteScreen(
             label = { Text("Max Capacity") },
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("capacityField")
         )
         Text("Cancellation Policy")
         OutlinedTextField(
@@ -191,21 +195,25 @@ fun RegisterCampsiteScreen(
                         value = value,
                         onValueChange = { viewModel.updateFeature(index, it) },
                         label = { Text("Amenity #${index + 1}") },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.testTag("amenity${index + 1}")
                     )
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = { viewModel.removeFeature(index) },
                         enabled = viewModel.features.size > 1,
                         colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
-                        ) { Text("X") }
+                        modifier = Modifier.testTag("deleteAmenity${index + 1}")
+                        )
+                    { Text("X") }
                 }
             }
             Button(
                 onClick = {
                     viewModel.addFeature()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("addAmenity"),
                 colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
                 ) {
                 Text("Add Amenity")
@@ -219,14 +227,14 @@ fun RegisterCampsiteScreen(
                         value = value,
                         onValueChange = { viewModel.updateRule(index, it) },
                         label = { Text("Rule #${index + 1}") },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.testTag("rule${index+1}")
                     )
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = { viewModel.removeRule(index) },
                         enabled = viewModel.rules.size > 1,
                         colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
-
+                        modifier = Modifier.testTag("removeRule${index+1}")
                         ) { Text("X") }
                 }
             }
@@ -234,7 +242,9 @@ fun RegisterCampsiteScreen(
                 onClick = {
                     viewModel.addRule()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("addRule"),
                 colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
                 ) {
                 Text("Add Rule")
@@ -252,7 +262,8 @@ fun RegisterCampsiteScreen(
                     picker.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
-                },
+                }
+                .testTag("imgUploadArea"),
             contentAlignment = Alignment.Center
         ) {
             if (viewModel.imageUri != null) {
@@ -276,6 +287,7 @@ fun RegisterCampsiteScreen(
         ) {
             viewModel.tags.forEach { tag ->
                 Tag(
+                    modifier = Modifier.testTag("tag${tag}"),
                     tag,
                     tag in viewModel.selectedTags,
                     onClick = { viewModel.toggleTag(tag) }
@@ -292,7 +304,9 @@ fun RegisterCampsiteScreen(
                 viewModel.addCustomTag(newTag)
                 newTag = ""
             }),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("newTagField")
         )
         Spacer(Modifier.width(8.dp))
         Button(
@@ -301,12 +315,15 @@ fun RegisterCampsiteScreen(
                 newTag = ""
             },
             colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-            enabled = newTag.isNotBlank()
+            enabled = newTag.isNotBlank(),
+            modifier = Modifier.testTag("addTagButton")
         ) { Text("Add") }
         Button(
             onClick = { viewModel.addCampsite() },
             enabled = status !is SaveStatus.Saving,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("submitButton"),
             colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
             ) {
             if (status is SaveStatus.Saving) {
@@ -323,6 +340,7 @@ fun RegisterCampsiteScreen(
 }
 @Composable
 fun Tag(
+    modifier: Modifier,
     text: String,
     selected: Boolean,
     onClick: () -> Unit
@@ -336,7 +354,7 @@ fun Tag(
             text = text,
             color = if (selected) Color.Black else Color.White,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp)
         )
     }
 }

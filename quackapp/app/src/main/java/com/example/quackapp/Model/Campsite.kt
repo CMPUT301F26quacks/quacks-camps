@@ -13,13 +13,12 @@ class Campsite (
     val location: String = "",
     val price: Int,
     val capacity: Int,
-    val optionalPromoImage: String = "", //https://developer.android.com/reference/android/net/Uri - referenced to the uploaded image and its null since its optional so it can be empty
-
+    val optionalPromoImage: String = "",
     var features: List<String>,
     var rules: List<String>,
-    var cancellationPolicy: String, //only mentioned in the entrant's user story - never set on the campsite owner's side
+    var cancellationPolicy: String,
     var tags: List<String>
-//    val owner: String = "",
+//    val ownerID: String = "",
 ){
     var rating: Double = 0.00
     var qrCode: String = ""

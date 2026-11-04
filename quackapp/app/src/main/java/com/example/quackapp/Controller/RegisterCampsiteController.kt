@@ -62,9 +62,17 @@ class RegisterCampsiteController: ViewModel(){
     var selectedTags by mutableStateOf(setOf<String>())
         private set
 
+    /**
+     * Toggles the selection of a tag
+     * @param tag Identifies the element to toggle
+     */
     fun toggleTag(tag: String) {
         selectedTags = if (tag in selectedTags) selectedTags - tag else selectedTags + tag
     }
+    /**
+     * Adds a custom Tag to the tags list
+     * @param raw Name of the new tag
+     */
     fun addCustomTag(raw: String) {
         val tag = raw.trim()
         if (tag.isEmpty()) return
@@ -82,17 +90,29 @@ class RegisterCampsiteController: ViewModel(){
 
     /**
      * Validates and adds a new Campsite object to the Firestore.
-     *
      * Campsite objects may have images which are stored into Storage and can be linked to their campsite object via unique ID
      */
     fun addCampsite(){
         // get the uploaded image's uri
         val uri = imageUri
-        // Validate fields
-        if (name.isBlank() || location.isBlank() || capacity <= 0 || price <= 0) {
-            _status.value = SaveStatus.Error("Fill in all fields and capacity and price must be non-zero")
+        // Validate necessary fields
+        if (name.isBlank()) {
+            _status.value = SaveStatus.Error("Campsite must have a name")
             return
         }
+        else if (location.isBlank()) {
+            _status.value = SaveStatus.Error("Campsite must have a location")
+            return
+        }
+        else if (price <= 0) {
+            _status.value = SaveStatus.Error("Price must be non-zero")
+            return
+        }
+        else if (capacity <= 0) {
+            _status.value = SaveStatus.Error("Price must be non-zero")
+            return
+        }
+
 
         // Start a coroutine that allows code to pause and await without freezing UI
         viewModelScope.launch {
@@ -121,7 +141,7 @@ class RegisterCampsiteController: ViewModel(){
                     cancellationPolicy = cancellationPolicy,
                     features = features,
                     rules = rules,
-                    tags = tags
+                    tags = selectedTags.toList()
                 )
                 // upload to firestore
                 docRef.set(campsite).await()
@@ -137,7 +157,6 @@ class RegisterCampsiteController: ViewModel(){
 
     /**
      * Clears all form fields back to their defaults.
-     *
      * Typically called after a successful save so the form is ready for a new entry.
      */
     fun resetForm() {
@@ -146,20 +165,48 @@ class RegisterCampsiteController: ViewModel(){
         imageUri = null
         price = 0
         capacity = 0
+        cancellationPolicy = ""
+        features = listOf("")
+        rules = listOf("")
+        selectedTags = setOf<String>()
         _status.value = SaveStatus.Idle
     }
 
+    /**
+     * Adds another element to the amentities/features list
+     */
     fun addFeature() { features = features + "" }
+    /**
+     * Updates an element of the amentities/features list at the index
+     * @param index Used to find the element to update
+     * @param value The string that will replace the element in the list
+     */
     fun updateFeature(index: Int, value: String) {
         features = features.toMutableList().also { it[index] = value }
     }
+    /**
+     * Deletes an element of the amentities/features list at the index
+     * @param index Used to find the element to delete
+     */
     fun removeFeature(index: Int) {
         features = features.toMutableList().also { it.removeAt(index) }
     }
+    /**
+     * Adds another element to the rules list
+     */
     fun addRule() { rules = rules + "" }
+    /**
+     * Updates an element of the rules list at the index
+     * @param index Used to find the element to update
+     * @param value The string that will replace the element in the list
+     */
     fun updateRule(index: Int, value: String) {
         rules = rules.toMutableList().also { it[index] = value }
     }
+    /**
+     * Deletes an element of the rules list at the index
+     * @param index Used to find the element to delete
+     */
     fun removeRule(index: Int) {
         rules = rules.toMutableList().also { it.removeAt(index) }
     }
