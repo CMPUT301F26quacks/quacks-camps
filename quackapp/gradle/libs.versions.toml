@@ -9,10 +9,9 @@ activityCompose = "1.13.0"
 kotlin = "2.2.10"
 composeBom = "2026.02.01"
 navigationCompose = "2.10.2"
+firebaseCommonKtx = "23.0.0"
+foundation = "1.12.1"
 gamesActivity = "4.4.2"
-googleServices = "4.5.0"
-firebaseBom = "35.1.0"
-firebaseInstallationsKtx = "20.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,13 +30,10 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-games-activity = { group = "androidx.games", name = "games-activity", version.ref = "gamesActivity" }
-firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
-firebase-installations = { module = "com.google.firebase:firebase-installations" }
-firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
-firebase-installations-ktx = { group = "com.google.firebase", name = "firebase-installations-ktx", version.ref = "firebaseInstallationsKtx" }
+firebase-common-ktx = { group = "com.google.firebase", name = "firebase-common-ktx", version.ref = "firebaseCommonKtx" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-google-services = { id = "com.google.gms.google-services", version.ref = "googleServices"}
 

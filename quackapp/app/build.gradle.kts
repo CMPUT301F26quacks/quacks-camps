@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.dokka") version "2.2.0"
     id("com.google.gms.google-services")
 }
 
@@ -39,6 +40,7 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -54,11 +56,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-
-    implementation("androidx.compose.material:material-icons-extended")
-
-    implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
-    implementation("com.google.firebase:firebase-installations")
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("io.coil-kt:coil-compose:2.7.0")
