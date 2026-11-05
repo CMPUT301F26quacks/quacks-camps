@@ -58,7 +58,8 @@ private fun RowScope.AddItem(
         selected = currentRoute == screen.sendsTo,
         alwaysShowLabel = true,
         onClick = {
-            if (currentRoute != screen.sendsTo) {
+            val returned = navController.popBackStack(screen.sendsTo, inclusive = false)
+            if (!returned) {
                 navController.navigate(screen.sendsTo) {
                     popUpTo("UserStart") { saveState = true }
                     launchSingleTop = true

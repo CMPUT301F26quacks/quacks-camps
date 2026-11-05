@@ -1,4 +1,5 @@
 package com.example.quackapp.View.Entrant
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -40,8 +41,12 @@ fun EntrantHome(
                 campsites = campsites,
                 //When a campsite card is clicked, send them to the campsite details screen
                 campsiteCardClicked = { campsite ->
-
-                }
+                    if (campsite.campId.isNotBlank()) {
+                        navController.navigate(
+                            "EntrantDetailedCampsite/${Uri.encode(campsite.campId)}"
+                        )
+                    }
+                },
             )
         }
     }
