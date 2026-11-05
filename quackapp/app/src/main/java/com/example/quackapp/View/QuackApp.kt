@@ -23,7 +23,7 @@ fun QuackApp() {
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
 
-        composable("CampsiteOwnerHome") { OwnerHome(navController) }
+        
         composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
 
         composable(
