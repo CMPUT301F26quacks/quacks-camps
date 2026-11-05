@@ -1,5 +1,6 @@
 package com.example.quackapp.Model
 
+
 /**
  * An object containing lists of icons that form a navigation bar.
  *
