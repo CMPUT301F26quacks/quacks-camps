@@ -25,11 +25,11 @@ fun QuackApp() {
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
 
-        
-        
+
+
 
         composable(
-            route= "CampsiteOwnerHome/{ownerId}",
+            route = "CampsiteOwnerHome/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
         ) {
             OwnerHome(navController)
@@ -61,9 +61,6 @@ fun QuackApp() {
                 isEditing = true
             )
         }
-
-
-
     }
 }
 
