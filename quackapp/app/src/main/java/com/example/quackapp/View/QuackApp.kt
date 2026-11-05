@@ -1,9 +1,11 @@
 package com.example.quackapp.View
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 
 /**
  * Sets up navigation between screens for whole app
@@ -21,9 +23,20 @@ fun QuackApp() {
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
 
-        composable("CampsiteOwnerHome") { OwnerHome(navController) }
+        composable(
+            route= "CampsiteOwnerHome/{ownerId}",
+            arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
+        ) {
+            OwnerHome(navController)
+        }
         composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
-
+        composable("CampsiteDetails") { DetailedCampsiteScreen(navController) }
+        composable(
+            route = "EditCampsite/{campsiteId}",
+            arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
+        ) {
+            EditCampsiteScreen(navController)
+        }
     }
 }
 
