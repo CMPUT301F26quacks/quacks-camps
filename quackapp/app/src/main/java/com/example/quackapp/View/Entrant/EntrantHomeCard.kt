@@ -1,5 +1,7 @@
 package com.example.quackapp.View.Entrant
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -9,6 +11,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,9 +38,13 @@ fun EntrantHomeCard(
         ),
         onClick = onClick,
         shape = RoundedCornerShape(20.dp),
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth(),
+            //.padding(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+
             Text(
                 text = campsite.name,
                 style = MaterialTheme.typography.headlineLarge
@@ -47,7 +55,7 @@ fun EntrantHomeCard(
                 modifier = Modifier.padding(top = 6.dp)
             )
             Text(
-                text = "\uD83D\uDCCC ${campsite.location} | Max ${campsite.capacity} people",
+                text = "\uD83D\uDCCC ${campsite.location} | Up to ${campsite.capacity} people",
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(top = 6.dp)
             )

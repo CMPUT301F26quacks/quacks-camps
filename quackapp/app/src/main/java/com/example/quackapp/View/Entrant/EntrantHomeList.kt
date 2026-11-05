@@ -57,6 +57,7 @@ fun EntrantHomeList(
     //Search Bar
     var query by remember { mutableStateOf("") }
     val searchBarText = if(locationSearchChecked) "Search locations..." else "Search campsites..."
+    val searchBarColor = if(locationSearchChecked) Color(0xFFF16B00) else MaterialTheme.colorScheme.outline
 
     //Displays Campsites that fit the filter requirements
     val resultingCampsites = remember(query, capacityRange, locationSearchChecked, campsites) {
@@ -87,6 +88,7 @@ fun EntrantHomeList(
                     query = query,
                     whenQueryChanges = { query = it },
                     searchBarText = searchBarText,
+                    searchBarColor = searchBarColor,
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -127,7 +129,7 @@ fun EntrantHomeList(
             item(key = "capacityRange") {
                 //Filter by Campsite Capacity
                 ValueRangeFilter(
-                    label = "Capacity",
+                    label = "Campsite Capacity",
                     range = capacityRange,
                     onRangeChange = { capacityRange = it },
                     valueRange = minCapacity.toFloat()..maxCapacity.toFloat(),

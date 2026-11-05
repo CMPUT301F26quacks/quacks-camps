@@ -24,7 +24,7 @@ fun ValueRangeFilter(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "$label: ${range.start.toInt()} - ${range.endInclusive.toInt()}",
+            text = "$label: ${range.start.toInt()} - ${range.endInclusive.toInt()} people",
             style = MaterialTheme.typography.titleMedium
         )
         RangeSlider(
