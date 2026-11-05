@@ -1,47 +1,56 @@
 package com.example.quackapp
-import com.google.firebase.firestore.FirebaseFirestore
 
 class ListingRepository {
-    private val db = FirebaseFirestore.getInstance()
 
-    //adds a listing, checks if valid using the restrictions on lotteryListing
-    fun addListing(listing: LotteryListing){
-        db.collection("listings").document(listing.lotteryId).set(listing)
-    }
+    private val listings = mutableListOf<LotteryListing>()
 
-    // gets all listings into a list currently saved in memory
-    fun getAllListings(callback: (List<LotteryListing>) -> Unit) {
-        db.collection("listings").get()
-            .addOnSuccessListener { snapshot ->
-            callback(snapshot.toObjects(LotteryListing::class.java))
+    fun addListing(listing: LotteryListing, ownerId: String): String {
+        val result = listing.ValidateListing()
+        if (!result.isValid) return result.errorMessage
+
+        if (listing.ownerId != ownerId) {
+            return "Only the owner can create a lottery."
         }
-    }
-    //searches through the stored list using the Id
-    fun getListingThroughId(lotteryId: String, callback: (LotteryListing?) -> Unit) {
-        db.collection("listings").document(lotteryId).get()
-            .addOnSuccessListener { document ->
-                val listing = document.toObject(LotteryListing::class.java)
-            }
-            .addOnFailureListener { callback(null) }
+        if (getListingThroughId(listing.lotteryId) != null) {
+            return "That lottery ID already exists."
+        }
 
+        listings.add(listing)
+        return "OK"
     }
 
-    //searches through the stored list using a specific Owner Name
-    fun getListingsByOwner(ownerId: String, callback: (List<LotteryListing>) -> Unit) {
-        db.collection("listings").whereEqualTo("ownerId", ownerId).get()
-            .addOnSuccessListener { snapshot ->
-                callback(snapshot.toObjects(LotteryListing::class.java))
-            }
+    fun getAllListings(): List<LotteryListing> {
+        return listings.toList()
     }
 
-    // searches for the listing and removes it from the mutable list
-    fun removeListing(lotteryId: String) {
-        db.collection("listings").document(lotteryId).delete()
+    fun getListingThroughId(lotteryId: String): LotteryListing? {
+        return listings.find { it.lotteryId == lotteryId }
     }
 
+    fun getListingsByOwner(ownerId: String): List<LotteryListing> {
+        return listings.filter { it.ownerId == ownerId }
+    }
 
-    // update the listing
+    fun removeListing(lotteryId: String): Boolean {
+        return listings.removeAll { it.lotteryId == lotteryId }
+    }
 
-    // if winner gets to pick for the dates
+    fun updateListing(updated: LotteryListing, ownerId: String): String {
+        val result = updated.ValidateListing()
+        if (!result.isValid) return result.errorMessage
 
+        val index = listings.indexOfFirst { it.lotteryId == updated.lotteryId }
+        if (index == -1){
+            return "Lottery not found."
+        }
+        if (listings[index].ownerId != ownerId) {
+            return "Only the owner can edit this lottery."
+        }
+        if (listings[index].status.equals("Drawn", true)){
+            return "You can't edit a lottery after the draw."
+        }
+
+        listings[index] = updated
+        return "OK"
+    }
 }

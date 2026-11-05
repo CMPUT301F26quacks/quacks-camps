@@ -1,6 +1,6 @@
 package com.example.quackapp
 
-enum class WaitlistStatus {WAITING, SELECTED, NOT_SELECTED, CANCELLED}
+enum class WaitlistStatus {WAITING, SELECTED, NOT_SELECTED, CANCELLED, ACCEPTED, DECLINED}
 
 class WaitlistEntry(
     val entryId: String,
@@ -18,7 +18,6 @@ class WaitlistEntry(
     fun isWaitListed(): Boolean{
         return status == WaitlistStatus.WAITING
     }
-    // both will not go
     // delete that quacksites on git from that and create that pull req again
     fun isSelected(): Boolean{
         return status == WaitlistStatus.SELECTED
