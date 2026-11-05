@@ -272,8 +272,10 @@ fun EditCampsiteScreen(
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
-                Text("Tap to choose an image")
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
+                    Text("Tap to upload an image")
+                }
             }
         }
         Text("Tags")

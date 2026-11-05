@@ -38,6 +38,7 @@ fun UserStart(navController: NavController) {
     // Stores error message if Firebase cannot complete the search
     var userSearchErrorMessage by remember { mutableStateOf<String?>(null) }
 
+    var currentDeviceId by remember { mutableStateOf<String?>(null) }
     var currentUser by remember { mutableStateOf<User?>(null) }
 
     var userSearchFinished by remember { mutableStateOf<Boolean>(false) }
@@ -49,6 +50,9 @@ fun UserStart(navController: NavController) {
 
             onSuccess = {
                 deviceId ->
+
+                currentDeviceId = deviceId // saves FID to use for directing to registration
+
                 UserRepository.getUser(
                     deviceId = deviceId,
                     onResult = { user ->
@@ -88,14 +92,27 @@ fun UserStart(navController: NavController) {
             }
         }
 
-
-        else -> {
+        currentUser != null -> {
             Column(
                 modifier = Modifier.fillMaxSize().padding(16.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                currentUser?.let { Text("Welcome back ${it.deviceId}") }
+                Text("Signing in...")
+                CircularProgressIndicator(
+                    modifier = Modifier.width(16.dp),
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+        }
+
+        else -> {
+
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
                     text = "quackSites",
                     fontSize = 24.sp
@@ -105,7 +122,7 @@ fun UserStart(navController: NavController) {
 
                 Button(
                     onClick = {
-                        navController.navigate("EntrantHome")
+                        navController.navigate("CreateEntrantProfile")
                     }
 
                 ) {
@@ -117,7 +134,7 @@ fun UserStart(navController: NavController) {
 
                 Button(
                     onClick = {
-                        navController.navigate("CampsiteOwnerHome/${currentUser?.deviceId}")
+                        navController.navigate("CreateOwnerProfile")
                     }
 
                 ) {
@@ -127,5 +144,29 @@ fun UserStart(navController: NavController) {
                 }
             }
         }
+    }
+
+    LaunchedEffect(currentUser) {
+
+        val user = currentUser ?: return@LaunchedEffect
+
+        when {
+            "ENTRANT" in user.roles && "OWNER" !in user.roles -> {
+                navController.navigate("EntrantHome") {
+                    popUpTo("UserStart") {
+                        inclusive = true
+                    }
+                }
+            }
+
+            "OWNER" in user.roles && "ENTRANT" !in user.roles -> {
+                navController.navigate("CampsiteOwnerHome/${currentUser!!.deviceId}") {
+                    popUpTo("UserStart") {
+                        inclusive = true
+                    }
+                }
+            }
+        }
+
     }
 }

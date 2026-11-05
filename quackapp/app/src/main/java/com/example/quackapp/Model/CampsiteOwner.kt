@@ -9,9 +9,10 @@ class CampsiteOwner(
     email: String = "",
     phoneNumber: String = "",
     notificationsEnabled: Boolean = true,
+    roles: List<String>,
     var ownedCampsites: MutableList<Campsite> = mutableListOf(),
     var ownedLotteries: MutableList<Lottery> = mutableListOf()
-): User(deviceId, name, email, phoneNumber, notificationsEnabled){
+): User(deviceId, name, email, phoneNumber, notificationsEnabled, roles){
     //notification preference
     fun toggleNotificationPreference() {
         notificationsEnabled = !notificationsEnabled
