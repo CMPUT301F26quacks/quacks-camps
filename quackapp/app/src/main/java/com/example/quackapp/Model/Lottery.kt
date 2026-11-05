@@ -30,7 +30,7 @@ class Lottery(
     var optionalWaitlistCapacity: Int? = null, //since optional we use null - idk if this is the best practice tho
     var waitlist: List<String> = listOf(), //list of entrants
     var status: LotteryStatus = LotteryStatus.CLOSED,
-    var campId: String
+    var campIds: List<String>
 )
 
 //entrants in da waitlist for optimal holding capacity+firebase db considerations
