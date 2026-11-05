@@ -42,7 +42,31 @@ fun UserProfile(
 
             onSuccess = {
                 id -> deviceId = id
+
+                if (isEditing) {
+
+                    UserRepository.getUser(
+                        deviceId = id,
+
+                        onResult = { user ->
+                            if (user != null) {
+                                name = user.name
+                                email = user.email
+                                phoneNumber = user.phoneNumber
+                            } else {
+                                errorMessage = "Unable to find User Profile"
+                            }
+                        },
+
+                        onFail = {
+                            exception -> errorMessage = exception.message ?: "Unable to load User Profile"
+                        }
+
+                    )
+
+                }
             },
+
             onFail = {
                 exception -> errorMessage = exception.message ?: "Unable to identify this device"
             }
@@ -138,3 +162,7 @@ fun UserProfile(
     }
 
 }
+
+// TODO: button to toggle notifications, delete profile, display app policy/guidelines
+// [US 01.10.01] As an entrant, I want to opt out of receiving notification
+// [US 01.11.01] As an entrant, I want to see the app policy and guidelines
