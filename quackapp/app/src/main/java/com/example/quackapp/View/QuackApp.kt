@@ -23,6 +23,9 @@ fun QuackApp() {
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
 
+        
+        
+
         composable(
             route= "CampsiteOwnerHome/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
@@ -37,6 +40,28 @@ fun QuackApp() {
         ) {
             EditCampsiteScreen(navController)
         }
+
+        composable("CreateEntrantProfile") {
+            UserProfile(
+                navController = navController,
+                selectedRole = "ENTRANT"
+            )
+        }
+        composable("CreateOwnerProfile") {
+            UserProfile(
+                navController = navController,
+                selectedRole = "OWNER"
+            )
+        }
+        composable("EditProfile") {
+            UserProfile(
+                navController = navController,
+                isEditing = true
+            )
+        }
+
+
+
     }
 }
 
