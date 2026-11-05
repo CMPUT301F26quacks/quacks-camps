@@ -90,8 +90,9 @@ class RegisterCampsiteController: ViewModel(){
     val status: StateFlow<SaveStatus> = _status
 
     /**
-     * Validates and adds a new Campsite object to the Firestore.
-     * Campsite objects may have images which are stored into Storage and can be linked to their campsite object via unique ID
+     * Validates and adds a new [Campsite] object to the Firestore.
+     * [Campsite] objects may have images which are stored into Storage
+     * and can be linked to their [Campsite] object via unique ID
      */
     fun addCampsite(){
         // get the uploaded image's uri
@@ -110,10 +111,9 @@ class RegisterCampsiteController: ViewModel(){
             return
         }
         else if (capacity <= 0) {
-            _status.value = SaveStatus.Error("Price must be non-zero")
+            _status.value = SaveStatus.Error("Capacity must be non-zero")
             return
         }
-
 
         // Start a coroutine that allows code to pause and await without freezing UI
         viewModelScope.launch {
@@ -134,7 +134,6 @@ class RegisterCampsiteController: ViewModel(){
                     url = imageRef.downloadUrl.await().toString()
                 }
                 // Make a new campsite object to store
-                /*
                 val campsite = Campsite(
                     campId = docRef.id,
                     name = name.trim(),
@@ -149,7 +148,7 @@ class RegisterCampsiteController: ViewModel(){
                     ownerId = ownerId
                 )
                 // upload to firestore
-                docRef.set(campsite).await()*/
+                docRef.set(campsite).await()
                 _status.value = SaveStatus.Success
             }
             catch (e: Exception) {
