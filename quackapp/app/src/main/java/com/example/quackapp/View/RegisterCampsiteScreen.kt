@@ -73,7 +73,6 @@ import coil.compose.AsyncImage
 import com.example.quackapp.Controller.RegisterCampsiteController
 import com.example.quackapp.Controller.SaveStatus
 
-// TODO: Find a way to detect who the owner is when registering campsites
 @Composable
 fun RegisterCampsiteScreen(
     navController: NavController,

@@ -1,24 +1,17 @@
 package com.example.quackapp.Controller
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
-import com.example.quackapp.Model.CampsiteRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import com.google.firebase.installations.FirebaseInstallations
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 /**
  * Controller for Campsite Owners' Home screen.
