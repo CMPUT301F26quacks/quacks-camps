@@ -29,8 +29,6 @@ fun SearchBar(
         value = query,
         onValueChange = whenQueryChanges,
         colors = OutlinedTextFieldDefaults.colors(
-            //focusedContainerColor = searchBarColor,
-            //unfocusedContainerColor = searchBarColor,
             focusedBorderColor = searchBarColor,
             unfocusedBorderColor = searchBarColor
         ),
