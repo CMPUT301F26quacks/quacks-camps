@@ -8,17 +8,17 @@ class Campsite (
     cancellation policy, availability,
     tags,
     class holds all attributes mentioned in entrant and campsite user stories*/
-    val id: String = "",
+    val campId: String = "",
     val name: String ="",
     val location: String = "",
-    val price: Int,
-    val capacity: Int,
+    val price: Int = -1,
+    val capacity: Int = -1,
     val optionalPromoImage: String = "",
-    var features: List<String>,
-    var rules: List<String>,
-    var cancellationPolicy: String,
-    var tags: List<String>
-//    val ownerID: String = "",
+    var features: List<String> = listOf(""),
+    var rules: List<String> = listOf(""),
+    var cancellationPolicy: String = "",
+    var tags: List<String> = listOf(""),
+    val ownerID: String = ""
 ){
     var rating: Double = 0.00
     var qrCode: String = ""

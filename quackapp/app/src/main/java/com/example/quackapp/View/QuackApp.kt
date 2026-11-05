@@ -6,9 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.quackapp.Model.Campsite
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -29,8 +31,20 @@ fun QuackApp() {
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
 
-        composable("CampsiteOwnerHome") { OwnerHome(navController) }
+        composable(
+            route= "CampsiteOwnerHome/{ownerId}",
+            arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
+        ) {
+            OwnerHome(navController)
+        }
         composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
+        composable("CampsiteDetails") { DetailedCampsiteScreen(navController) }
+        composable(
+            route = "EditCampsite/{campsiteId}",
+            arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
+        ) {
+            EditCampsiteScreen(navController)
+        }
 
         composable("EntrantCampsiteDetailScreen/{campsiteId}") { backStackEntry ->
             val campsiteId = backStackEntry.arguments?.getString("campsiteId")?: ""  //get campsite id

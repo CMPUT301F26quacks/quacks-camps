@@ -12,6 +12,7 @@ import android.net.Uri
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.installations.FirebaseInstallations
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -123,6 +124,7 @@ class RegisterCampsiteController: ViewModel(){
                 val docRef = campsitesRef.document()
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
+                val ownerId = FirebaseInstallations.getInstance().id.await()
                 // Upload the image if one was selected
                 var url = ""
                 if (uri != null) {
@@ -132,7 +134,7 @@ class RegisterCampsiteController: ViewModel(){
                 }
                 // Make a new campsite object to store
                 val campsite = Campsite(
-                    id = docRef.id,
+                    campId = docRef.id,
                     name = name.trim(),
                     location = location.trim(),
                     optionalPromoImage = url,
@@ -141,7 +143,8 @@ class RegisterCampsiteController: ViewModel(){
                     cancellationPolicy = cancellationPolicy,
                     features = features,
                     rules = rules,
-                    tags = selectedTags.toList()
+                    tags = selectedTags.toList(),
+                    ownerID = ownerId
                 )
                 // upload to firestore
                 docRef.set(campsite).await()
