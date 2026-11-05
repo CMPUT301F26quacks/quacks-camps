@@ -1,4 +1,4 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Entrant
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -100,7 +100,11 @@ fun EntrantActiveCampsites(
                 title = {
                     Column {
                         Text("QuackCamps", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Text("Entrant Portal", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                        Text(
+                            "Entrant Portal",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
                     }
                 },
                 //I have commented out the back button because we have the nav bar
@@ -155,6 +159,7 @@ fun EntrantActiveCampsites(
                     onCancelClick = { res -> reservationToCancel = res },
                     onGoToLotteryWins = { selectedTabIndex = 1 }
                 )
+
                 1 -> LotteryOffersList(
                     offers = pendingOffers,
                     onDecline = { offer -> offerToDecline = offer },
