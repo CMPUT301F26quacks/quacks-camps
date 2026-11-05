@@ -64,7 +64,6 @@ class WaitlistRepository {
         return "OK"
     }
 
-    // winner accepts
 
     // winner declines, another is picked
 }
