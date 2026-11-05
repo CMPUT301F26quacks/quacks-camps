@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.quackapp.Model.Campsite
-import com.example.quackapp.Model.sampleCampsites
 import com.example.quackapp.View.SearchBar
 import com.example.quackapp.View.ValueRangeFilter
 
@@ -142,7 +141,7 @@ fun EntrantHomeList(
         }
 
         //Displays Campsite Cards
-        items(resultingCampsites, key = { it.id }) { campsite ->
+        items(resultingCampsites, key = { it.campId }) { campsite ->
             EntrantHomeCard(
                 campsite = campsite,
                 onClick = { campsiteCardClicked(campsite) }
@@ -153,15 +152,3 @@ fun EntrantHomeList(
 }
 
 
-//TO BE DELETED once Firebase is connected
-//Shows Sample Campsites
-@Preview(showBackground = true)
-@Composable
-private fun CampsiteListPreview() {
-    MaterialTheme {
-        EntrantHomeList(
-            campsites = sampleCampsites,
-            campsiteCardClicked = {}
-        )
-    }
-}

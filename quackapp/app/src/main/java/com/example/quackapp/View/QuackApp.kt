@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.quackapp.View.Entrant.EntrantHome
 import androidx.navigation.navArgument
+import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 
 /**
  * Sets up navigation between screens for whole app

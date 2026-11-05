@@ -3,9 +3,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.quackapp.Model.sampleCampsites
+import com.example.quackapp.Controller.EntrantHomeController
 
 
 /**
@@ -16,7 +19,11 @@ import com.example.quackapp.Model.sampleCampsites
  * @param navController allows you to move between screens using navigation bar
  */
 @Composable
-fun EntrantHome(navController: NavController) {
+fun EntrantHome(
+    navController: NavController,
+    controller: EntrantHomeController = viewModel()) {
+
+    val campsites by controller.camps.collectAsState()
 
     EntrantScaffold(navController) { innerPadding ->
 
@@ -25,11 +32,11 @@ fun EntrantHome(navController: NavController) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            //SearchBar(sampleCampsites)
+
             EntrantHomeList(
-                campsites = sampleCampsites,
+                campsites = campsites,
                 campsiteCardClicked = { campsite ->
-                    // Navigation to the detail screen comes later
+
                 }
             )
         }

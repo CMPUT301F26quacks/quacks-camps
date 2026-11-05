@@ -1,14 +1,17 @@
 package com.example.quackapp.View
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,9 +27,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Controller.UserRepository
 import com.example.quackapp.Model.User
+import com.example.quackapp.R
 
 /**
  * Starting screen for all unregistered users.
@@ -96,7 +103,7 @@ fun UserStart(navController: NavController) {
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+
 
         else -> {
             Column(
@@ -105,9 +112,17 @@ fun UserStart(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 currentUser?.let { Text("Welcome back ${it.deviceId}") }
+
+                Image(
+                    painter = painterResource(id = R.drawable.duck),
+                    contentDescription = "Logo",
+                    modifier = Modifier.size(150.dp),
+                    contentScale = ContentScale.Crop
+                )
                 Text(
                     text = "quackSites",
-                    fontSize = 24.sp
+                    fontSize = 24.sp,
+                    color = Color(0xFFF2BA00)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -115,7 +130,12 @@ fun UserStart(navController: NavController) {
                 Button(
                     onClick = {
                         navController.navigate("EntrantHome")
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF2BA00),
+                        contentColor = Color(0xFFFFFFFF)
+
+                    )
 
                 ) {
                     Text("I want to register this \n" +

@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.quackapp.Model.Campsite
-import com.example.quackapp.Model.sampleCampsites
 
 //Typography stuff
 //https://developer.android.com/develop/ui/compose/designsystems/material3#typography
@@ -64,16 +63,3 @@ fun EntrantHomeCard(
     }
 }
 
-//TO BE DELETED once Firebase is connected
-//Sets up Sample Cards
-@Preview(showBackground = true)
-@Composable
-private fun CampsiteCardPreview() {
-    MaterialTheme {
-        EntrantHomeCard(
-            campsite = sampleCampsites.first(),
-            onClick = {},
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
