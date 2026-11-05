@@ -24,7 +24,7 @@ fun QuackApp() {
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
 
         
-        composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
+        
 
         composable(
             route= "CampsiteOwnerHome/{ownerId}",
