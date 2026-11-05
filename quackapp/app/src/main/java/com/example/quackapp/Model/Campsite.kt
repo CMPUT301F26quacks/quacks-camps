@@ -46,7 +46,7 @@ val sampleCampsites = listOf(
         "4",
         "Basin Peak",
         "Bob",
-        "Canmore",
+        "ZZZZZ",
         150,
         8,
         4.7

@@ -1,6 +1,5 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Entrant
 
-//import android.graphics.Color
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,22 +16,24 @@ import androidx.compose.ui.unit.dp
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.sampleCampsites
 
+//Typography stuff
 //https://developer.android.com/develop/ui/compose/designsystems/material3#typography
 
+//TODO Add Comments + Tests
 @Composable
 fun EntrantHomeCard(
     campsite: Campsite,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    //Campsite Card Template
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF248AFF),      // Changes the card background
+            containerColor = Color(0xFF248AFF),
             contentColor = Color.White,
         ),
         onClick = onClick,
         shape = RoundedCornerShape(20.dp),
-        //elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -55,6 +56,8 @@ fun EntrantHomeCard(
     }
 }
 
+//TO BE DELETED once Firebase is connected
+//Sets up Sample Cards
 @Preview(showBackground = true)
 @Composable
 private fun CampsiteCardPreview() {
