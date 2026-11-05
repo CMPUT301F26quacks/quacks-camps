@@ -67,9 +67,8 @@ class CampsiteOwner(
     }
     //function to generate the unique qr code id for a campsite
     fun generateQRCodeID(campsite: Campsite): String {
-        val campsiteName = campsite.name
-        val uniqueID = getRandomList(Random)
-        return "campsite/${campsiteName}_${uniqueID.joinToString("")}"
+        val campsiteID = campsite.id
+        return "campsite/${campsiteID}"
     }
 
     fun generateQRCode(campsite: Campsite): String {
