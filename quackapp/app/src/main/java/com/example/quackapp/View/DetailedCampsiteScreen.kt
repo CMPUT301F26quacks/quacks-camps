@@ -23,6 +23,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults.iconButtonColors
@@ -38,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -176,7 +179,50 @@ fun DetailedCampsiteScreen(
                     )
                 }
             }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = 0.5f
+                    )
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Lottery Details", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    val currentLottery = viewModel.lottery
+                    if (currentLottery != null) {
+                        Text(
+                            "Status: ${currentLottery.status.name}"
+                        )
+                        Text(
+                            "Registration: ${currentLottery.registrationPeriodStart} to ${currentLottery.registrationPeriodEnd}",
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            "Booking Period: ${currentLottery.bookingPeriodStart} to ${currentLottery.bookingPeriodEnd}",
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            "Winners to Draw: ${currentLottery.numLotteryWinners}",
+                            fontSize = 12.sp
+                        )
+                        currentLottery.optionalWaitlistCapacity?.let { cap ->
+                            Text("Waitlist Capacity: $cap", fontSize = 12.sp)
+                        }
+                    } else {
+                        Text(
+                            "No active lottery created for this campsite.",
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
         }
+
+
 
     }
 }

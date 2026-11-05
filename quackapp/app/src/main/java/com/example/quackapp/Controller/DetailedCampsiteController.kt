@@ -8,6 +8,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.Lottery
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
@@ -40,6 +41,7 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
         private set
     var imageUrl by mutableStateOf("")
         private set
+    var lottery by mutableStateOf<Lottery?>(null)
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
@@ -64,6 +66,7 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     rules = campsite.rules
                     cancellationPolicy = campsite.cancellationPolicy
                     selectedTags = campsite.tags.toSet()
+                    lottery = campsite.lottery
                 } else {
                     _status.value = SaveStatus.Error("Campsite not found")
                 }

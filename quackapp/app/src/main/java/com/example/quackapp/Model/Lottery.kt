@@ -1,5 +1,6 @@
 package com.example.quackapp.Model
 
+import android.R
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -28,8 +29,8 @@ class Lottery(
     var numLotteryWinners: Int,
     var optionalWaitlistCapacity: Int? = null, //since optional we use null - idk if this is the best practice tho
     var waitlist: List<String> = listOf(), //list of entrants
-    var status: LotteryStatus = LotteryStatus.CLOSED
-
+    var status: LotteryStatus = LotteryStatus.CLOSED,
+    var campId: String
 )
 
 //entrants in da waitlist for optimal holding capacity+firebase db considerations
