@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.quackapp.View.Entrant.EntrantHome
 import androidx.navigation.navArgument
+import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 
 /**
@@ -24,6 +25,13 @@ fun QuackApp() {
 
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
+
+        composable(
+            route = "EntrantDetailedCampsite/{campId}",
+            arguments = listOf(navArgument("campId") { type = NavType.StringType })
+        ) {
+            EntrantDetailedCampsite(navController = navController)
+        }
 
 
 

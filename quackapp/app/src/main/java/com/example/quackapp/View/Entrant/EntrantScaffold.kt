@@ -27,6 +27,7 @@ fun EntrantScaffold(
     Scaffold(
         topBar = topBar,
         snackbarHost = snackbarHost,
+        //Bottom Navigation Bar for Entrant
         bottomBar = { NavBar(navController, NavBarLists.entrant) },
         content = content
     )
