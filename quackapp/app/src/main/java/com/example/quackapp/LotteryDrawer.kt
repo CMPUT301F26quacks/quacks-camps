@@ -1,30 +1,41 @@
 package com.example.quackapp
 
-
+class DrawMessage(
+    val entrantId: String,
+    val message: String
+)
 class LotteryDrawer {
-    private val WaitlistRepository = WaitlistRepository()
+    private val WaitlistRepo = WaitlistRepository()
+    private val ListingRepo = ListingRepository()
 
-    fun runDrawAndSave(lotteryId: String, maxWinners: Int, onComplete: (List<WaitlistEntry>) -> Unit) {
-        WaitlistRepository.getEntriesForLottery(lotteryId) { entries ->
-            val waitlistedEntrants = entries.filter { it.status == WaitlistStatus.WAITING }
-            val shuffled = waitlistedEntrants.shuffled()
+    private val notifications = mutableListOf<DrawMessage>()
 
-            for (i in shuffled.indices) {
-                if (i < maxWinners) {
-                    shuffled[i].status = WaitlistStatus.SELECTED
+    // draw
+    fun runDrawAndSave(listing: LotteryListing, onComplete: (List<WaitlistEntry>) -> Unit) {
+        if (listing.status.equals("Drawn", true)){
+            onComplete(emptyList())
+            return
+        }
+        WaitlistRepo.getEntriesForLottery(listing.lotteryId) { entries ->
+            val shuffled = entries
+                .filter { it.status == WaitlistStatus.WAITING }
+                .shuffled()
+
+            for ((i, entry) in shuffled.withIndex()) {
+                if (i < listing.maxWinners) {
+                    entry.status = WaitlistStatus.SELECTED
+                    notifications.add(DrawMessage(entry.entrantId, "You won the Lottery!"))
                 } else {
-                    shuffled[i].status = WaitlistStatus.NOT_SELECTED
+                    entry.status = WaitlistStatus.NOT_SELECTED
+                    notifications.add(DrawMessage(entry.entrantId, "You were not selected in the Lottery."))
                 }
-                    // Push updated status back to Firebase
-                WaitlistRepository.addEntry(shuffled[i])
+                WaitlistRepo.addEntry(entry)
             }
+            listing.status = "Drawn"
+            ListingRepo.addListing(listing, listing.ownerId)
+
             onComplete(shuffled)
         }
     }
-    // get notification when they win the lottery
-    fun receiveNotifications(){}
-    /* if selected = won
-    else
-        didnt win the lottery
-     */
+
 }

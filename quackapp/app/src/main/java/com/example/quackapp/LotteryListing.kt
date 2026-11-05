@@ -10,7 +10,7 @@ class LotteryListing(
     val bookingStartDate: String,
     val bookingEndDate: String,
     val waitListCapacity: Int,
-    val status: String,
+    var status: String,
     val maxWinners: Int // set it up
 ) {
 

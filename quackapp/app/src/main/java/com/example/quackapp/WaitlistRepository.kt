@@ -1,26 +1,66 @@
 package com.example.quackapp
-import com.google.firebase.firestore.FirebaseFirestore
 
 class WaitlistRepository {
-    private val db = FirebaseFirestore.getInstance()
 
-    // Save or update a waitlist entry in Firebase
-    fun addEntry(entry: WaitlistEntry) {
-        db.collection("waitlists").document(entry.entryId).set(entry)
+    val entries = mutableListOf<WaitlistEntry>()
+
+    fun find(lotteryId: String, entrantId: String): WaitlistEntry? {
+        return entries.find { it.lotteryId == lotteryId && it.entrantId == entrantId }
     }
 
-    // Get all waitlist entries for a specific lottery from Firebase
     fun getEntriesForLottery(lotteryId: String, callback: (List<WaitlistEntry>) -> Unit) {
-        db.collection("waitlists")
-            .whereEqualTo("lotteryId", lotteryId)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val list = snapshot.toObjects(WaitlistEntry::class.java)
-                callback(list)
+        callback(entries.filter { it.lotteryId == lotteryId })
+    }
+
+    fun addEntry(entry: WaitlistEntry) {
+        entries.removeAll { it.entryId == entry.entryId }   // replace if it already exists
+        entries.add(entry)
+    }
+
+    fun countWaiting(lotteryId: String): Int {
+        return entries.count { it.lotteryId == lotteryId && it.isWaitListed() }
+    }
+
+    fun enter(listing: LotteryListing, entrantId: String): String {
+        if (!listing.isRegistrationOpen()) {
+            return "Registration is not open."
+        }
+        if (listing.isWaitlistFull(countWaiting(listing.lotteryId))) {
+            return "The waiting list is full."
+        }
+
+        val existing = find(listing.lotteryId, entrantId)
+        if (existing == null) {
+            val entry = WaitlistEntry("${listing.lotteryId}_$entrantId",
+                listing.lotteryId, entrantId)
+            if (!entry.isValid()) {
+                return "Invalid entry."
             }
-            .addOnFailureListener {
-                callback(emptyList())
-            }
+            entries.add(entry)
+            return "OK"
+        }
+        if (existing.status == WaitlistStatus.CANCELLED) {
+            existing.status = WaitlistStatus.WAITING
+            return "OK"
+        }
+        return "You already entered."
+    }
+
+    fun leave(listing: LotteryListing, entrantId: String): String {
+        if (!listing.isRegistrationOpen()) return "Registration is closed."
+
+        val existing = find(listing.lotteryId, entrantId)
+        if (existing == null || !existing.isWaitListed()) return "You are not in this lottery."
+
+        existing.cancelEntry()
+        return "OK"
+    }
+
+    fun accept(listing: LotteryListing, entrantId: String): String {
+        val entry = find(listing.lotteryId, entrantId)
+        if (entry == null || !entry.isSelected()) return "You have no spot to accept."
+
+        entry.status = WaitlistStatus.ACCEPTED
+        return "OK"
     }
 }
-
