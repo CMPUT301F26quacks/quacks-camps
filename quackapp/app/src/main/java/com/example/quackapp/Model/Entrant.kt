@@ -16,8 +16,9 @@ class Entrant(
     name: String = "",
     email: String = "",
     phoneNumber: String = "",
-    notificationsEnabled: Boolean = true
-) : User(deviceId, name, email, phoneNumber, notificationsEnabled) {
+    notificationsEnabled: Boolean = true,
+    roles: List<String>
+) : User(deviceId, name, email, phoneNumber, notificationsEnabled, roles) {
 
     /**
      * Retrieves all active, confirmed reservations for this entrant.
