@@ -2,6 +2,7 @@ package com.example.quackapp.Controller
 
 import android.util.Log
 import com.example.quackapp.Model.User
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 
@@ -44,13 +45,22 @@ object UserRepository {
     }
 
     fun createUser(
-        deviceId: String
+        user: User,
+        onSuccess: () -> Unit,
+        onFail: (Exception) -> Unit
     ) {
 
         val database = FirebaseFirestore.getInstance()
 
         database.collection("users")
-            .document(deviceId)
+            .document(user.deviceId)
+            .set(user)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener {
+                exception -> onFail(exception)
+            }
     }
 
     fun userExists( //

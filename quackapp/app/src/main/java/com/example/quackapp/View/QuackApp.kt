@@ -24,6 +24,27 @@ fun QuackApp() {
         composable("CampsiteOwnerHome") { OwnerHome(navController) }
         composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
 
+        composable("CreateEntrantProfile") {
+            UserProfile(
+                navController = navController,
+                selectedRole = "ENTRANT"
+            )
+        }
+        composable("CreateOwnerProfile") {
+            UserProfile(
+                navController = navController,
+                selectedRole = "OWNER"
+            )
+        }
+        composable("EditProfile") {
+            UserProfile(
+                navController = navController,
+                isEditing = true
+            )
+        }
+
+
+
     }
 }
 
