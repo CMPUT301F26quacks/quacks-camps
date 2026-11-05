@@ -22,10 +22,13 @@ import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Controller for Campsite Owners' Home screen.
+ *  Controller for Campsite Owners' Home screen.
  *
+ *  Contains logic for displaying only [Campsite] belonging to the logged in owner
+ *  Contains functions related to editing existing [Campsite] and
+ *  deleting campsites from the database
  *
- *
+ *  @property savedStateHandle a map which contains data passed from outside. Used here get ownerId
  */
 class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val db = Firebase.firestore
@@ -33,6 +36,8 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val imgStorage = Firebase.storage
     var deleteError by mutableStateOf<String?>(null)
         private set
+    // define camps by going into the database in the campsites collection
+    // and finding all documents that match the logged in userId
     val camps: StateFlow<List<Campsite>> = callbackFlow {
         val listener = db.collection("campsites")
             .whereEqualTo("ownerID", ownerId)
@@ -47,7 +52,13 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     }
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
+    /**
+     *  Deletes a [Campsite] object from the database
+     *
+     *  What more is there really to say
+     *
+     *  @param campsite is the [Campsite] object we want to delete
+     */
     fun deleteCampsite(campsite: Campsite) {
         viewModelScope.launch {
             try {
@@ -71,6 +82,4 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
             }
         }
     }
-    fun clearDeleteError() { deleteError = null }
-
 }

@@ -16,7 +16,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
-
+/**
+ * Controller for the "Detailed Campsite" screen.
+ *
+ * Fetches a campsite from Firestore and stores its fields into their
+ * respective state variables
+ *
+ * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ */
 class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel() {
     private val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
     private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
@@ -37,7 +44,12 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
     val status: StateFlow<SaveStatus> = _status
-
+    /**
+     * Initialization
+     *
+     * Takes all data from the given campId from Firestore and fill
+     * each state variable with its value
+     */
     init {
         viewModelScope.launch {
             try {

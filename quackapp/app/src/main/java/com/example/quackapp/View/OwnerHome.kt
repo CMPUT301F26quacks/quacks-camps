@@ -47,7 +47,12 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
-
+/**
+ * UI for the home page that Campsite owners are directed to
+ *
+ * Uses [navController] to navigate to other screens
+ * Uses [OwnerHomeController] to deal with user input
+ */
 @Composable
 fun OwnerHome(
     navController: NavController,
@@ -116,6 +121,7 @@ fun OwnerHome(
                     CampRow(campsite, navController, onDeleteClick = { campToDelete = campsite })
                 }
             }
+            // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
             campToDelete?.let { camp ->
                 AlertDialog(
                     onDismissRequest = { campToDelete = null },
@@ -139,6 +145,10 @@ fun OwnerHome(
     }
 }
 
+/**
+ * UI for each [Campsite] element the user owns
+ *
+ */
 @Composable
 fun CampRow(
     campsite: Campsite,
