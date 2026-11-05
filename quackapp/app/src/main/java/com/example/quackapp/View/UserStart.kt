@@ -160,7 +160,7 @@ fun UserStart(navController: NavController) {
             }
 
             "OWNER" in user.roles && "ENTRANT" !in user.roles -> {
-                navController.navigate("OwnerHome") {
+                navController.navigate("CampsiteOwnerHome") {
                     popUpTo("UserStart") {
                         inclusive = true
                     }
