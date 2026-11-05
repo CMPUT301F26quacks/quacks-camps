@@ -122,7 +122,7 @@ fun OwnerHome(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(camps) { campsite ->
-                    CampRow(campsite)
+                    CampRow(campsite, navController)
                 }
             }
         }
@@ -131,7 +131,7 @@ fun OwnerHome(
 // TODO: Make a function to display each campsite as a row according to the UI mockup
 
 @Composable
-fun CampRow(campsite: Campsite){
+fun CampRow(campsite: Campsite, navController: NavController){
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -178,13 +178,13 @@ fun CampRow(campsite: Campsite){
                     text = "Edit",
                     fontSize = 18.sp,
                     color = Color.White,
-                    modifier = Modifier.clickable(onClick = {})
+                    modifier = Modifier.clickable(onClick = {navController.navigate("EditCampsite/${campsite.campId}")})
                 )
                 Text(
                     text = "Details",
                     fontSize = 18.sp,
                     color = Color.White,
-                    modifier = Modifier.clickable(onClick = {})
+                    modifier = Modifier.clickable(onClick = {navController.navigate("CampsiteDetails")})
                 )
                 Text(
                     text = "Delete",

@@ -117,7 +117,7 @@ fun UserStart(navController: NavController) {
 
                 Button(
                     onClick = {
-                        navController.navigate("CampsiteOwnerHome")
+                        navController.navigate("CampsiteOwnerHome/${currentUser?.deviceId}")
                     }
 
                 ) {

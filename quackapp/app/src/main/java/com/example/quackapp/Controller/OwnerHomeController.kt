@@ -3,6 +3,7 @@ package com.example.quackapp.Controller
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
@@ -19,12 +20,19 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-
-class OwnerHomeController: ViewModel(){
-   private val db = Firebase.firestore
+/**
+ * Controller for Campsite Owners' Home screen.
+ *
+ *
+ *
+ */
+class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
+    private val db = Firebase.firestore
+    private val ownerId: String = checkNotNull(savedStateHandle["ownerId"])
 
     val camps: StateFlow<List<Campsite>> = callbackFlow {
         val listener = db.collection("campsites")
+            .whereEqualTo("ownerID", ownerId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -36,5 +44,4 @@ class OwnerHomeController: ViewModel(){
     }
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
 }
