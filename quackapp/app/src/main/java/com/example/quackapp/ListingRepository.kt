@@ -38,4 +38,10 @@ class ListingRepository {
     fun removeListing(lotteryId: String) {
         db.collection("listings").document(lotteryId).delete()
     }
+
+
+    // update the listing
+
+    // if winner gets to pick for the dates
+
 }

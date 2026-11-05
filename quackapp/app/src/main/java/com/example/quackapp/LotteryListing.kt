@@ -11,7 +11,7 @@ class LotteryListing(
     val bookingEndDate: String,
     val waitListCapacity: Int,
     val status: String,
-    val maxWinners: Int
+    val maxWinners: Int // set it up
 ) {
 
     // validating all values

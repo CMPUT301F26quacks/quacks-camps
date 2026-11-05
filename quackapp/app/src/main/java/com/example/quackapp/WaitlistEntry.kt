@@ -18,6 +18,8 @@ class WaitlistEntry(
     fun isWaitListed(): Boolean{
         return status == WaitlistStatus.WAITING
     }
+    // both will not go
+    // delete that quacksites on git from that and create that pull req again
     fun isSelected(): Boolean{
         return status == WaitlistStatus.SELECTED
     }
@@ -25,4 +27,7 @@ class WaitlistEntry(
     fun cancelEntry() {
         status = WaitlistStatus.CANCELLED
     }
+
+    // get a notification when they enter the waitlist
+
 }
