@@ -63,4 +63,8 @@ class WaitlistRepository {
         entry.status = WaitlistStatus.ACCEPTED
         return "OK"
     }
+
+    // winner accepts
+
+    // winner declines, another is picked
 }
