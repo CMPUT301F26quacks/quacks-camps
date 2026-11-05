@@ -30,7 +30,12 @@ fun QuackApp() {
             OwnerHome(navController)
         }
         composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
-        composable("CampsiteDetails") { DetailedCampsiteScreen(navController) }
+        composable(
+            route = "CampsiteDetails/{campsiteId}",
+            arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }))
+        {
+            DetailedCampsiteScreen(navController)
+        }
         composable(
             route = "EditCampsite/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
