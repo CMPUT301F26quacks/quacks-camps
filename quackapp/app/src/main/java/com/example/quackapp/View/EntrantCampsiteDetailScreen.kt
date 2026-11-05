@@ -31,7 +31,7 @@ import com.example.quackapp.Model.Campsite
 /**
  * Campsite Detail Screen entrant's see when they scan a promotional QR code for a campsite
  * US 02.02.01: As a campsite owner, I want the system to generate a unique QR code that links to the campsite details
- * TODO: add logic of joining the lottery waitlist
+ * TODO: add logic of joining the lottery waitlist ...
  */
 
 @Composable
