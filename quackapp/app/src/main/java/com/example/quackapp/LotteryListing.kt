@@ -1,6 +1,10 @@
 package com.example.quackapp
 
-// the owner creates the lottery listing
+/**
+ * Campsite lottery listing created by an owner.
+ * This class has all the details for lottery based campsite booking, including
+ * booking window, registration period, maximum winners and waitlist capacity.
+ */
 class LotteryListing(
     val lotteryId: String,
     val campsiteId: String,
@@ -14,7 +18,9 @@ class LotteryListing(
     val maxWinners: Int // set it up
 ) {
 
-    // validating all values
+    /**
+     * Validates all properties of the lotteryListing ensuring all requirements are met.
+     */
     fun ValidateListing(): ValidateResult {
         if (campsiteId.isBlank()) {
             return ValidateResult(false, "Campsite ID cannot be empty.")
@@ -42,18 +48,30 @@ class LotteryListing(
 
     }
 
-    // checks if registration is open for entrants
-
+    /**
+     * Checks the status of the registration
+     *
+     * @return true if open
+     */
     fun isRegistrationOpen(): Boolean {
         return status.equals("Open", true)
     }
 
-    // checks if the waitlist is full
+    /**
+     * checks if the waitlist is full
+     *
+     * @param currentCount
+     * @return true if capacity reached, false if space remaining
+     */
     fun isWaitlistFull(currentCount: Int): Boolean{
         if(waitListCapacity == -1) return false
         return currentCount >= waitListCapacity
     }
 }
+
+/**
+ * Shows the result of a validation check
+ */
 data class ValidateResult(
     val isValid: Boolean,
     val errorMessage: String
