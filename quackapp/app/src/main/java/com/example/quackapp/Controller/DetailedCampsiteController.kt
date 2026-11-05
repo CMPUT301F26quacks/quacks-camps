@@ -26,9 +26,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
 class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel() {
-    private val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
+    val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
     private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
-    private val imgStorage = Firebase.storage
     var name by mutableStateOf("")
     var location by mutableStateOf("")
     var price by mutableStateOf("")
