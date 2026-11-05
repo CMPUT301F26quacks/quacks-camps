@@ -79,7 +79,6 @@ fun OwnerHome(
                     onClick = { navController.popBackStack() },
                     colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
                     modifier = Modifier
-//                        .navigationBarsPadding()
                         .padding(8.dp)
                         .testTag("backButton") // for testing
                 ) {
@@ -113,7 +112,6 @@ fun OwnerHome(
         }
     }
 }
-// TODO: Make a function to display each campsite as a row according to the UI mockup
 
 @Composable
 fun CampRow(campsite: Campsite, navController: NavController){
@@ -169,7 +167,7 @@ fun CampRow(campsite: Campsite, navController: NavController){
                     text = "Details",
                     fontSize = 18.sp,
                     color = Color.White,
-                    modifier = Modifier.clickable(onClick = {navController.navigate("CampsiteDetails")})
+                    modifier = Modifier.clickable(onClick = {navController.navigate("CampsiteDetails/${campsite.campId}")})
                 )
                 Text(
                     text = "Delete",

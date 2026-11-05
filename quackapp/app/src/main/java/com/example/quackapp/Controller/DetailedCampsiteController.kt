@@ -29,14 +29,12 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
         private set
     var rules by mutableStateOf(listOf(""))
     var cancellationPolicy by mutableStateOf("")
-    var tags by mutableStateOf(listOf("Pet Friendly", "Smoke Free", "Luxurious", "Back Camping"))
     var selectedTags by mutableStateOf(setOf<String>())
         private set
-    var existingImageUrl by mutableStateOf("")
+    var imageUrl by mutableStateOf("")
         private set
     var isLoading by mutableStateOf(true)
         private set
-
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
     val status: StateFlow<SaveStatus> = _status
 
@@ -49,7 +47,7 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     location = campsite.location
                     price = campsite.price.toString()
                     capacity = campsite.capacity.toString()
-                    existingImageUrl = campsite.optionalPromoImage
+                    imageUrl = campsite.optionalPromoImage
                     features = campsite.features
                     rules = campsite.rules
                     cancellationPolicy = campsite.cancellationPolicy
