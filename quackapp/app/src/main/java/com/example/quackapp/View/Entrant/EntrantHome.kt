@@ -14,17 +14,20 @@ import com.example.quackapp.Controller.EntrantHomeController
 /**
  * Entrant Home Screen
  *
- * TO-DO: Has list of campsites you view, filter, or search for a campsite.
+ * Contains the EntrantHomeList and Navigation Bar
  *
  * @param navController allows you to move between screens using navigation bar
+ * @param controller brings in all the campsites to be displayed for the Entrant
  */
 @Composable
 fun EntrantHome(
     navController: NavController,
-    controller: EntrantHomeController = viewModel()) {
+    controller: EntrantHomeController = viewModel()
+) {
 
     val campsites by controller.camps.collectAsState()
 
+    //EntrantScaffold provides the Entrant Navigation Bar
     EntrantScaffold(navController) { innerPadding ->
 
         Column(
@@ -32,9 +35,10 @@ fun EntrantHome(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-
+            //Takes all the campsites from the firebase and inputs them into EntrantHomeList
             EntrantHomeList(
                 campsites = campsites,
+                //When a campsite card is clicked, send them to the campsite details screen
                 campsiteCardClicked = { campsite ->
 
                 }

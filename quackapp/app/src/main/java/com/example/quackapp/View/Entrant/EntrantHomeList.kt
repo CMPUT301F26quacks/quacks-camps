@@ -58,17 +58,23 @@ fun EntrantHomeList(
     val searchBarText = if(locationSearchChecked) "Search locations..." else "Search campsites..."
     val searchBarColor = if(locationSearchChecked) Color(0xFFF16B00) else MaterialTheme.colorScheme.outline
 
-    //Displays Campsites that fit the filter requirements
+    //Displays Campsites that fit the filter requirements if there are any
     val resultingCampsites = remember(query, capacityRange, locationSearchChecked, campsites) {
         campsites.filter { campsite ->
             val matchesQuery = when {
+                //If search bar is empty, matchesQuery is True
                 query.isBlank() -> true
+                //If search by location is on, only display based on location
                 locationSearchChecked -> campsite.location.contains(query, ignoreCase = true)
+                //If search by location is off, only display based on campsite name
                 else -> campsite.name.contains(query, ignoreCase = true)
             }
 
+            //Checks if campsite is within capacity range
             val matchesCapacity = campsite.capacity.toFloat() in capacityRange
 
+            //If campsite is within capacity range and is valid based on the filters
+            //Then the campsite is approved and can be displayed
             matchesQuery && matchesCapacity
         }
     }

@@ -22,7 +22,18 @@ import com.example.quackapp.Model.Campsite
 //Typography stuff
 //https://developer.android.com/develop/ui/compose/designsystems/material3#typography
 
-//TODO Add Comments + Tests
+//TODO Add Tests
+
+/**
+ * Clickable card containing a summary of that campsite
+ *
+ * These cards are added to a list of cards displayed in a lazy column.
+ * When a card is clicked, it sends you to that campsite's information page
+ *
+ * @param campsite Takes as input a campsite and uses some of its info in the summary
+ * @param onClick When onClick is triggered it sends you to that campsites info page
+ * @param modifier Used if modifier is needed
+ */
 @Composable
 fun EntrantHomeCard(
     campsite: Campsite,
@@ -39,20 +50,22 @@ fun EntrantHomeCard(
         shape = RoundedCornerShape(20.dp),
         modifier = modifier
             .fillMaxWidth(),
-            //.padding(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
+        //Campsite Card Summary Details
         Column(modifier = Modifier.padding(16.dp)) {
-
+            //Name of Campsite
             Text(
                 text = campsite.name,
                 style = MaterialTheme.typography.headlineLarge
             )
+            //Campsite Rating and Price
             Text(
                 text = "\u2B50 ${campsite.rating} | $${campsite.price} per night",
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(top = 6.dp)
             )
+            //Campsite Location and Capacity
             Text(
                 text = "\uD83D\uDCCC ${campsite.location} | Up to ${campsite.capacity} people",
                 style = MaterialTheme.typography.headlineSmall,
