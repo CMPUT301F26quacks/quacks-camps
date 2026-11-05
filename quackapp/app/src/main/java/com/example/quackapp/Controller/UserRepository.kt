@@ -63,6 +63,37 @@ object UserRepository {
             }
     }
 
+    fun updateUser(
+        deviceId: String,
+        name: String,
+        email: String,
+        phoneNumber: String,
+        onSuccess: () -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        val database = FirebaseFirestore.getInstance()
+
+        database.collection("users")
+            .document(deviceId)
+            .update(
+                mapOf( // creates a temporary map containing a list of key-value pairs for updating
+                    "name" to name,
+                    "email" to email,
+                    "phoneNumber" to phoneNumber
+                )
+            )
+
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { exception ->
+                onFail(exception)
+            }
+
+    }
+
+
     fun userExists( //
         deviceId: String,
         onResult: (Boolean) -> Unit,

@@ -18,7 +18,7 @@ class Campsite (
     var rules: List<String> = listOf(""),
     var cancellationPolicy: String = "",
     var tags: List<String> = listOf(""),
-    val ownerID: String = ""
+    val ownerId: String = ""
 ){
     var rating: Double = 0.00
     var qrCode: String = ""
