@@ -19,6 +19,11 @@ import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Controller.UserRepository
 import com.example.quackapp.Model.User
 
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+
 @Composable
 fun UserProfile(
     navController: NavController,
@@ -33,6 +38,8 @@ fun UserProfile(
     var phoneNumber by remember { mutableStateOf("") }
 
     var deviceId by remember { mutableStateOf<String?>(null) }
+
+    var notificationsEnabled by remember { mutableStateOf<Boolean>(true) }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -53,6 +60,7 @@ fun UserProfile(
                                 name = user.name
                                 email = user.email
                                 phoneNumber = user.phoneNumber
+                                notificationsEnabled = user.notificationsEnabled
                             } else {
                                 errorMessage = "Unable to find User Profile"
                             }
@@ -115,16 +123,32 @@ fun UserProfile(
 
         Button(
             onClick = {
+                notificationsEnabled = !notificationsEnabled
+                //colors = if ()
+            }
+        ) {
+            Text(
+                if (notificationsEnabled) {
+                    "Notifications Enabled"
+                } else {
+                    "Notifications Disabled"
+                }
+            )
+        }
+
+        Button(
+            onClick = {
 
                 val id = deviceId
 
-                if (id != null && selectedRole != null) {
+                if (id != null && selectedRole != null) { //***************************
 
                     val user = User(
                         deviceId = id,
                         name = name,
                         email = email,
                         phoneNumber = phoneNumber,
+                        notificationsEnabled = notificationsEnabled,
                         roles = listOf(selectedRole)
                     )
 
@@ -139,7 +163,7 @@ fun UserProfile(
                             }
 
                             if (selectedRole == "OWNER") {
-                                navController.navigate("OwnerHome")
+                                navController.navigate("CampsiteOwnerHome/${deviceId}")
                             }
                         },
 
