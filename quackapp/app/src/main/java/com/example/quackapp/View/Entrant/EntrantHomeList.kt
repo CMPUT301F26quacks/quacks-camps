@@ -31,7 +31,18 @@ import com.example.quackapp.Model.Campsite
 import com.example.quackapp.View.SearchBar
 import com.example.quackapp.View.ValueRangeFilter
 
-//TODO Add Comments + Tests
+//TODO Add Tests
+
+/**
+ * Displays campsite cards based on filters
+ *
+ * Looks at if the entrant has adjusted any filters, if so,
+ * display results that fit the requirements of the filter.
+ *
+ * @param campsites takes in a list of campsites to be displayed
+ * @param campsiteCardClicked allows campsites to be clicked
+ * @param modifier allows modifiers to be passed through
+ */
 @Composable
 fun EntrantHomeList(
     campsites: List<Campsite>,
@@ -73,9 +84,17 @@ fun EntrantHomeList(
             //Checks if campsite is within capacity range
             val matchesCapacity = campsite.capacity.toFloat() in capacityRange
 
-            //If campsite is within capacity range and is valid based on the filters
-            //Then the campsite is approved and can be displayed
-            matchesQuery && matchesCapacity
+
+            if(matchesQuery && matchesCapacity){
+                //If campsite is within capacity range and is valid based on the filters
+                //Then the campsite is approved and can be displayed
+                true
+            }
+            else{
+                //Otherwise we reject it and do not display it
+                false
+            }
+
         }
     }
 
@@ -89,6 +108,7 @@ fun EntrantHomeList(
         item {
             Row(verticalAlignment = Alignment.CenterVertically){
                 //Allows users to Search
+                //query is what the user has entered in the search bar
                 SearchBar(
                     query = query,
                     whenQueryChanges = { query = it },
@@ -120,7 +140,7 @@ fun EntrantHomeList(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    //Search by Location
+                    //Search by Location check box
                     Text("Search By Location")
                     Checkbox(
                         checked = locationSearchChecked,
