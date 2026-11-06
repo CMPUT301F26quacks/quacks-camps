@@ -153,9 +153,9 @@ fun EntrantActiveCampsites(
     val unreadNotifCount = remember(notifications, deviceId) {
         notificationRepo.getUnreadCount(deviceId)
     }
-    //added past reservations
-    val pastReservations = remember(reservations){
-        repository.getPastReservations()
+    // Past reservations (US 01.06.02)
+    val pastReservations: List<Reservation> = remember(reservations, deviceId) {
+        repository.getPastReservations(deviceId)
     }
 
 

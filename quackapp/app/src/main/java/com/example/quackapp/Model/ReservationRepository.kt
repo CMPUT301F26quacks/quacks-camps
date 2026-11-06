@@ -142,7 +142,6 @@ class ReservationRepository private constructor() {
     }
 
     /**
-    /**
      * Retrieves past (completed, cancelled, or declined) reservations.
      * US 01.06.02: As an entrant, I want to view a list of past reservations.
      */
