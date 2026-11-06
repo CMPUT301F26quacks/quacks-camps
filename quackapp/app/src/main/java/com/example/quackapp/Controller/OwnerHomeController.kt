@@ -32,38 +32,47 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val db = Firebase.firestore
-    private val ownerId: String = savedStateHandle["ownerId"] ?: ""
+    private val passedOwnerId: String = savedStateHandle["ownerId"] ?: ""
     private val imgStorage = Firebase.storage
     var deleteError by mutableStateOf<String?>(null)
         private set
     // define camps by going into the database in the campsites collection
     // and finding all documents that match the logged in userId
     val camps: StateFlow<List<Campsite>> = callbackFlow {
-        val query = if(ownerId.isNotBlank()) {
-            db.collection("campsites").whereEqualTo("ownerId", ownerId)
-        }
-        else{
-            db.collection("campsites")
-        }
-        /*
-        val listener = db.collection("campsites")
-            .whereEqualTo("ownerId", ownerId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
+        if(passedOwnerId.isNotBlank()){
+            //if ownerId passed in route URL, use directly
+            val listener = db.collection("campsites")
+                .whereEqualTo("ownerId", passedOwnerId)
+                .addSnapshotListener { snapshot, error ->
+                    if(error!=null){
+                        close(error)
+                        return@addSnapshotListener
+                    }
+                    trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
                 }
-                trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
-            }
-        awaitClose { listener.remove() }*/
-        val listener = query.addSnapshotListener{snapshot, error ->
-            if(error!=null){
-                close(error)
-                return@addSnapshotListener
-            }
-            trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+            awaitClose { listener.remove() }
         }
-        awaitClose { listener.remove() }
+        else{   //but if tapping on home button again, js use logged in device id
+            DeviceIdGetter.getDeviceId(
+                onSuccess = {deviceId ->
+                    val listener = db.collection("campsites")
+                        .whereEqualTo("ownerId", deviceId)
+                        .addSnapshotListener {snapshot, error ->
+                            if(error != null){
+                                close(error)
+                                return@addSnapshotListener
+                            }
+                            trySend(snapshot?.toObjects(Campsite::class.java)?: emptyList())
+                        }
+                },
+                onFail = {
+                    trySend(emptyList())
+                }
+            )
+            awaitClose {}
+        }
+
+
     }
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

@@ -52,6 +52,7 @@ import com.example.quackapp.Model.ReservationStatus
  * [US 02.07.01] As a campsite owner, I want to view a list of active reservations.
  * [US 02.07.02] As a campsite owner, I want to view a list of past reservations.
  * [US 02.07.03] As a campsite owner, I want to view a list of cancelled reservations.
+ * TODO: add logic for rejecting reservations
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
