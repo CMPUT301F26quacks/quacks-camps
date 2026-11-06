@@ -138,7 +138,7 @@ fun ListCampInLotteryScreen(
                 startMillis = viewModel.bookingStart,
                 endMillis = viewModel.bookingEnd,
                 onRangeSelected = { s, e -> viewModel.bookingStart = s; viewModel.bookingEnd = e },
-                minDateMillis = viewModel.registrationEnd ?: todayUtcMillis()
+                minDateMillis = (viewModel.registrationEnd?.plus(86400000))?: todayUtcMillis() // 86400000 is one day in milliseconds
             )
 
             Spacer(modifier = Modifier.height(10.dp))
