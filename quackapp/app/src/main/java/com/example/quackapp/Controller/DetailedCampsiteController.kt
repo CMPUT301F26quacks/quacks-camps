@@ -46,6 +46,8 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
     val status: StateFlow<SaveStatus> = _status
+    var rating by mutableStateOf("0.0")
+        private set
     /**
      * Initialization
      *
@@ -67,6 +69,7 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     cancellationPolicy = campsite.cancellationPolicy
                     selectedTags = campsite.tags.toSet()
                     lottery = campsite.lottery
+                    rating = campsite.rating.toString()
                 } else {
                     _status.value = SaveStatus.Error("Campsite not found")
                 }
