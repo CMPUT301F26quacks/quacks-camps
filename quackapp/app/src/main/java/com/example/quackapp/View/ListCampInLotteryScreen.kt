@@ -1,6 +1,5 @@
 package com.example.quackapp.View
 
-import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,14 +20,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults.iconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,12 +41,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import com.example.quackapp.Controller.ListCampInLotteryController
+import com.example.quackapp.Controller.EditLotteryDetailsController
 import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
-import okhttp3.internal.wait
+
 /**
  * Screen for listing [Campsite] into a [Lottery]
  *
@@ -60,7 +54,7 @@ import okhttp3.internal.wait
 @Composable
 fun ListCampInLotteryScreen(
     navController: NavController,
-    viewModel: ListCampInLotteryController = viewModel()
+    viewModel: EditLotteryDetailsController = viewModel()
     ) {
 
     var numWinners by remember { mutableStateOf("") }
