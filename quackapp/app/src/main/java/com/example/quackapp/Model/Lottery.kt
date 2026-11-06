@@ -1,5 +1,7 @@
 package com.example.quackapp.Model
 
+import android.R
+import com.google.firebase.Timestamp
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -21,15 +23,15 @@ enum class WaitlistStatus {WAITING, SELECTED, NOT_SELECTED}
 
 class Lottery(
     var lotteryID: String,
-    var registrationPeriodStart: String,
-    var registrationPeriodEnd: String,
-    var bookingPeriodStart: String,
-    var bookingPeriodEnd: String,
+    var registrationPeriodStart: Timestamp?,
+    var registrationPeriodEnd: Timestamp?,
+    var bookingPeriodStart: Timestamp?,
+    var bookingPeriodEnd: Timestamp?,
     var numLotteryWinners: Int,
     var optionalWaitlistCapacity: Int? = null, //since optional we use null - idk if this is the best practice tho
     var waitlist: List<String> = listOf(), //list of entrants
-    var status: LotteryStatus = LotteryStatus.CLOSED
-
+    var status: LotteryStatus = LotteryStatus.CLOSED,
+    var campIds: List<String>
 )
 
 //entrants in da waitlist for optimal holding capacity+firebase db considerations

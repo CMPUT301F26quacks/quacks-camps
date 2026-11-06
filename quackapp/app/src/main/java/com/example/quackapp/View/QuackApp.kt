@@ -1,6 +1,8 @@
 package com.example.quackapp.View
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -8,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.quackapp.View.Entrant.EntrantHome
 import androidx.navigation.navArgument
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
+import com.example.quackapp.Controller.DetailedCampsiteController
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 
 /**
@@ -43,13 +46,26 @@ fun QuackApp() {
             OwnerHome(navController)
         }
         composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
-        composable("CampsiteDetails") { DetailedCampsiteScreen(navController) }
+        composable(
+            route = "CampsiteDetails/{campsiteId}",
+            arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }))
+        {
+            DetailedCampsiteScreen(navController)
+        }
         composable(
             route = "EditCampsite/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
         ) {
             EditCampsiteScreen(navController)
         }
+        composable(
+            route = "ListCampInLotteryScreen/{campsiteId}",
+            arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
+        ) {
+            ListCampInLotteryScreen(navController)
+        }
+
+
 
         composable("CreateEntrantProfile") {
             UserProfile(

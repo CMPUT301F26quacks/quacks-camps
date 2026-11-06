@@ -39,6 +39,8 @@ sealed interface SaveStatus {
  * If the user picked a promo image, it is uploaded to Firebase Storage first and
  * its download URL is stored on the [Campsite] document.
  *
+ * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ *
  */
 class RegisterCampsiteController: ViewModel(){
     // Firestore database instance

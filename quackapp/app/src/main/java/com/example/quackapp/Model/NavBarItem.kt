@@ -28,7 +28,7 @@ sealed class NavBarItem(
         NavBarItem("Active Campsites", Icons.Filled.Bookmark, "EntrantActiveCampsites")
 
     object EntrantProfile:
-        NavBarItem("Profile", Icons.Filled.ManageAccounts, "EntrantProfile")
+        NavBarItem("Profile", Icons.Filled.ManageAccounts, "EditProfile")
 
 
     object OwnerHome:
