@@ -103,15 +103,51 @@ fun DetailedCampsiteScreen(
                     Text("No Image")
                 }
             }
-            Text(text = "Location:", fontSize = 30.sp)
-            Text(text = viewModel.location, fontSize = 24.sp)
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Cost:", fontSize = 30.sp)
-            Text(text = "$${viewModel.price} per night", fontSize = 24.sp)
+            //rating?
+            Text(text = "Rating: ", fontSize = 30.sp)
+            Text(text = viewModel.rating, fontSize = 24.sp)
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Max Capacity:", fontSize = 30.sp)
-            Text(text = viewModel.capacity, fontSize = 24.sp)
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Card(   //location
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF248AFF)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = "Location:", fontSize = 30.sp)
+                    Text(text = viewModel.location, fontSize = 24.sp)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Card(      //price
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF248AFF)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = "Cost:", fontSize = 30.sp)
+                    Text(text = "$${viewModel.price} per night", fontSize = 24.sp)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Card(   //capacity
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF248AFF)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = "Max Capacity:", fontSize = 30.sp)
+                    Text(text = viewModel.capacity, fontSize = 24.sp)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+
+
             Text(text = "Cancellation Policy:", fontSize = 30.sp)
             if (viewModel.cancellationPolicy == ""){
                 Text(text = "No cancellation policy", fontSize = 24.sp)

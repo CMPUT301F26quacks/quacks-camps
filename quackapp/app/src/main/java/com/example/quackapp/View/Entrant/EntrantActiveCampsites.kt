@@ -62,6 +62,7 @@ import kotlinx.coroutines.launch
  * - US 01.04.02: Choose campsite in a multiple campsite lottery.
  * - US 01.04.03: Decline reservation offer.
  * - US 01.05.01: Receive reservation confirmation.
+ * - US 01.06.02: View list of past reservations
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +80,11 @@ fun EntrantActiveCampsites(
     val pendingOffers = remember(offers) {
         repository.getPendingOffers()
     }
+    //added past reservations
+    val pastReservations = remember(reservations){
+        repository.getPastReservations()
+    }
+
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -151,6 +157,17 @@ fun EntrantActiveCampsites(
                         )
                     }
                 )
+                //adding a tab for past reservations
+                Tab(
+                    selected = selectedTabIndex == 2,
+                    onClick = { selectedTabIndex = 2 },
+                    text = {
+                        Text(
+                            "Past Reservations (${pastReservations.size})",
+                            fontWeight = if (selectedTabIndex == 2) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
             }
 
             when (selectedTabIndex) {
@@ -179,6 +196,9 @@ fun EntrantActiveCampsites(
                             }
                         }
                     }
+                )
+                2 -> PastReservationsList(
+                    reservations=pastReservations
                 )
             }
         }
@@ -669,6 +689,116 @@ fun LotteryOfferCard(
                     Text("Accept & Reserve")
                 }
             }
+        }
+    }
+}
+
+/**
+ * UI Component displaying the list of past reservations (US 01.06.02)
+ */
+@Composable
+fun PastReservationsList(
+    reservations: List<Reservation>
+) {
+    if (reservations.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "No Past Reservations",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Past, declined, or cancelled reservations will appear here.",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(reservations, key = { it.id }) { res ->
+                PastReservationCard(reservation = res)
+            }
+        }
+    }
+}
+
+/**
+ * Card representing an individual past reservation.
+ */
+@Composable
+fun PastReservationCard(reservation: Reservation){
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = reservation.campsiteName,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFF2E7D32),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = reservation.status.name,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            if (reservation.campsiteLocation.isNotBlank()) {
+                Text(
+                    text = reservation.campsiteLocation,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(text = "Dates: ${reservation.dateRange}", fontWeight = FontWeight.Medium)
+            Text(text = "Guests: ${reservation.numGuests}", fontSize = 14.sp)
+            Text(
+                text = "Total: $${String.format("%.2f", reservation.totalPrice)} CAD",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Booking ID: #${reservation.id.take(8)}",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.outline
+            )
         }
     }
 }
