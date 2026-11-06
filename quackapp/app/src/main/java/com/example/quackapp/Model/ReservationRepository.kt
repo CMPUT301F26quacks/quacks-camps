@@ -1,13 +1,15 @@
 package com.example.quackapp.Model
 
+import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Repository and Controller for managing Entrant reservations and lottery win offers.
- * Implements in-memory state with realistic default data for local execution and testing,
- * architected for future Firestore collection synchronization.
+ * Synchronizes with Firebase Cloud Firestore ("reservations" and "lottery_offers" collections),
+ * with safe local memory fallback for offline use and unit tests.
  */
 class ReservationRepository private constructor() {
 
@@ -16,6 +18,17 @@ class ReservationRepository private constructor() {
 
     private val _offers = MutableStateFlow<List<LotteryOffer>>(emptyList())
     val offers: StateFlow<List<LotteryOffer>> = _offers.asStateFlow()
+
+    /**
+     * Lazily obtains FirebaseFirestore instance, safely falling back to null in JVM unit tests
+     * or environments where FirebaseApp is not initialized.
+     */
+    private val firestore: FirebaseFirestore?
+        get() = try {
+            FirebaseFirestore.getInstance()
+        } catch (e: Throwable) {
+            null
+        }
 
     init {
         loadInitialMockData()
@@ -140,6 +153,24 @@ class ReservationRepository private constructor() {
     }
 
     /**
+     * Dynamically registers an available date range for a lottery offer (e.g., when selected via calendar).
+     * US 01.04.01: Entrant date selection on lottery win.
+     */
+    fun addAvailableDateRange(offerId: String, dateRange: String) {
+        val currentOffers = _offers.value
+        val index = currentOffers.indexOfFirst { it.id == offerId }
+        if (index != -1) {
+            val offer = currentOffers[index]
+            if (!offer.availableDateRanges.contains(dateRange)) {
+                val updated = offer.copy(availableDateRanges = offer.availableDateRanges + dateRange)
+                val list = currentOffers.toMutableList()
+                list[index] = updated
+                _offers.value = list
+            }
+        }
+    }
+
+    /**
      * Confirms a reservation following a lottery win.
      * US 01.05.01: As an entrant, I want to receive confirmation of my campsite reservation.
      *
@@ -187,6 +218,25 @@ class ReservationRepository private constructor() {
         )
 
         _reservations.value = listOf(reservation) + _reservations.value
+
+        // Sync confirmed reservation to Firestore
+        firestore?.let { db ->
+            try {
+                db.collection("reservations")
+                    .document(reservation.id)
+                    .set(reservation)
+                    .addOnFailureListener { e ->
+                        Log.w("ReservationRepo", "Failed to sync reservation to Firestore", e)
+                    }
+
+                db.collection("lottery_offers")
+                    .document(offerId)
+                    .update("status", OfferStatus.ACCEPTED.name)
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore confirmReservation failed", e)
+            }
+        }
+
         return reservation
     }
 
@@ -207,6 +257,18 @@ class ReservationRepository private constructor() {
         val updatedOffers = currentOffers.toMutableList()
         updatedOffers[offerIndex] = updatedOffer
         _offers.value = updatedOffers
+
+        // Sync decline to Firestore
+        firestore?.let { db ->
+            try {
+                db.collection("lottery_offers")
+                    .document(offerId)
+                    .update("status", OfferStatus.DECLINED.name)
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore declineOffer failed", e)
+            }
+        }
+
         return true
     }
 
@@ -226,7 +288,54 @@ class ReservationRepository private constructor() {
         val updatedList = currentReservations.toMutableList()
         updatedList[resIndex] = updatedRes
         _reservations.value = updatedList
+
+        // Sync cancellation to Firestore
+        firestore?.let { db ->
+            try {
+                db.collection("reservations")
+                    .document(reservationId)
+                    .update("status", ReservationStatus.CANCELLED.name)
+                    .addOnFailureListener { e ->
+                        Log.w("ReservationRepo", "Failed to update cancellation in Firestore", e)
+                    }
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore cancelReservation failed", e)
+            }
+        }
+
         return true
+    }
+
+    /**
+     * Synchronizes reservations from Cloud Firestore for the given entrant device.
+     * Merges fetched Firestore documents into the local state flow.
+     *
+     * @param deviceId The entrant device identifier.
+     * @param onComplete Callback invoked with refreshed reservations list.
+     */
+    fun syncFromFirestore(deviceId: String = "", onComplete: ((List<Reservation>) -> Unit)? = null) {
+        val db = firestore ?: run {
+            onComplete?.invoke(getActiveReservations(deviceId))
+            return
+        }
+
+        val targetDevice = if (deviceId.isBlank()) "default_device" else deviceId
+        db.collection("reservations")
+            .whereEqualTo("entrantDeviceId", targetDevice)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
+                if (fetched.isNotEmpty()) {
+                    val fetchedIds = fetched.map { it.id }.toSet()
+                    val remaining = _reservations.value.filter { it.id !in fetchedIds }
+                    _reservations.value = fetched + remaining
+                }
+                onComplete?.invoke(getActiveReservations(deviceId))
+            }
+            .addOnFailureListener { e ->
+                Log.w("ReservationRepo", "Error syncing reservations from Firestore", e)
+                onComplete?.invoke(getActiveReservations(deviceId))
+            }
     }
 
     companion object {
