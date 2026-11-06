@@ -28,6 +28,8 @@ import kotlin.coroutines.cancellation.CancellationException
 class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
     private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
+    private val lotteryRef = Firebase.firestore.collection("lotteries")
+
     var name by mutableStateOf("")
     var location by mutableStateOf("")
     var price by mutableStateOf("")
@@ -41,6 +43,7 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
     var imageUrl by mutableStateOf("")
         private set
     var lottery by mutableStateOf<Lottery?>(null)
+    var lotteryId: String? = null
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
@@ -67,10 +70,15 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     rules = campsite.rules
                     cancellationPolicy = campsite.cancellationPolicy
                     selectedTags = campsite.tags.toSet()
-                    lottery = campsite.lottery
+                    lotteryId = campsite.lotteryId
                     rating = campsite.rating.toString()
-                } else {
+                }
+                else {
                     _status.value = SaveStatus.Error("Campsite not found")
+                }
+                if (lotteryId != null){
+                    val existingLottery = lotteryRef.document(lotteryId!!).get().await().toObject(Lottery::class.java)
+                    lottery = existingLottery
                 }
             } catch (e: CancellationException) {
                 throw e

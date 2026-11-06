@@ -29,7 +29,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
 class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
-    private val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
+    val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
     private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
     private val db = Firebase.firestore
     private val lotteryRef = db.collection("lotteries")
@@ -39,7 +39,7 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
     var bookingStart by mutableStateOf<Long?>(null)
     var bookingEnd by mutableStateOf<Long?>(null)
     var name by mutableStateOf("")
-    var lottery by mutableStateOf<Lottery?>(null)
+    var lottery by mutableStateOf<String?>(null)
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
@@ -57,7 +57,7 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                 val campsite = campsiteRef.get().await().toObject(Campsite::class.java)
                 if (campsite != null) {
                     name = campsite.name
-                    lottery = campsite.lottery
+                    lottery = campsite.lotteryId
                 } else {
                     _status.value = SaveStatus.Error("Campsite not found")
                 }
@@ -109,7 +109,7 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                 val docRef = lotteryRef.document()
 
                 // Make a new lottery object
-                val lottery = Lottery(
+                val newLottery = Lottery(
                     lotteryID = docRef.id,
                     registrationPeriodStart = Timestamp(Date(registrationStart!!)),
                     registrationPeriodEnd = Timestamp(Date(registrationEnd!!)),
@@ -122,7 +122,9 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                 )
 
                 // upload to firestore
-                docRef.set(lottery).await()
+                docRef.set(newLottery).await()
+                // update the campsite to have an active lottery
+                campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
                 _status.value = SaveStatus.Success
             } catch (e: Exception) {
                 _status.value = SaveStatus.Error(e.message ?: "Something went wrong")

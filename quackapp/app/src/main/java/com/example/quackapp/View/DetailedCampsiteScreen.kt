@@ -41,7 +41,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
-
+/**
+ * Owner-side UI for viewing the details of their campsite
+ */
 @Composable
 fun DetailedCampsiteScreen(
     navController: NavController,
@@ -227,11 +229,11 @@ fun DetailedCampsiteScreen(
                             "Status: ${currentLottery.status.name}"
                         )
                         Text(
-                            "Registration: ${currentLottery.registrationPeriodStart} to ${currentLottery.registrationPeriodEnd}",
+                            "Registration: ${currentLottery.registrationPeriodStart?.toDate()} to ${currentLottery.registrationPeriodEnd?.toDate()}",
                             fontSize = 12.sp
                         )
                         Text(
-                            "Booking Period: ${currentLottery.bookingPeriodStart} to ${currentLottery.bookingPeriodEnd}",
+                            "Booking Period: ${currentLottery.bookingPeriodStart?.toDate()} to ${currentLottery.bookingPeriodEnd?.toDate()}",
                             fontSize = 12.sp
                         )
                         Text(
