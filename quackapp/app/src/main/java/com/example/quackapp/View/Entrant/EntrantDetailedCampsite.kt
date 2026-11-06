@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -24,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,16 +42,16 @@ import com.example.quackapp.Controller.EntrantDetailedCampsiteController
  * When an entrant clicks on an EntrantHomeCard, it sends them to this page
  * with information on the campsite and the ability to enter that campsites lottery
  *
+ * @param modifier mainly for padding
  * @param navController allows entrant to use navigation bar
  * @param controller uses EntrantDetailedCampsiteController to fetch the
  * corresponding campsite
- * @param modifier mainly for padding
  */
 @Composable
 fun EntrantDetailedCampsite(
+    modifier: Modifier = Modifier,
     navController: NavController,
-    controller: EntrantDetailedCampsiteController = viewModel(),
-    modifier: Modifier = Modifier
+    controller: EntrantDetailedCampsiteController = viewModel()
 ) {
 
     //uses controller to fetch the campsite that was clicked on
@@ -56,6 +61,11 @@ fun EntrantDetailedCampsite(
     val campsite = pulledCampsite
 
     var enteredLottery by remember { mutableStateOf(false) }
+
+    //variables for the user the input a rating later
+    var showRatingInput by remember {mutableStateOf(false)}
+    var ratingInput by remember {mutableStateOf("")}
+    var errorMessage by remember {mutableStateOf<String?>(null)}
 
     //If campsite has not loaded in yet, wait
     if (campsite == null) {
@@ -102,6 +112,71 @@ fun EntrantDetailedCampsite(
                             style = MaterialTheme.typography.headlineSmall,
                             color = Color(0xFFF2BA00)
                         )
+                        //User Make a Rating
+                        OutlinedButton(
+                            onClick = {showRatingInput = !showRatingInput}
+                        ) {
+                            Text(
+                                if(showRatingInput) "Close" else "Make a Rating"
+                            )
+                        }
+
+                        //if user wants to rate campsite
+                        if(showRatingInput) {
+                            OutlinedTextField(
+                                value = ratingInput,
+                                onValueChange = { input ->
+                                    //only allow 1 number to be entered
+                                    if (input.length<=1) {
+                                        ratingInput = input
+                                        //ensure that the number is not outside of range
+                                        val ratingNum = input.toIntOrNull()
+                                        if(ratingNum == null || ratingNum < 0 || ratingNum > 5) {
+                                            errorMessage = "Please input a valid rating"
+                                        }
+                                        else{ //valid
+                                            errorMessage = null
+                                        }
+                                    }
+                                },
+                                label = {Text("Enter rating (0-5)")},
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true,
+                                isError = errorMessage != null,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            //showing the error message when invalid
+                            errorMessage?.let {message ->
+                                Text(
+                                    text=message,
+                                    color=Color.Red
+                                )
+                            }
+
+                            //submit button if valid (double verification, there will be no mistakes)
+                            val ratingNum = ratingInput.toIntOrNull()
+                            if(ratingNum != null){
+                                Button(
+                                    onClick = {
+                                        com.example.quackapp.Controller.DeviceIdGetter.getDeviceId(
+                                            onSuccess = {deviceId ->
+                                                controller.updateRating(ratingNum.toDouble(), deviceId)
+                                                showRatingInput = !showRatingInput
+                                                ratingInput = "" //set empty
+                                            },
+                                            onFail = {
+                                                errorMessage = "Rating failed to submit. Please try again."
+                                            }
+                                        )
+                                    },
+                                ) {
+                                    Text("Submit Rating")
+                                }
+                            }
+                        }
+
+
                         //Campsite Location
                         Text(
                             text = "\uD83D\uDCCC ${campsite.location}",
