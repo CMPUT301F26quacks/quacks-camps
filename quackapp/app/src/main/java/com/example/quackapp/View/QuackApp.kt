@@ -6,14 +6,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.quackapp.View.Entrant.EntrantHome
 import androidx.navigation.navArgument
 import com.example.quackapp.Model.Campsite
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 
 /**
  * Sets up navigation between screens for whole app
@@ -53,6 +58,14 @@ fun QuackApp() {
         ) {
             EditCampsiteScreen(navController)
         }
+        composable(
+            route = "ListCampInLotteryScreen/{campsiteId}",
+            arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
+        ) {
+            ListCampInLotteryScreen(navController)
+        }
+
+
 
         composable("CreateEntrantProfile") {
             UserProfile(
@@ -89,7 +102,7 @@ fun QuackApp() {
             }
             //show entrant campsite detail screen only if campsite not null aka campsite found
             campsite?.let {loadedCampsite ->
-                EntrantCampsiteDetailScreen(navController, campsite = loadedCampsite)
+                EntrantedDetailedCampsite(navController, campsite = loadedCampsite)
             }
 
         }

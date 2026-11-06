@@ -83,19 +83,6 @@ fun OwnerHome(
                 }
             }
 
-        },
-        bottomBar = {
-            Surface(modifier = Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = { navController.popBackStack() },
-                    colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .testTag("backButton") // for testing
-                ) {
-                    Text("Back")
-                }
-            }
         }
     ) { innerPadding ->
         if (camps.isEmpty()) {

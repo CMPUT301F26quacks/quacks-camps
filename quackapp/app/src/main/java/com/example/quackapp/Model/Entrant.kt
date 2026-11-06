@@ -55,8 +55,4 @@ class Entrant(
      * US 01.10.01: As an entrant, I want to opt out of receiving notifications.
      */
 
-    fun toggleNotificationPreference() {
-        notificationsEnabled = !notificationsEnabled
-    }
-
 }

@@ -11,6 +11,7 @@ composeBom = "2026.02.01"
 navigationCompose = "2.10.2"
 foundation = "1.12.1"
 gamesActivity = "4.4.2"
+lifecycleViewmodelKtx = "2.11.0"
 uiText = "1.12.1"
 runtime = "1.12.1"
 
@@ -34,6 +35,7 @@ androidx-games-activity = { group = "androidx.games", name = "games-activity", v
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
