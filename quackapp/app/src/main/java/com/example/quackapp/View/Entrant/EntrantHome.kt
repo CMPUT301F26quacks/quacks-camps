@@ -59,5 +59,13 @@ fun EntrantHome(
  */
 fun scannedQRCode(scannedCode: String, navController: NavController){
     val cleanedCode = scannedCode.trim()
+    val campId = when {
+        cleanedCode.contains("campsite/") -> cleanedCode.substringAfter("campsite/")
+        else -> cleanedCode
+    }
+
+    if(campId.isNotBlank()) {
+        navController.navigate("EntrantDetailedCampsite/${Uri.encode(campId)}")
+    }
 
 }
