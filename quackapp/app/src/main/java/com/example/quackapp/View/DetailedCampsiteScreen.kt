@@ -41,7 +41,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
-
+/**
+ * Owner-side UI for viewing the details of their campsite
+ */
 @Composable
 fun DetailedCampsiteScreen(
     navController: NavController,
@@ -112,37 +114,42 @@ fun DetailedCampsiteScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 Card(   //location
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF248AFF)),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
                 ) {
-                    Text(text = "Location:", fontSize = 30.sp)
-                    Text(text = viewModel.location, fontSize = 24.sp)
+                    Column(modifier = Modifier.padding(4.dp)) {
+                        Text(text = "Location:", fontSize = 24.sp, color = Color.White)
+                        Text(text = viewModel.location, fontSize = 18.sp, color = Color.White)
+                    }
                 }
-
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Card(      //price
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF248AFF)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(text = "Cost:", fontSize = 30.sp)
-                    Text(text = "$${viewModel.price} per night", fontSize = 24.sp)
+                    Column(modifier = Modifier.padding(4.dp)) {
+                        Text(text = "Cost:", fontSize = 24.sp, color = Color.White)
+                        Text(text = "$${viewModel.price} per night", fontSize = 18.sp, color = Color.White)
+                    }
                 }
-
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Card(   //capacity
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF248AFF)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(text = "Max Capacity:", fontSize = 30.sp)
-                    Text(text = viewModel.capacity, fontSize = 24.sp)
+                    Column(modifier = Modifier.padding(4.dp)) {
+                        Text(text = "Capacity:", fontSize = 24.sp, color = Color.White)
+                        Text(text = "${viewModel.capacity} people", fontSize = 18.sp, color = Color.White)
+                    }
                 }
-
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
@@ -227,24 +234,24 @@ fun DetailedCampsiteScreen(
                             "Status: ${currentLottery.status.name}"
                         )
                         Text(
-                            "Registration: ${currentLottery.registrationPeriodStart} to ${currentLottery.registrationPeriodEnd}",
-                            fontSize = 12.sp
+                            "Registration: ${currentLottery.registrationPeriodStart?.toDate()} to ${currentLottery.registrationPeriodEnd?.toDate()}",
+                            fontSize = 16.sp
                         )
                         Text(
-                            "Booking Period: ${currentLottery.bookingPeriodStart} to ${currentLottery.bookingPeriodEnd}",
-                            fontSize = 12.sp
+                            "Booking Period: ${currentLottery.bookingPeriodStart?.toDate()} to ${currentLottery.bookingPeriodEnd?.toDate()}",
+                            fontSize = 16.sp
                         )
                         Text(
                             "Winners to Draw: ${currentLottery.numLotteryWinners}",
-                            fontSize = 12.sp
+                            fontSize = 16.sp
                         )
                         currentLottery.optionalWaitlistCapacity?.let { cap ->
-                            Text("Waitlist Capacity: $cap", fontSize = 12.sp)
+                            Text("Waitlist Capacity: $cap", fontSize = 14.sp)
                         }
                     } else {
                         Text(
                             "No active lottery created for this campsite.",
-                            fontSize = 14.sp
+                            fontSize = 16.sp
                         )
                         // TEMPORARY
                         Button(onClick = {navController.navigate("ListCampInLotteryScreen/${viewModel.campsiteId}")}) {

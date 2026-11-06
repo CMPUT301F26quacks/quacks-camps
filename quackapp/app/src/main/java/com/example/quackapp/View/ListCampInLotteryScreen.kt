@@ -45,6 +45,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
@@ -73,7 +75,10 @@ fun ListCampInLotteryScreen(
             viewModel.bookingEnd = null
             numWinners = ""
             waitlistCap = ""
-            navController.popBackStack()
+            navController.navigate(route = "campsiteDetails/${viewModel.campsiteId}")
+            {
+                popUpTo("campsiteDetails/${viewModel.campsiteId}") { inclusive = true }
+            }
         }
     }
 
@@ -133,7 +138,7 @@ fun ListCampInLotteryScreen(
                 startMillis = viewModel.bookingStart,
                 endMillis = viewModel.bookingEnd,
                 onRangeSelected = { s, e -> viewModel.bookingStart = s; viewModel.bookingEnd = e },
-                minDateMillis = viewModel.registrationEnd ?: todayUtcMillis()
+                minDateMillis = (viewModel.registrationEnd?.plus(86400000))?: todayUtcMillis() // 86400000 is one day in milliseconds
             )
 
             Spacer(modifier = Modifier.height(10.dp))

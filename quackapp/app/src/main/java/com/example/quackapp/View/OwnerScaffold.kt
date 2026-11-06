@@ -17,9 +17,11 @@ import com.example.quackapp.Model.NavBarLists
 @Composable
 fun OwnerScaffold(
     navController: NavController,
+    topBar: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     Scaffold(
+        topBar = topBar,
         bottomBar = { NavBar(navController, NavBarLists.owner) },
         content = content
     )
