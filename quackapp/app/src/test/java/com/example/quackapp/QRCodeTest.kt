@@ -18,6 +18,6 @@ class QRCodeTest {
     }
 
     @Test
-    fun testQRCode
+    fun testQRCode() {}
 
 }
