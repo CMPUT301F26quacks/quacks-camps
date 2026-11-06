@@ -2,7 +2,7 @@ package com.example.quackapp.Model
 
 /**
  * Base User class representing any user role in the Campsite Reservation Application.
- * Supports passwordless identification using the Android device identifier (US 01.09.01).
+ * Supports passwordless identification using the Firebase Installation IDS (FID) (US 01.09.01).
  *
  * @property deviceId Unique persistent identifier for device-based authentication.
  * @property name Full name of the user profile.
@@ -18,6 +18,4 @@ open class User(
     var phoneNumber: String = "",
     var notificationsEnabled: Boolean = true,
     var roles: List<String> = emptyList()
-) {
-
-}
+) {}

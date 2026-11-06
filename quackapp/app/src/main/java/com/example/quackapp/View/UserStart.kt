@@ -36,9 +36,10 @@ import com.example.quackapp.Model.User
 import com.example.quackapp.R
 
 /**
- * Starting screen for all unregistered users.
+ * Starting screen responsible for identifying the current user.
  *
- * Gives user the option to register their device as either an Entrant or Campsite Owner.
+ * Gives user the option to register their device as either an Entrant or Campsite Owner,
+ * or signs them in automatically if their Firebase Installation ID already exists in the database, Supporting US 01.09.01.
  *
  * @param navController Allows user to navigate to Entrant or Campsite Home.
  */
