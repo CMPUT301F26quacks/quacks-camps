@@ -39,10 +39,10 @@ enum class NotificationType {
  */
 data class AppNotification(
     val id: String = UUID.randomUUID().toString(),
-    val recipientDeviceId: String,
-    val title: String,
-    val message: String,
-    val type: NotificationType,
+    val recipientDeviceId: String = "",
+    val title: String = "",
+    val message: String = "",
+    val type: NotificationType = NotificationType.GENERAL,
     val timestamp: Long = System.currentTimeMillis(),
     val isRead: Boolean = false,
     val relatedOfferId: String? = null,

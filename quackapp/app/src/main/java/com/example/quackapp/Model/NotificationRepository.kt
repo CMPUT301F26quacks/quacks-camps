@@ -1,21 +1,32 @@
 package com.example.quackapp.Model
 
+import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Repository and Controller for managing platform notifications.
+ * Synchronizes with Firebase Cloud Firestore ("notifications" collection),
+ * with safe local memory fallback for offline use and unit tests.
+ *
  * Fulfills CRC card specifications:
  * - Encapsulates notification payload (type, message, timestamp, status).
  * - Dispatches lottery win/loss alerts, booking confirmations, and cancellations.
  * - Respects user notification opt-out preferences (US 01.10.01).
- * - Implements in-memory state with initial mock alerts for testing and evaluation.
  */
 class NotificationRepository private constructor() {
 
     private val _notifications = MutableStateFlow<List<AppNotification>>(emptyList())
     val notifications: StateFlow<List<AppNotification>> = _notifications.asStateFlow()
+
+    private val firestore: FirebaseFirestore?
+        get() = try {
+            FirebaseFirestore.getInstance()
+        } catch (e: Throwable) {
+            null
+        }
 
     init {
         loadInitialMockData()
@@ -103,6 +114,21 @@ class NotificationRepository private constructor() {
         )
 
         _notifications.value = listOf(notification) + _notifications.value
+
+        // Sync to Firestore
+        firestore?.let { db ->
+            try {
+                db.collection("notifications")
+                    .document(notification.id)
+                    .set(notification)
+                    .addOnFailureListener { e ->
+                        Log.w("NotificationRepo", "Failed to sync notification to Firestore", e)
+                    }
+            } catch (e: Throwable) {
+                Log.w("NotificationRepo", "Firestore error writing notification", e)
+            }
+        }
+
         return notification
     }
 
@@ -213,6 +239,15 @@ class NotificationRepository private constructor() {
             updated[index] = updated[index].copy(isRead = true)
             _notifications.value = updated
         }
+        firestore?.let { db ->
+            try {
+                db.collection("notifications")
+                    .document(notificationId)
+                    .update("isRead", true)
+            } catch (e: Throwable) {
+                Log.w("NotificationRepo", "Firestore error marking notification as read", e)
+            }
+        }
     }
 
     /**
@@ -233,6 +268,43 @@ class NotificationRepository private constructor() {
      */
     fun deleteNotification(notificationId: String) {
         _notifications.value = _notifications.value.filterNot { it.id == notificationId }
+        firestore?.let { db ->
+            try {
+                db.collection("notifications")
+                    .document(notificationId)
+                    .delete()
+            } catch (e: Throwable) {
+                Log.w("NotificationRepo", "Firestore error deleting notification", e)
+            }
+        }
+    }
+
+    /**
+     * Synchronizes notifications from Cloud Firestore for the given recipient device.
+     */
+    fun syncFromFirestore(deviceId: String = "", onComplete: ((List<AppNotification>) -> Unit)? = null) {
+        val db = firestore ?: run {
+            onComplete?.invoke(getNotificationsForUser(deviceId))
+            return
+        }
+
+        val targetDevice = if (deviceId.isBlank()) "default_device" else deviceId
+        db.collection("notifications")
+            .whereEqualTo("recipientDeviceId", targetDevice)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val fetched = snapshot.documents.mapNotNull { it.toObject(AppNotification::class.java) }
+                if (fetched.isNotEmpty()) {
+                    val fetchedIds = fetched.map { it.id }.toSet()
+                    val remaining = _notifications.value.filter { it.id !in fetchedIds }
+                    _notifications.value = fetched + remaining
+                }
+                onComplete?.invoke(getNotificationsForUser(deviceId))
+            }
+            .addOnFailureListener { e ->
+                Log.w("NotificationRepo", "Error syncing notifications from Firestore", e)
+                onComplete?.invoke(getNotificationsForUser(deviceId))
+            }
     }
 
     /**
