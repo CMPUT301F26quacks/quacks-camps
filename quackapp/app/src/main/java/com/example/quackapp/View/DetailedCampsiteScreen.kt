@@ -217,6 +217,10 @@ fun DetailedCampsiteScreen(
                             "No active lottery created for this campsite.",
                             fontSize = 14.sp
                         )
+                        // TEMPORARY
+                        Button(onClick = {navController.navigate("ListCampInLotteryScreen/${viewModel.campsiteId}")}) {
+                            Text("Create Lottery")
+                        }
                     }
                 }
             }
