@@ -32,13 +32,20 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val db = Firebase.firestore
-    private val ownerId: String = checkNotNull(savedStateHandle["ownerId"])
+    private val ownerId: String = savedStateHandle["ownerId"] ?: ""
     private val imgStorage = Firebase.storage
     var deleteError by mutableStateOf<String?>(null)
         private set
     // define camps by going into the database in the campsites collection
     // and finding all documents that match the logged in userId
     val camps: StateFlow<List<Campsite>> = callbackFlow {
+        val query = if(ownerId.isNotBlank()) {
+            db.collection("campsites").whereEqualTo("ownerId", ownerId)
+        }
+        else{
+            db.collection("campsites")
+        }
+        /*
         val listener = db.collection("campsites")
             .whereEqualTo("ownerId", ownerId)
             .addSnapshotListener { snapshot, error ->
@@ -48,6 +55,14 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                 }
                 trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
             }
+        awaitClose { listener.remove() }*/
+        val listener = query.addSnapshotListener{snapshot, error ->
+            if(error!=null){
+                close(error)
+                return@addSnapshotListener
+            }
+            trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+        }
         awaitClose { listener.remove() }
     }
         .catch { emit(emptyList()) }
