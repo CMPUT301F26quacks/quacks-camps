@@ -28,8 +28,9 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
     val campsite: StateFlow<Campsite?> = callbackFlow {
         //Looks for matching campId
         val listener = db.collection("campsites")
-            .whereEqualTo("campId", campId)
-            .limit(1)
+            //.whereEqualTo("campId", campId)
+            //.limit(1)
+            .document(campId)
             .addSnapshotListener { snapshot, error ->
                 //If there's an error then stop
                 if (error != null) {
@@ -37,7 +38,7 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
                     return@addSnapshotListener
                 }
                 //Otherwise, it will be ready to be collected
-                trySend(snapshot?.toObjects(Campsite::class.java)?.firstOrNull())
+                trySend(snapshot?.toObject(Campsite::class.java))
             }
         awaitClose { listener.remove() }
     }

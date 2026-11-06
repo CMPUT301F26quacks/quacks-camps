@@ -93,31 +93,6 @@ fun QuackApp() {
                 isEditing = true
             )
         }
-        /**TODO: trying to figure out the qr code logic here
-         * commented out so it doesnt affect dev
-         * composable("EntrantCampsiteDetailScreen/{campsiteId}") { backStackEntry ->
-         *             val campsiteId = backStackEntry.arguments?.getString("campsiteId")?: ""  //get campsite id
-         *             var campsite by remember {mutableStateOf<Campsite?>(null)}  //find the campsite
-         *
-         *             LaunchedEffect(campsiteId){ //look for the campsite with firebase!
-         *                 if(campsiteId.isNotBlank()){
-         *                     Firebase.firestore.collection("campsites")
-         *                         .document(campsiteId)
-         *                         .get()
-         *                         .addOnSuccessListener { document ->
-         *                             campsite=document.toObject(Campsite::class.java)
-         *                         }
-         *                 }
-         *             }
-         *             //show entrant campsite detail screen only if campsite not null aka campsite found
-         *             campsite?.let {loadedCampsite ->
-         *                 EntrantDetailedCampsite(navController, campsite = loadedCampsite)
-         *             }
-         *
-         *         }
-         */
-
-
     }
 }
 

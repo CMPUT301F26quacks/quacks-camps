@@ -47,6 +47,8 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.CampsiteOwner
+
 /**
  * UI for the home page that Campsite owners are directed to
  *
@@ -60,6 +62,7 @@ fun OwnerHome(
 ) {
     val camps by viewModel.camps.collectAsState()
     var campToDelete by remember { mutableStateOf<Campsite?>(null) }
+    var campToShowQR by remember { mutableStateOf<Campsite?>(null) }    //track which campsite's QR code to display
 
     OwnerScaffold (
         navController = navController,
@@ -107,7 +110,7 @@ fun OwnerHome(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(camps) { campsite ->
-                    CampRow(campsite, navController, onDeleteClick = { campToDelete = campsite })
+                    CampRow(campsite, navController, onDeleteClick = { campToDelete = campsite }, onQRClick = {campToShowQR = campsite})
                 }
             }
             // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
@@ -130,6 +133,32 @@ fun OwnerHome(
                     }
                 )
             }
+
+            campToShowQR?.let {camp ->
+                val qrImageUrl = CampsiteOwner.generateQRCode(camp)
+
+                AlertDialog(
+                    onDismissRequest = {campToShowQR = null},
+                    title = {Text("QR Code for ${camp.name}", fontWeight = FontWeight.Bold)},
+                    text = {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            AsyncImage(
+                                model = qrImageUrl,
+                                contentDescription = "Campsite QR Code",
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { campToShowQR = null }) {
+                            Text("Close")
+                        }
+                    }
+                )
+
+            }
         }
     }
 }
@@ -142,7 +171,8 @@ fun OwnerHome(
 fun CampRow(
     campsite: Campsite,
     navController: NavController,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onQRClick: () -> Unit
 ){
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -205,6 +235,14 @@ fun CampRow(
                     modifier = Modifier
                         .pointerHoverIcon(PointerIcon.Hand)
                         .clickable(onClick = onDeleteClick)
+                )
+                Text(
+                    text = "QR Code",
+                    fontSize = 18.sp,
+                    color=Color.White,
+                    modifier = Modifier
+                        .pointerHoverIcon(PointerIcon.Hand)
+                        .clickable(onClick = onQRClick)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
             }

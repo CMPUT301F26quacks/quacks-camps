@@ -20,7 +20,7 @@ class CampsiteOwner(
     //register campsite
     fun registerCampsite(campsite: Campsite): Campsite {
 //        campsite.owner = this.name
-        campsite.qrCode = generateQRCodeID(campsite)
+        campsite.qrCode = generateQRCode(campsite)
         ownedCampsites.add(campsite)
         return campsite
     }
@@ -66,16 +66,16 @@ class CampsiteOwner(
         ownedLotteries.remove(lottery)
         lottery.status = LotteryStatus.CLOSED
     }
-    //function to generate the unique qr code id for a campsite
-    fun generateQRCodeID(campsite: Campsite): String {
-        val campsiteID = campsite.campId
-        return "campsite/${campsiteID}"
+
+    companion object{
+        fun generateQRCode(campsite: Campsite): String {
+            //function to actually visually generate the qr code (api)
+            val campsiteID = campsite.campId
+            val stringID = "campsite/${campsiteID}"
+            return "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${Uri.encode(stringID)}"    //uri.encode used so the string can be safely passed onto the url or something
+        }
     }
 
-    fun generateQRCode(campsite: Campsite): String {
-        //function to actually visually generate the qr code (api)
-        return "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${Uri.encode(generateQRCodeID(campsite))}"    //uri.encode used so the string can be safely passed onto the url or something
-    }
 
     //helper function to generate a random sequence of 5 nums for the qr code generator
     fun getRandomList(random: Random): List<Int> = List(5) {
