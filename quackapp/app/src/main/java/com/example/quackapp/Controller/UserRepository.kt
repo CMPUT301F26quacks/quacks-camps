@@ -68,6 +68,7 @@ object UserRepository {
         name: String,
         email: String,
         phoneNumber: String,
+        notificationsEnabled: Boolean,
         onSuccess: () -> Unit,
         onFail: (Exception) -> Unit
     ) {
@@ -80,7 +81,8 @@ object UserRepository {
                 mapOf( // creates a temporary map containing a list of key-value pairs for updating
                     "name" to name,
                     "email" to email,
-                    "phoneNumber" to phoneNumber
+                    "phoneNumber" to phoneNumber,
+                    "notificationsEnabled" to notificationsEnabled
                 )
             )
 
@@ -93,6 +95,25 @@ object UserRepository {
 
     }
 
+    fun deleteUser(
+        deviceId: String,
+        onSuccess: () -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        val database = FirebaseFirestore.getInstance()
+
+        database.collection("users")
+            .document(deviceId)
+            .delete()
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener {
+                exception -> onFail(exception)
+            }
+
+    }
 
     fun userExists( //
         deviceId: String,
