@@ -157,7 +157,7 @@ fun EntrantActiveCampsites(
                         )
                     }
                 )
-                //adding a tab for past reservations - is it okay idk
+                //adding a tab for past reservations
                 Tab(
                     selected = selectedTabIndex == 2,
                     onClick = { selectedTabIndex = 2 },
@@ -198,8 +198,7 @@ fun EntrantActiveCampsites(
                     }
                 )
                 2 -> PastReservationsList(
-                    reservations = pastReservations
-
+                    reservations=pastReservations
                 )
             }
         }
