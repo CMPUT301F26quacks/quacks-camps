@@ -213,6 +213,7 @@ fun RegisterCampsiteScreen(
             label = { Text("Policy") },
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("cancelPolicyField")
         )
         Text("Amenities/Features")
         Column() {
