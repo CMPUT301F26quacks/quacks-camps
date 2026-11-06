@@ -60,7 +60,9 @@ fun OwnerHome(
 ) {
     val camps by viewModel.camps.collectAsState()
     var campToDelete by remember { mutableStateOf<Campsite?>(null) }
-    Scaffold (
+
+    OwnerScaffold (
+        navController = navController,
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
                 Row(
