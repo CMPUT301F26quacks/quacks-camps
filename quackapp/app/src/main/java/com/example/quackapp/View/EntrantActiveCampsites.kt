@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -28,6 +30,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -43,7 +47,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -60,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavController
+import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Model.AppNotification
 import com.example.quackapp.Model.CampsiteSummary
 import com.example.quackapp.Model.LotteryOffer
@@ -73,6 +80,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Entrant confirmation delivery preference for receipts.
@@ -109,14 +117,36 @@ fun EntrantActiveCampsites(
     val offers by repository.offers.collectAsState()
     val notifications by notificationRepo.notifications.collectAsState()
 
-    val activeReservations = remember(reservations) {
-        repository.getActiveReservations()
+    var deviceId by remember { mutableStateOf("default_device") }
+
+    // Sync active reservations and notifications with Cloud Firestore
+    LaunchedEffect(Unit) {
+        try {
+            DeviceIdGetter.getDeviceId(
+                onSuccess = { fid ->
+                    deviceId = fid
+                    repository.syncFromFirestore(fid)
+                    notificationRepo.syncFromFirestore(fid)
+                },
+                onFail = {
+                    repository.syncFromFirestore("default_device")
+                    notificationRepo.syncFromFirestore("default_device")
+                }
+            )
+        } catch (e: Throwable) {
+            repository.syncFromFirestore("default_device")
+            notificationRepo.syncFromFirestore("default_device")
+        }
     }
-    val pendingOffers = remember(offers) {
-        repository.getPendingOffers()
+
+    val activeReservations = remember(reservations, deviceId) {
+        repository.getActiveReservations(deviceId)
     }
-    val unreadNotifCount = remember(notifications) {
-        notificationRepo.getUnreadCount()
+    val pendingOffers = remember(offers, deviceId) {
+        repository.getPendingOffers(deviceId)
+    }
+    val unreadNotifCount = remember(notifications, deviceId) {
+        notificationRepo.getUnreadCount(deviceId)
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -240,7 +270,7 @@ fun EntrantActiveCampsites(
                             campsiteId = campsite.campsiteId,
                             chosenDate = chosenDate,
                             numGuests = numGuests,
-                            deviceId = "default_device"
+                            deviceId = deviceId
                         )
                         if (res != null) {
                             confirmedReservationForDialog = res
@@ -254,7 +284,7 @@ fun EntrantActiveCampsites(
                         if (isWin) {
                             val mockOfferId = "offer-demo-${System.currentTimeMillis() % 1000}"
                             notificationRepo.notifyLotteryWin(
-                                recipientDeviceId = "default_device",
+                                recipientDeviceId = deviceId,
                                 lotteryTitle = "Rocky Mountain Sunrise Draw",
                                 offerId = mockOfferId
                             )
@@ -263,7 +293,7 @@ fun EntrantActiveCampsites(
                             }
                         } else {
                             notificationRepo.notifyLotteryLoss(
-                                recipientDeviceId = "default_device",
+                                recipientDeviceId = deviceId,
                                 lotteryTitle = "Lake Louise Peak Season Draw"
                             )
                             coroutineScope.launch {
@@ -887,6 +917,64 @@ fun LotteryOfferCard(
                 }
             }
 
+            var showDatePickerModal by remember { mutableStateOf(false) }
+
+            // Material 3 Calendar Date Range Picker button (US 01.04.01 / Figma storyboard)
+            OutlinedButton(
+                onClick = { showDatePickerModal = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = "Pick Calendar Dates",
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (selectedDateRange.isNotBlank() && selectedDateRange !in offer.availableDateRanges)
+                        "Custom Selected: $selectedDateRange"
+                    else
+                        "Select Custom Dates via Calendar (US 01.04.01)"
+                )
+            }
+
+            if (selectedDateRange.isNotBlank() && selectedDateRange !in offer.availableDateRanges) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Selected",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Calendar choice: $selectedDateRange",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            if (showDatePickerModal) {
+                EntrantDateRangePickerDialog(
+                    onDismissRequest = { showDatePickerModal = false },
+                    onDateRangeSelected = { startMillis, endMillis ->
+                        val customRange = formatEpochToDateRange(startMillis, endMillis)
+                        ReservationRepository.getInstance().addAvailableDateRange(offer.id, customRange)
+                        selectedDateRange = customRange
+                    }
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // Number of Guests selection
@@ -1089,4 +1177,79 @@ fun NotificationsDialog(
             }
         }
     )
+}
+
+/**
+ * Interactive Date Range Picker Modal using Material 3 Compose components.
+ * Fulfills US 01.04.01 and US 01.04.02 and implements the Figma booking calendar design.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EntrantDateRangePickerDialog(
+    onDismissRequest: () -> Unit,
+    onDateRangeSelected: (startDateMillis: Long, endDateMillis: Long) -> Unit
+) {
+    val dateRangePickerState = rememberDateRangePickerState()
+
+    DatePickerDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val start = dateRangePickerState.selectedStartDateMillis
+                    val end = dateRangePickerState.selectedEndDateMillis
+                    if (start != null && end != null) {
+                        onDateRangeSelected(start, end)
+                        onDismissRequest()
+                    }
+                },
+                enabled = dateRangePickerState.selectedStartDateMillis != null &&
+                        dateRangePickerState.selectedEndDateMillis != null
+            ) {
+                Text("Confirm Dates", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text("Cancel")
+            }
+        }
+    ) {
+        DateRangePicker(
+            state = dateRangePickerState,
+            title = {
+                Text(
+                    text = "Select Stay Dates (US 01.04.01)",
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            },
+            headline = {
+                Text(
+                    text = "Click check-in and check-out dates on the calendar",
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            showModeToggle = false,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(480.dp)
+                .padding(bottom = 8.dp)
+        )
+    }
+}
+
+/**
+ * Formats start and end epoch milliseconds (UTC) into a human-readable stay range.
+ */
+fun formatEpochToDateRange(startDateMillis: Long, endDateMillis: Long): String {
+    val utcFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val startStr = utcFormat.format(Date(startDateMillis))
+    val endStr = utcFormat.format(Date(endDateMillis))
+    return "$startStr - $endStr"
 }

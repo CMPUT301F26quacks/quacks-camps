@@ -161,4 +161,38 @@ class ReservationRepositoryTest {
         assertEquals(initialActiveCount - 1, updatedActive.size)
         assertFalse(updatedActive.any { it.id == activeReservation.id })
     }
+
+    /**
+     * US 01.04.01: Entrant can add custom calendar date range and confirm reservation.
+     */
+    @Test
+    fun testAddAvailableDateRangeAndConfirm() {
+        val offer = repository.getPendingOffers().first { it.id == "offer-banff-01" }
+        val customRange = "Jul 10, 2027 - Jul 14, 2027"
+
+        repository.addAvailableDateRange(offer.id, customRange)
+        val updatedOffer = repository.getPendingOffers().first { it.id == offer.id }
+        assertTrue("Updated offer should contain custom date range", updatedOffer.availableDateRanges.contains(customRange))
+
+        val reservation = repository.confirmReservation(
+            offerId = offer.id,
+            campsiteId = offer.campsites.first().campsiteId,
+            chosenDate = customRange,
+            numGuests = 2,
+            deviceId = "test-custom-date-device"
+        )
+
+        assertNotNull("Reservation with custom calendar dates should succeed", reservation)
+        assertEquals(customRange, reservation?.dateRange)
+    }
+
+    @Test
+    fun testSyncFromFirestoreSafeFallback() {
+        var callbackInvoked = false
+        repository.syncFromFirestore("test-device") { resList ->
+            callbackInvoked = true
+            assertNotNull(resList)
+        }
+        assertTrue("Firestore sync callback should complete gracefully in test mode", callbackInvoked)
+    }
 }

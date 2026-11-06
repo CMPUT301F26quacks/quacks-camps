@@ -170,4 +170,14 @@ class NotificationRepositoryTest {
         assertEquals(1, updatedNotifs.size)
         assertEquals(NotificationType.LOTTERY_WIN, updatedNotifs.first().type)
     }
+
+    @Test
+    fun testSyncFromFirestoreSafeFallback() {
+        var callbackInvoked = false
+        notificationRepo.syncFromFirestore("test_entrant_device") { list ->
+            callbackInvoked = true
+            assertNotNull(list)
+        }
+        assertTrue("Notification sync callback should invoke gracefully", callbackInvoked)
+    }
 }
