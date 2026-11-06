@@ -51,3 +51,13 @@ fun EntrantHome(
         }
     }
 }
+
+/**
+ * Handle scanned QR codes and navigate to the corresponding campsite
+ * @param scannedCode: link of the scanned QR Code
+ * @param navController: allows you to move between screens using navigation bar
+ */
+fun scannedQRCode(scannedCode: String, navController: NavController){
+    val cleanedCode = scannedCode.trim()
+
+}
