@@ -72,7 +72,12 @@ fun QuackApp() {
         ) {
             ListCampInLotteryScreen(navController)
         }
-
+        composable(
+            route = "updateLottery/{lotteryId}",
+            arguments = listOf(navArgument("lotteryId") { type = NavType.StringType })
+        ) {
+            ListCampInLotteryScreen(navController)
+        }
 
 
         composable("CreateEntrantProfile") {

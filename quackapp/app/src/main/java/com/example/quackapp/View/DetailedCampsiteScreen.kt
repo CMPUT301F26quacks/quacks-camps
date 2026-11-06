@@ -226,6 +226,11 @@ fun DetailedCampsiteScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Lottery Details", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Button(
+                        onClick = {navController.navigate("updateLottery/${viewModel.lotteryId}")}
+                    ) {
+                        Text("Update details")
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
 
                     val currentLottery = viewModel.lottery
