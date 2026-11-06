@@ -142,6 +142,18 @@ class ReservationRepository private constructor() {
     }
 
     /**
+    /**
+     * Retrieves past (completed, cancelled, or declined) reservations.
+     * US 01.06.02: As an entrant, I want to view a list of past reservations.
+     */
+    fun getPastReservations(deviceId: String = ""): List<Reservation> {
+        return _reservations.value.filter { res ->
+            (res.status == ReservationStatus.CANCELLED || res.status == ReservationStatus.DECLINED || res.status == ReservationStatus.COMPLETED) &&
+                    (deviceId.isBlank() || res.entrantDeviceId == deviceId || res.entrantDeviceId == "default_device")
+        }
+    }
+
+    /**
      * Dynamically registers an available date range for a lottery offer (e.g., when selected via calendar).
      * US 01.04.01: Entrant date selection on lottery win.
      */

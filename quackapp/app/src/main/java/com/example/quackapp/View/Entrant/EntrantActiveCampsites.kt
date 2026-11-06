@@ -1,4 +1,4 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Entrant
 
 import android.content.Intent
 import android.widget.Toast
@@ -82,6 +82,10 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+import com.example.quackapp.View.DateRangePickerField
+import com.example.quackapp.View.toDisplayDate
+import com.example.quackapp.View.todayUtcMillis
+
 /**
  * Entrant confirmation delivery preference for receipts.
  * US 01.05.02: Receive reservation by notification or downloadable CSV.
@@ -103,6 +107,7 @@ enum class ConfirmationDeliveryPreference(val label: String) {
  * - US 01.05.01: Receive reservation confirmation.
  * - US 01.05.02: Receive reservation by notification or downloadable CSV.
  * - US 01.06.01: View list of active reservations.
+ * - US 01.06.02: View list of past reservations.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,6 +153,11 @@ fun EntrantActiveCampsites(
     val unreadNotifCount = remember(notifications, deviceId) {
         notificationRepo.getUnreadCount(deviceId)
     }
+    //added past reservations
+    val pastReservations = remember(reservations){
+        repository.getPastReservations()
+    }
+
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -169,7 +179,11 @@ fun EntrantActiveCampsites(
                 title = {
                     Column {
                         Text("QuackCamps", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Text("Entrant Portal", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                        Text(
+                            "Entrant Portal",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
                     }
                 },
                 actions = {
@@ -227,6 +241,17 @@ fun EntrantActiveCampsites(
                         )
                     }
                 )
+                //adding a tab for past reservations
+                Tab(
+                    selected = selectedTabIndex == 2,
+                    onClick = { selectedTabIndex = 2 },
+                    text = {
+                        Text(
+                            "Past Reservations (${pastReservations.size})",
+                            fontWeight = if (selectedTabIndex == 2) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
             }
 
             when (selectedTabIndex) {
@@ -260,6 +285,7 @@ fun EntrantActiveCampsites(
                     },
                     onGoToLotteryWins = { selectedTabIndex = 1 }
                 )
+
                 1 -> LotteryOffersList(
                     offers = pendingOffers,
                     notifications = notifications,
@@ -301,6 +327,9 @@ fun EntrantActiveCampsites(
                             }
                         }
                     }
+                )
+                2 -> PastReservationsList(
+                    reservations=pastReservations
                 )
             }
         }
@@ -917,29 +946,28 @@ fun LotteryOfferCard(
                 }
             }
 
-            var showDatePickerModal by remember { mutableStateOf(false) }
+            var customStartMillis by remember { mutableStateOf<Long?>(null) }
+            var customEndMillis by remember { mutableStateOf<Long?>(null) }
 
-            // Material 3 Calendar Date Range Picker button (US 01.04.01 / Figma storyboard)
-            OutlinedButton(
-                onClick = { showDatePickerModal = true },
+            // Reusing shared DateRangePickerField (US 01.04.01 / Figma calendar booking)
+            DateRangePickerField(
+                label = "Pick Custom Dates (US 01.04.01)",
+                startMillis = customStartMillis,
+                endMillis = customEndMillis,
+                minDateMillis = todayUtcMillis(),
+                onRangeSelected = { start, end ->
+                    customStartMillis = start
+                    customEndMillis = end
+                    if (start != null && end != null) {
+                        val formattedRange = "${start.toDisplayDate()} – ${end.toDisplayDate()}"
+                        ReservationRepository.getInstance().addAvailableDateRange(offer.id, formattedRange)
+                        selectedDateRange = formattedRange
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Pick Calendar Dates",
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (selectedDateRange.isNotBlank() && selectedDateRange !in offer.availableDateRanges)
-                        "Custom Selected: $selectedDateRange"
-                    else
-                        "Select Custom Dates via Calendar (US 01.04.01)"
-                )
-            }
+                    .padding(vertical = 4.dp)
+            )
 
             if (selectedDateRange.isNotBlank() && selectedDateRange !in offer.availableDateRanges) {
                 Row(
@@ -962,17 +990,6 @@ fun LotteryOfferCard(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-            }
-
-            if (showDatePickerModal) {
-                EntrantDateRangePickerDialog(
-                    onDismissRequest = { showDatePickerModal = false },
-                    onDateRangeSelected = { startMillis, endMillis ->
-                        val customRange = formatEpochToDateRange(startMillis, endMillis)
-                        ReservationRepository.getInstance().addAvailableDateRange(offer.id, customRange)
-                        selectedDateRange = customRange
-                    }
-                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -1180,76 +1197,111 @@ fun NotificationsDialog(
 }
 
 /**
- * Interactive Date Range Picker Modal using Material 3 Compose components.
- * Fulfills US 01.04.01 and US 01.04.02 and implements the Figma booking calendar design.
+ * UI Component displaying the list of past reservations (US 01.06.02)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EntrantDateRangePickerDialog(
-    onDismissRequest: () -> Unit,
-    onDateRangeSelected: (startDateMillis: Long, endDateMillis: Long) -> Unit
+fun PastReservationsList(
+    reservations: List<Reservation>
 ) {
-    val dateRangePickerState = rememberDateRangePickerState()
-
-    DatePickerDialog(
-        onDismissRequest = onDismissRequest,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val start = dateRangePickerState.selectedStartDateMillis
-                    val end = dateRangePickerState.selectedEndDateMillis
-                    if (start != null && end != null) {
-                        onDateRangeSelected(start, end)
-                        onDismissRequest()
-                    }
-                },
-                enabled = dateRangePickerState.selectedStartDateMillis != null &&
-                        dateRangePickerState.selectedEndDateMillis != null
-            ) {
-                Text("Confirm Dates", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismissRequest) {
-                Text("Cancel")
-            }
-        }
-    ) {
-        DateRangePicker(
-            state = dateRangePickerState,
-            title = {
+    if (reservations.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Select Stay Dates (US 01.04.01)",
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
+                    "No Past Reservations",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            },
-            headline = {
-                Text(
-                    text = "Click check-in and check-out dates on the calendar",
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
-                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            },
-            showModeToggle = false,
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Past, declined, or cancelled reservations will appear here.",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+    } else {
+        LazyColumn(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(480.dp)
-                .padding(bottom = 8.dp)
-        )
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(reservations, key = { it.id }) { res ->
+                PastReservationCard(reservation = res)
+            }
+        }
     }
 }
 
 /**
- * Formats start and end epoch milliseconds (UTC) into a human-readable stay range.
+ * Card representing an individual past reservation.
  */
-fun formatEpochToDateRange(startDateMillis: Long, endDateMillis: Long): String {
-    val utcFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
+@Composable
+fun PastReservationCard(reservation: Reservation) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = reservation.campsiteName,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFF2E7D32),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = reservation.status.name,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            if (reservation.campsiteLocation.isNotBlank()) {
+                Text(
+                    text = reservation.campsiteLocation,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(text = "Dates: ${reservation.dateRange}", fontWeight = FontWeight.Medium)
+            Text(text = "Guests: ${reservation.numGuests}", fontSize = 14.sp)
+            Text(
+                text = "Total: $${String.format(Locale.US, "%.2f", reservation.totalPrice)} CAD",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Booking ID: #${reservation.id.take(8)}",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.outline
+            )
+        }
     }
-    val startStr = utcFormat.format(Date(startDateMillis))
-    val endStr = utcFormat.format(Date(endDateMillis))
-    return "$startStr - $endStr"
 }

@@ -2,6 +2,7 @@ package com.example.quackapp.Controller
 
 import android.util.Log
 import com.example.quackapp.Model.User
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 
@@ -44,13 +45,74 @@ object UserRepository {
     }
 
     fun createUser(
-        deviceId: String
+        user: User,
+        onSuccess: () -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        val database = FirebaseFirestore.getInstance()
+
+        database.collection("users")
+            .document(user.deviceId)
+            .set(user)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener {
+                exception -> onFail(exception)
+            }
+    }
+
+    fun updateUser(
+        deviceId: String,
+        name: String,
+        email: String,
+        phoneNumber: String,
+        notificationsEnabled: Boolean,
+        onSuccess: () -> Unit,
+        onFail: (Exception) -> Unit
     ) {
 
         val database = FirebaseFirestore.getInstance()
 
         database.collection("users")
             .document(deviceId)
+            .update(
+                mapOf( // creates a temporary map containing a list of key-value pairs for updating
+                    "name" to name,
+                    "email" to email,
+                    "phoneNumber" to phoneNumber,
+                    "notificationsEnabled" to notificationsEnabled
+                )
+            )
+
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { exception ->
+                onFail(exception)
+            }
+
+    }
+
+    fun deleteUser(
+        deviceId: String,
+        onSuccess: () -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        val database = FirebaseFirestore.getInstance()
+
+        database.collection("users")
+            .document(deviceId)
+            .delete()
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener {
+                exception -> onFail(exception)
+            }
+
     }
 
     fun userExists( //

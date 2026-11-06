@@ -9,9 +9,10 @@ class CampsiteOwner(
     email: String = "",
     phoneNumber: String = "",
     notificationsEnabled: Boolean = true,
+    roles: List<String>,
     var ownedCampsites: MutableList<Campsite> = mutableListOf(),
     var ownedLotteries: MutableList<Lottery> = mutableListOf()
-): User(deviceId, name, email, phoneNumber, notificationsEnabled){
+): User(deviceId, name, email, phoneNumber, notificationsEnabled, roles){
     //notification preference
     fun toggleNotificationPreference() {
         notificationsEnabled = !notificationsEnabled
@@ -67,9 +68,8 @@ class CampsiteOwner(
     }
     //function to generate the unique qr code id for a campsite
     fun generateQRCodeID(campsite: Campsite): String {
-        val campsiteName = campsite.name
-        val uniqueID = getRandomList(Random)
-        return "campsite/${campsiteName}_${uniqueID.joinToString("")}"
+        val campsiteID = campsite.campId
+        return "campsite/${campsiteID}"
     }
 
     fun generateQRCode(campsite: Campsite): String {

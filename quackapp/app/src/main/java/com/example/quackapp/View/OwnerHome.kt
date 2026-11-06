@@ -16,15 +16,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,13 +47,19 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
-
+/**
+ * UI for the home page that Campsite owners are directed to
+ *
+ * Uses [navController] to navigate to other screens
+ * Uses [OwnerHomeController] to deal with user input
+ */
 @Composable
 fun OwnerHome(
     navController: NavController,
     viewModel: OwnerHomeController = viewModel()
 ) {
     val camps by viewModel.camps.collectAsState()
+    var campToDelete by remember { mutableStateOf<Campsite?>(null) }
     Scaffold (
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
@@ -72,20 +83,6 @@ fun OwnerHome(
                 }
             }
 
-        },
-        bottomBar = {
-            Surface(modifier = Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = { navController.popBackStack() },
-                    colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-                    modifier = Modifier
-//                        .navigationBarsPadding()
-                        .padding(8.dp)
-                        .testTag("backButton") // for testing
-                ) {
-                    Text("Back")
-                }
-            }
         }
     ) { innerPadding ->
         if (camps.isEmpty()) {
@@ -97,7 +94,8 @@ fun OwnerHome(
             ) {
                 Text("No campsites registered")
             }
-        } else {
+        }
+        else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -107,16 +105,43 @@ fun OwnerHome(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(camps) { campsite ->
-                    CampRow(campsite, navController)
+                    CampRow(campsite, navController, onDeleteClick = { campToDelete = campsite })
                 }
+            }
+            // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
+            campToDelete?.let { camp ->
+                AlertDialog(
+                    onDismissRequest = { campToDelete = null },
+                    title = { Text("Delete campsite?") },
+                    text = { Text("\"${camp.name}\" will be permanently deleted. This can't be undone.") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                viewModel.deleteCampsite(camp)
+                                campToDelete = null
+                            },
+                            modifier = Modifier.testTag("confirmDelete")
+                        ) { Text("Delete", color = Color.Red) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { campToDelete = null }) { Text("Cancel") }
+                    }
+                )
             }
         }
     }
 }
-// TODO: Make a function to display each campsite as a row according to the UI mockup
 
+/**
+ * UI for each [Campsite] element the user owns
+ *
+ */
 @Composable
-fun CampRow(campsite: Campsite, navController: NavController){
+fun CampRow(
+    campsite: Campsite,
+    navController: NavController,
+    onDeleteClick: () -> Unit
+){
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -140,10 +165,10 @@ fun CampRow(campsite: Campsite, navController: NavController){
         else{
             Box(contentAlignment = Alignment.Center,
                 modifier = Modifier
-                .height(80.dp)
-                .width(100.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.White)
+                    .height(80.dp)
+                    .width(100.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White)
             ){
                 Text("No Image", textAlign = TextAlign.Center)
             }
@@ -169,7 +194,7 @@ fun CampRow(campsite: Campsite, navController: NavController){
                     text = "Details",
                     fontSize = 18.sp,
                     color = Color.White,
-                    modifier = Modifier.clickable(onClick = {navController.navigate("CampsiteDetails")})
+                    modifier = Modifier.clickable(onClick = {navController.navigate("CampsiteDetails/${campsite.campId}")})
                 )
                 Text(
                     text = "Delete",
@@ -177,9 +202,9 @@ fun CampRow(campsite: Campsite, navController: NavController){
                     color = Color.White,
                     modifier = Modifier
                         .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable(onClick = {})
+                        .clickable(onClick = onDeleteClick)
                 )
-                Spacer(modifier = Modifier.width(18.dp))
+                Spacer(modifier = Modifier.width(12.dp))
             }
         }
 

@@ -18,7 +18,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
 
-
+/**
+ * Controller for the "Edit Campsite" screen.
+ *
+ * Holds the form state, validates it, and saves any changes to a [Campsite] to Firestore.
+ * If the user picked a promo image, it is uploaded to Firebase Storage first and
+ * its download URL is stored on the [Campsite] document.
+ *
+ * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ */
 class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
     private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
@@ -48,7 +56,12 @@ class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
     val status: StateFlow<SaveStatus> = _status
-
+    /**
+     * Initialization
+     *
+     * Takes all data from the given campId from Firestore and fill
+     * each state variable with its value
+     */
     init {
         viewModelScope.launch {
             try {
@@ -76,10 +89,26 @@ class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
         }
 
     }
-
+    /**
+     * Validates state variable and alters [Campsite] object in the Firestore.
+     * [Campsite] objects may have images which are stored into Firebase Storage
+     * and can be linked to their [Campsite] object via unique ID
+     */
     fun saveChanges() {
-        if (name.isBlank() || location.isBlank() || capacity.toInt() <= 0 || price.toInt() <= 0) {
-            _status.value = SaveStatus.Error("Fill in all fields and capacity and price must be non-zero")
+        if (name.isBlank()) {
+            _status.value = SaveStatus.Error("Campsite must have a name")
+            return
+        }
+        else if (location.isBlank()) {
+            _status.value = SaveStatus.Error("Campsite must have a location")
+            return
+        }
+        else if (price.toInt() <= 0) {
+            _status.value = SaveStatus.Error("Price must be non-zero")
+            return
+        }
+        else if (capacity.toInt() <= 0) {
+            _status.value = SaveStatus.Error("Capacity must be non-zero")
             return
         }
 

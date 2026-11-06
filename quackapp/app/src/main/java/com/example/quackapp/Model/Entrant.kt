@@ -43,10 +43,17 @@ class Entrant(
     }
 
     /**
+     * Retrieves past reservations for this entrant.
+     * US 01.06.02: As an entrant, I want to view a list of past reservations.
+     */
+    fun getPastReservations(repository: ReservationRepository = ReservationRepository.getInstance()): List<Reservation> {
+        return repository.getPastReservations(this.deviceId)
+    }
+
+    /**
      * Allows users to opt in or out of receiving notifications (on by default).
      * US 01.10.01: As an entrant, I want to opt out of receiving notifications.
      */
-
     fun toggleNotificationPreference() {
         notificationsEnabled = !notificationsEnabled
     }

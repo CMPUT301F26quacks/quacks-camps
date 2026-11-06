@@ -1,10 +1,11 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Entrant
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import com.example.quackapp.Model.NavBarLists
+import com.example.quackapp.View.NavBar
 
 /**
  * Provides Navigation Bar to all Entrant Screens that use it
@@ -26,6 +27,7 @@ fun EntrantScaffold(
     Scaffold(
         topBar = topBar,
         snackbarHost = snackbarHost,
+        //Bottom Navigation Bar for Entrant
         bottomBar = { NavBar(navController, NavBarLists.entrant) },
         content = content
     )
