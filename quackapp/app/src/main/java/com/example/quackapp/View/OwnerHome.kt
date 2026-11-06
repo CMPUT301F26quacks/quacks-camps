@@ -216,19 +216,19 @@ fun CampRow(
                 modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "Edit",
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     color = Color.White,
                     modifier = Modifier.clickable(onClick = {navController.navigate("EditCampsite/${campsite.campId}")})
                 )
                 Text(
                     text = "Details",
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     color = Color.White,
                     modifier = Modifier.clickable(onClick = {navController.navigate("CampsiteDetails/${campsite.campId}")})
                 )
                 Text(
                     text = "Delete",
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     color = Color.White,
                     modifier = Modifier
                         .pointerHoverIcon(PointerIcon.Hand)
@@ -236,7 +236,7 @@ fun CampRow(
                 )
                 Text(
                     text = "QR Code",
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     color=Color.White,
                     modifier = Modifier
                         .pointerHoverIcon(PointerIcon.Hand)
