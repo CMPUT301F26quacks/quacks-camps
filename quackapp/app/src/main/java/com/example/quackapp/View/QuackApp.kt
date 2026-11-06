@@ -1,13 +1,6 @@
 package com.example.quackapp.View
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,6 +13,8 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.example.quackapp.Controller.DetailedCampsiteController
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
+import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
+import com.example.quackapp.View.Entrant.EntrantHome
 
 /**
  * Sets up navigation between screens for whole app
@@ -53,6 +48,8 @@ fun QuackApp() {
         ) {
             OwnerHome(navController)
         }
+        composable("OwnerHome") { OwnerHome(navController) }
+
         composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
         composable(
             route = "CampsiteDetails/{campsiteId}",
@@ -73,8 +70,6 @@ fun QuackApp() {
             ListCampInLotteryScreen(navController)
         }
 
-
-
         composable("CreateEntrantProfile") {
             UserProfile(
                 navController = navController,
@@ -93,6 +88,14 @@ fun QuackApp() {
                 isEditing = true
             )
         }
+        composable("OwnerProfile") {
+            UserProfile(
+                navController = navController,
+                isEditing = true
+            )
+        }
+        composable("OwnerReservationHistory") {
+            OwnerReservationHistoryScreen(navController = navController)
+        }
     }
 }
-
