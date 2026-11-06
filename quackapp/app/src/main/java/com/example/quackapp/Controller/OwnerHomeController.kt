@@ -40,7 +40,7 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     // and finding all documents that match the logged in userId
     val camps: StateFlow<List<Campsite>> = callbackFlow {
         val listener = db.collection("campsites")
-            .whereEqualTo("ownerID", ownerId)
+            .whereEqualTo("ownerId", ownerId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)

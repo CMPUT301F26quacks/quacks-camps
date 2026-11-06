@@ -47,27 +47,30 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.SaveStatus
+import com.example.quackapp.Model.Lottery
 import okhttp3.internal.wait
-
+/**
+ * Screen for listing [Campsite] into a [Lottery]
+ *
+ * @param navController the number of winners allowed for the lottery
+ * @param viewModel the number of people allowed in the waitlist, or null if no limit
+ */
 @Composable
 fun ListCampInLotteryScreen(
     navController: NavController,
     viewModel: ListCampInLotteryController = viewModel()
     ) {
-    var regsitrationStart by remember { mutableStateOf("") }
-    var regsitrationEnd by remember { mutableStateOf("") }
-    var bookingStart by remember { mutableStateOf("") }
-    var bookingEnd by remember { mutableStateOf("") }
+
     var numWinners by remember { mutableStateOf("") }
     var waitlistCap by remember { mutableStateOf("") }
     val status by viewModel.status.collectAsState()
 
     LaunchedEffect(status) {
         if (status is SaveStatus.Success){
-            regsitrationStart = ""
-            regsitrationEnd = ""
-            bookingStart = ""
-            bookingEnd = ""
+            viewModel.registrationStart = null
+            viewModel.registrationEnd = null
+            viewModel.bookingStart = null
+            viewModel.bookingEnd = null
             numWinners = ""
             waitlistCap = ""
             navController.popBackStack()
@@ -108,24 +111,15 @@ fun ListCampInLotteryScreen(
                     append("*")
                 }
             }, fontSize = 24.sp)
-            Row() {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Start date")
-                    OutlinedTextField(
-                        value = regsitrationStart,
-                        onValueChange = { regsitrationStart = it },
-                        placeholder = { Text("DD-MM-YYYY") }
-                    )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("End date")
-                    OutlinedTextField(
-                        value = regsitrationEnd,
-                        onValueChange = { regsitrationEnd = it },
-                        placeholder = { Text("DD-MM-YYYY") }
-                    )
-                }
-            }
+
+            DateRangePickerField(
+                label = "Registration Period",
+                startMillis = viewModel.registrationStart,
+                endMillis = viewModel.registrationEnd,
+                onRangeSelected = { s, e -> viewModel.registrationStart = s; viewModel.registrationEnd = e },
+                minDateMillis = todayUtcMillis()
+            )
+
             Spacer(modifier = Modifier.height(10.dp))
             Text(text = buildAnnotatedString {
                 append("Booking Period ")
@@ -133,24 +127,15 @@ fun ListCampInLotteryScreen(
                     append("*")
                 }
             }, fontSize = 24.sp)
-            Row() {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Start date")
-                    OutlinedTextField(
-                        value = bookingStart,
-                        onValueChange = { bookingStart = it },
-                        placeholder = { Text("DD-MM-YYYY") }
-                    )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("End date")
-                    OutlinedTextField(
-                        value = bookingEnd,
-                        onValueChange = { bookingEnd = it },
-                        placeholder = { Text("DD-MM-YYYY") }
-                    )
-                }
-            }
+
+            DateRangePickerField(
+                label = "Booking dates",
+                startMillis = viewModel.bookingStart,
+                endMillis = viewModel.bookingEnd,
+                onRangeSelected = { s, e -> viewModel.bookingStart = s; viewModel.bookingEnd = e },
+                minDateMillis = viewModel.registrationEnd ?: todayUtcMillis()
+            )
+
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = buildAnnotatedString {
@@ -200,10 +185,6 @@ fun ListCampInLotteryScreen(
                         cap = waitlistCap.toInt()
                     }
                     viewModel.addLottery(
-                        registrationStart =  regsitrationStart,
-                        registrationEnd = regsitrationEnd,
-                        bookingStart = bookingStart,
-                        bookingEnd = bookingEnd,
                         numWinners = numWinners.toInt(),
                         waitlistCap = cap,
                     )
