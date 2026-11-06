@@ -11,7 +11,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
-//TODO Add Comments + Tests
+//TODO Add Tests
+
+/**
+ * Display a range slider from a min to a max value
+ *
+ * @param label Text above the range slider
+ * @param range the currently selected range from min to max
+ * @param onRangeChange Called while slider is being adjusted by entrant
+ * @param valueRange the full value range from min to max
+ * @param steps the number of increments on the slider
+ * @param modifier adds modifiers if there are any
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ValueRangeFilter(
