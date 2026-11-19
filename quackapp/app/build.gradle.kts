@@ -3,8 +3,12 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.dokka") version "2.2.0"
     id("com.google.gms.google-services")
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
-
+secrets {
+    propertiesFileName = "secrets.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
+}
 android {
     namespace = "com.example.quackapp"
     compileSdk {
@@ -68,4 +72,5 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+    implementation("com.google.maps.android:maps-compose:8.4.0")
 }

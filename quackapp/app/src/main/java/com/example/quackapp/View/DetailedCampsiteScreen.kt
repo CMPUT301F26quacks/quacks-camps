@@ -41,6 +41,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+
 /**
  * Owner-side UI for viewing the details of their campsite
  */
@@ -153,7 +156,18 @@ fun DetailedCampsiteScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-
+            MapPreviewCard(
+                location = LatLng(53.55014,-113.46871),
+                title = "Here",
+                onMapClick = {
+                    // Example action: Open the location in the Google Maps app
+//                    val uri = Uri.parse("geo:${eventLocation.latitude},${eventLocation.longitude}?q=${Uri.encode(locationName)}")
+//                    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+//                        setPackage("com.google.android.apps.maps")
+//                    }
+//                    context.startActivity(intent)
+                }
+            )
 
             Text(text = "Cancellation Policy:", fontSize = 30.sp)
             if (viewModel.cancellationPolicy == ""){
