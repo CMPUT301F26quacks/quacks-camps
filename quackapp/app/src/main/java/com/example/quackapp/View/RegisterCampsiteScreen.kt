@@ -97,6 +97,7 @@ fun RegisterCampsiteScreen(
             viewModel.resetForm()
             priceAsString = ""
             capacityAsString = ""
+            navController.popBackStack()
         }
     }
 

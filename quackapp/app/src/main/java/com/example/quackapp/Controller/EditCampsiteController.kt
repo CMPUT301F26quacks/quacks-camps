@@ -76,6 +76,9 @@ class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
                     rules = campsite.rules
                     cancellationPolicy = campsite.cancellationPolicy
                     selectedTags = campsite.tags.toSet()
+                    for (tag in selectedTags){
+                        tags = tags + tag
+                    }
                 } else {
                     _status.value = SaveStatus.Error("Campsite not found")
                 }

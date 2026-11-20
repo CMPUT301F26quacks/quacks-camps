@@ -27,11 +27,27 @@ import androidx.compose.ui.graphics.Color
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.ui.graphics.graphicsLayer
 
+/**
+ * Shared screen for creating and editing a user profile.
+ *
+ * During registration, the screen collects personal information and creates a
+ * Firestore profile for the selected role. In edit mode, it loads the existing
+ * profile and allows the user to update name, email, phone number, and notification
+ * preference. Users can also view the app policy and delete their profile.
+ *
+ * Supports:
+ * US 01.07.03 - Update personal information.
+ * US 01.08.01 - Delete profile.
+ * US 01.10.01 - Opt out of notifications.
+ * US 01.11.01 - View app policy and guidelines.
+ *
+ * @param navController controls navigation after profile actions.
+ * @param selectedRole role assigned when registering a new user.
+ * @param isEditing true when editing an existing profile instead of creating one.
+ */
 @Composable
 fun UserProfile(
     navController: NavController,
