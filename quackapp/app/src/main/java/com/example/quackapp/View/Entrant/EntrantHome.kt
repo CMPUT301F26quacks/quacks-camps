@@ -30,6 +30,7 @@ fun EntrantHome(
 ) {
 
     val campsites by controller.camps.collectAsState()
+    val lotteries by controller.lotteries.collectAsState()
 
     //EntrantScaffold provides the Entrant Navigation Bar
     EntrantScaffold(navController) { innerPadding ->
@@ -42,6 +43,7 @@ fun EntrantHome(
             //Takes all the campsites from the firebase and inputs them into EntrantHomeList
             EntrantHomeList(
                 campsites = campsites,
+                lotteries = lotteries,
                 //When a campsite card is clicked, send them to the campsite details screen
                 campsiteCardClicked = { campsite ->
                     if (campsite.campId.isNotBlank()) {

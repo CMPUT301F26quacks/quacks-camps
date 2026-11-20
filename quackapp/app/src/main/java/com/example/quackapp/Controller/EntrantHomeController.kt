@@ -3,6 +3,7 @@ package com.example.quackapp.Controller
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.Lottery
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
@@ -23,6 +24,21 @@ class EntrantHomeController: ViewModel(){
                     return@addSnapshotListener
                 }
                 trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+            }
+        awaitClose { listener.remove() }
+    }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
+    val lotteries: StateFlow<List<Lottery>> = callbackFlow {
+        val listener = db.collection("lotteries")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                trySend(snapshot?.toObjects(Lottery::class.java) ?: emptyList())
             }
         awaitClose { listener.remove() }
     }

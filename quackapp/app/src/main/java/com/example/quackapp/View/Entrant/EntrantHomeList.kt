@@ -28,8 +28,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.Lottery
 import com.example.quackapp.View.SearchBar
 import com.example.quackapp.View.ValueRangeFilter
+import com.google.firebase.Timestamp
 
 //TODO Add Tests
 
@@ -46,6 +48,7 @@ import com.example.quackapp.View.ValueRangeFilter
 @Composable
 fun EntrantHomeList(
     campsites: List<Campsite>,
+    lotteries: List<Lottery>,
     campsiteCardClicked: (Campsite) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -55,6 +58,17 @@ fun EntrantHomeList(
     val maxCapacity = remember(campsites) { campsites.maxOfOrNull { it.capacity } ?: 0 }
     var capacityRange by remember(minCapacity, maxCapacity) {
         mutableStateOf(minCapacity.toFloat()..maxCapacity.toFloat())
+    }
+
+    //Lottery Dates Range Bar
+    val minDate: Long = remember(lotteries) {
+        lotteries.mapNotNull { it.registrationPeriodStart?.seconds }.minOrNull() ?: 0L
+    }
+    val maxDate: Long = remember(lotteries) {
+        lotteries.mapNotNull { it.registrationPeriodEnd?.seconds }.maxOrNull() ?: 0L
+    }
+    var dateRange by remember(minDate, maxDate) {
+        mutableStateOf(minDate.toFloat()..maxDate.toFloat())
     }
 
     //Filter Button
@@ -150,6 +164,22 @@ fun EntrantHomeList(
             }
 
         }
+
+        // IN PROGRESS
+        if (maxDate > minDate && filterVisible) {
+            item(key = "dateRange") {
+                //Filter by Lottery Date
+                ValueRangeFilter(
+                    label = "Lottery Dates",
+                    range = dateRange,
+                    onRangeChange = { dateRange = it },
+                    valueRange = minDate.toFloat()..maxDate.toFloat(),
+                    steps = maxDate - minDate - 1
+                )
+            }
+        }
+
+
         if (maxCapacity > minCapacity && filterVisible) {
             item(key = "capacityRange") {
                 //Filter by Campsite Capacity
@@ -162,6 +192,7 @@ fun EntrantHomeList(
                 )
             }
         }
+
         item {
             Text("Showing ${resultingCampsites.size} of ${campsites.size} campsites.")
         }
