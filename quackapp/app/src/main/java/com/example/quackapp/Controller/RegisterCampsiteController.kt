@@ -11,6 +11,7 @@ import com.google.firebase.storage.storage
 import android.net.Uri
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.installations.FirebaseInstallations
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,9 +43,10 @@ sealed interface SaveStatus {
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  *
  */
-class RegisterCampsiteController: ViewModel(){
+class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(){
     // Firestore database instance
     private val db = Firebase.firestore
+    private val ownerId: String = checkNotNull(savedStateHandle["ownerId"])
 
     // Reference to the campsites collection in Firestore
     private val campsitesRef = db.collection("campsites")
@@ -126,7 +128,6 @@ class RegisterCampsiteController: ViewModel(){
                 val docRef = campsitesRef.document()
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
-                val ownerId = FirebaseInstallations.getInstance().id.await()
 
                 // Upload the image if one was selected
                 var url = ""

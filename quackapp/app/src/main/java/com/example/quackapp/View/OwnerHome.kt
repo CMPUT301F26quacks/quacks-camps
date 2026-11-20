@@ -82,7 +82,7 @@ fun OwnerHome(
                     FloatingActionButton(
                         containerColor = Color(0xFFFF9800),
                         contentColor = Color.White,
-                        onClick = { navController.navigate("RegisterCampsite") },
+                        onClick = { navController.navigate("RegisterCampsite/${viewModel.ownerId}") },
                         modifier = Modifier
                             .pointerHoverIcon(PointerIcon.Hand)
                             .testTag("addCampsiteButton")
@@ -239,6 +239,7 @@ fun CampRow(
                     modifier = Modifier
                         .pointerHoverIcon(PointerIcon.Hand)
                         .clickable(onClick = onDeleteClick)
+                        .testTag("delete${campsite.name}")
                 )
                 Text(
                     text = "QR Code",

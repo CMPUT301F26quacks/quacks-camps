@@ -23,6 +23,9 @@ import org.junit.Rule
 import org.junit.Test
 
 class OwnerHomeTest {
+    // NOTE
+    // tests in this file don't interact with the database.
+    // We only test the creation and deletion of UI elements using mocks
     @get:Rule
     val composeRule = createComposeRule()
 
