@@ -1,5 +1,6 @@
 package com.example.quackapp
 
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -18,9 +19,11 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.testing.TestNavHostController
+import com.example.quackapp.Controller.DetailedCampsiteController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.RegisterCampsiteController
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.View.DetailedCampsiteScreen
 import com.example.quackapp.View.OwnerHome
 import com.example.quackapp.View.RegisterCampsiteScreen
 import okhttp3.internal.wait
@@ -32,6 +35,16 @@ class RegisterCampTest {
     val composeRule = createComposeRule()
     private lateinit var navController: TestNavHostController
     private val ownerId = "testOwner"
+
+    private fun waitFor(text: String){
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule
+                .onAllNodesWithText(text)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+    }
+
     private fun launch() {
         val homeVM = OwnerHomeController(SavedStateHandle(mapOf("ownerId" to ownerId)))
         val registerVM = RegisterCampsiteController(SavedStateHandle(mapOf("ownerId" to ownerId)))
@@ -42,7 +55,13 @@ class RegisterCampTest {
             NavHost(navController, startDestination = "OwnerHome") {
                 composable("OwnerHome") { OwnerHome(navController, homeVM) }
                 composable("RegisterCampsite/{id}") { RegisterCampsiteScreen(navController, registerVM) }
-            }
+                composable("CampsiteDetails/{id}") { entry ->
+                    val id = entry.arguments?.getString("id").orEmpty()
+                    val detailVM = remember(id) {
+                        DetailedCampsiteController(SavedStateHandle(mapOf("campsiteId" to id)))
+                    }
+                    DetailedCampsiteScreen(navController, detailVM)
+                }            }
         }
     }
 
@@ -77,9 +96,7 @@ class RegisterCampTest {
     @Test
     fun tryNonNumericPriceAndCapacityFieldsAndDelete(){
         launch()
-        composeRule
-            .onNodeWithText("No campsites registered")
-            .assertExists()
+        waitFor("No campsites registered")
 
         composeRule
             .onNodeWithTag("addCampsiteButton")
@@ -135,13 +152,8 @@ class RegisterCampTest {
             .performScrollTo()
             .performClick()
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule
-                .onAllNodesWithText("Campsites")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+        waitFor("Campsites")
 
-        }
         composeRule
             .onNodeWithText("Kool Kids Camp")
             .assertExists()
@@ -156,6 +168,179 @@ class RegisterCampTest {
 
         composeRule
             .onNodeWithText("Kool Kids Camp")
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun addFullCampWithManyAmenitiesAndRules(){
+        launch()
+        waitFor("No campsites registered")
+
+
+        composeRule
+            .onNodeWithTag("addCampsiteButton")
+            .performClick()
+
+        composeRule
+            .onNodeWithText("Register Campsite")
+            .assertExists()
+
+        composeRule
+            .onNodeWithTag("nameField")
+            .performTextInput("Test Camp")
+
+        composeRule
+            .onNodeWithTag("locationField")
+            .performTextInput("Quackada")
+
+        composeRule
+            .onNodeWithTag("priceField")
+            .performTextInput("50")
+
+        composeRule
+            .onNodeWithTag("capacityField")
+            .performTextInput("10")
+
+        composeRule
+            .onNodeWithTag("cancelPolicyField")
+            .performTextInput("24 hour notice")
+
+        composeRule
+            .onNodeWithTag("amenity1")
+            .performTextInput("Water")
+
+        composeRule
+            .onNodeWithTag("addAmenity")
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("amenity2")
+            .performTextInput("Food")
+
+        composeRule
+            .onNodeWithTag("deleteAmenity1")
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("amenity2")
+            .assertDoesNotExist()
+
+        composeRule
+            .onNodeWithTag("addAmenity")
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("amenity2")
+            .performTextInput("Water")
+
+        composeRule
+            .onNodeWithTag("rule1")
+            .performTextInput("No running")
+
+        composeRule
+            .onNodeWithTag("addRule")
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("rule2")
+            .performTextInput("No dancing")
+
+        composeRule
+            .onNodeWithTag("deleteRule1")
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("rule2")
+            .assertDoesNotExist()
+
+        composeRule
+            .onNodeWithTag("addRule")
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("rule2")
+            .performTextInput("Have fun")
+
+        composeRule
+            .onNodeWithText("Smoke Free")
+            .performScrollTo()
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("newTagField")
+            .performTextInput("Cool")
+
+        composeRule
+            .onNodeWithTag("addTagButton")
+            .performScrollTo()
+            .performClick()
+
+        composeRule
+            .onNodeWithText("Submit")
+            .performScrollTo()
+            .performClick()
+
+        waitFor("Campsites")
+
+        composeRule
+            .onNodeWithText("Test Camp")
+            .assertExists()
+
+        composeRule
+            .onNodeWithTag("detailsTest Camp")
+            .performClick()
+
+        waitFor("Test Camp")
+
+        composeRule
+            .onNodeWithText("Quackada")
+            .assertExists()
+
+        composeRule
+            .onNodeWithText("$50 per night")
+            .assertExists()
+
+        composeRule
+            .onNodeWithText("10 people")
+            .assertExists()
+
+        composeRule
+            .onNodeWithText("24 hour notice")
+            .assertExists()
+
+        composeRule
+            .onNodeWithTag("amenity2")
+            .assertExists()
+
+        composeRule
+            .onNodeWithTag("rule2")
+            .assertExists()
+
+        composeRule
+            .onNodeWithText("Smoke Free")
+            .assertExists()
+
+        composeRule
+            .onNodeWithText("Cool")
+            .assertExists()
+
+        composeRule
+            .onNodeWithTag("backButton")
+            .performClick()
+
+        waitFor("Campsites")
+
+        composeRule
+            .onNodeWithTag("deleteTest Camp")
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("confirmDelete")
+            .performClick()
+
+
+        composeRule
+            .onNodeWithText("Test Camp")
             .assertDoesNotExist()
     }
 }

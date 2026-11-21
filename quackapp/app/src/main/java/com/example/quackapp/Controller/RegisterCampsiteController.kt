@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.installations.FirebaseInstallations
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -125,7 +126,11 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
             _status.value = SaveStatus.Saving
             try {
                 // Create database references, any image and campsite object will be linked by their ids (document name)
-                val docRef = campsitesRef.document()
+                val docRef = if (ownerId == "testOwner"){
+                    campsitesRef.document("testCamp")
+                } else {
+                    campsitesRef.document()
+                }
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
 

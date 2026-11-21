@@ -224,13 +224,17 @@ fun CampRow(
                     text = "Edit",
                     fontSize = 16.sp,
                     color = Color.White,
-                    modifier = Modifier.clickable(onClick = {navController.navigate("EditCampsite/${campsite.campId}")})
+                    modifier = Modifier
+                        .testTag("edit${campsite.name}")
+                        .clickable(onClick = {navController.navigate("EditCampsite/${campsite.campId}")})
                 )
                 Text(
                     text = "Details",
                     fontSize = 16.sp,
                     color = Color.White,
-                    modifier = Modifier.clickable(onClick = {navController.navigate("CampsiteDetails/${campsite.campId}")})
+                    modifier = Modifier
+                        .testTag("details${campsite.name}")
+                        .clickable(onClick = {navController.navigate("CampsiteDetails/${campsite.campId}")})
                 )
                 Text(
                     text = "Delete",
