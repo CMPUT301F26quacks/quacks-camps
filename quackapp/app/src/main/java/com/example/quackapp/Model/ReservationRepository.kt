@@ -338,6 +338,48 @@ class ReservationRepository private constructor() {
             }
     }
 
+    fun getConfirmedReservations(
+        campsiteId: String,
+        onResult: (List<Reservation>) -> Unit
+    ){
+        val localMatches = _reservations.value.filter {
+            it.campsiteId == campsiteId && it.status == ReservationStatus.CONFIRMED
+        }
+
+
+        val db = firestore ?: run {
+            onResult(localMatches)
+            return
+        }
+
+
+        db.collection("reservations")
+            .whereEqualTo("campsiteId", campsiteId)
+            .whereEqualTo("status", ReservationStatus.CONFIRMED.name)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
+                if (fetched.isNotEmpty()) {
+                    // Merge into local StateFlow so cache stays up to date
+                    val fetchedIds = fetched.map { it.id }.toSet()
+                    val remaining = _reservations.value.filter { it.id !in fetchedIds }
+                    _reservations.value = fetched + remaining
+                    onResult(fetched)
+                } else {
+                    onResult(localMatches)
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.w("ReservationRepo", "Error fetching campsite reservations", e)
+                onResult(localMatches)
+
+
+            }
+    }
+
+
+
+
     companion object {
         @Volatile
         private var instance: ReservationRepository? = null
