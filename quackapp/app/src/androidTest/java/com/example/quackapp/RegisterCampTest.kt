@@ -172,7 +172,7 @@ class RegisterCampTest {
     }
 
     @Test
-    fun addFullCampWithManyAmenitiesAndRules(){
+    fun addFullCampAndViewDetails(){
         launch()
         waitFor("No campsites registered")
 
