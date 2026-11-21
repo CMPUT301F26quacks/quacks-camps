@@ -61,6 +61,7 @@ fun DetailedCampsiteScreen(
                 ) {
                     Text(text = viewModel.name, fontSize = 36.sp)
                     IconButton(
+                        modifier = Modifier.testTag("backButton"),
                         colors = iconButtonColors(
                             containerColor = Color(0xFFFF9800),
                             contentColor = Color.White,
