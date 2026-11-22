@@ -16,6 +16,7 @@ import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
 import com.example.quackapp.View.Entrant.EntrantHome
 import com.example.quackapp.View.Admin.AdminHome
+import com.example.quackapp.View.Admin.AdminImageGallery
 
 /**
  * Sets up navigation between screens for whole app
@@ -100,5 +101,6 @@ fun QuackApp() {
         }
 
         composable("AdminHome") { AdminHome(navController) }
+        composable("AdminImageGallery") { AdminImageGallery(navController) }
     }
 }
