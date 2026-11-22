@@ -15,6 +15,7 @@ import com.example.quackapp.Controller.DetailedCampsiteController
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
 import com.example.quackapp.View.Entrant.EntrantHome
+import com.example.quackapp.View.Admin.AdminHome
 
 /**
  * Sets up navigation between screens for whole app
@@ -97,5 +98,7 @@ fun QuackApp() {
         composable("OwnerReservationHistory") {
             OwnerReservationHistoryScreen(navController = navController)
         }
+
+        composable("AdminHome") { AdminHome(navController) }
     }
 }
