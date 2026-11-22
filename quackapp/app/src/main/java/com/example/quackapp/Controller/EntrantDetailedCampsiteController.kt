@@ -78,22 +78,8 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
                     reviewsRef.add(newReview).await()
                 }
 
-                //get all reviews for this campsite
-                val allReviews = reviewsRef
-                    .whereEqualTo("campsiteID", campId)
-                    .get()
-                    .await()
-
-                val ratings = allReviews.documents.mapNotNull { it.getDouble("rating") }
-                if(ratings.isNotEmpty()){
-                    val averageRating = ratings.average()
-
-                    //update overall campsite rating field
-                    db.collection("campsites")
-                        .document(campId)
-                        .update("rating", averageRating)
-                        .await()
-                }
+                //recalculate the overall campsite rating
+                CampsiteRatingUpdater.recompute(campId)
             } catch (e: Exception) {
                 //handle error
                 Log.e("EntrantDetailedCampsiteController", "Failed to update rating for campId: $campId", e)
