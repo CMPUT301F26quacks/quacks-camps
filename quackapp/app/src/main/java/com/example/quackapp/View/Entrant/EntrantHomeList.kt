@@ -21,16 +21,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.quackapp.Controller.FilterCampsiteController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.View.DateRangePickerField
 import com.example.quackapp.View.SearchBar
 import com.example.quackapp.View.ValueRangeFilter
+import com.example.quackapp.View.todayUtcMillis
 import com.google.firebase.Timestamp
 
 //TODO Add Tests
@@ -61,6 +65,8 @@ fun EntrantHomeList(
     }
 
     //Lottery Dates Range Bar
+    //USELESS
+    //DELETE LATER
     val minDate: Long = remember(lotteries) {
         lotteries.mapNotNull { it.registrationPeriodStart?.seconds }.minOrNull() ?: 0L
     }
@@ -71,45 +77,46 @@ fun EntrantHomeList(
         mutableStateOf(minDate.toFloat()..maxDate.toFloat())
     }
 
+    //Filter by Date
+    var startingDate by rememberSaveable { mutableStateOf<Long?>(null) }
+    var endingDate by rememberSaveable { mutableStateOf<Long?>(null) }
+
     //Filter Button
     var filterVisible by remember { mutableStateOf(false) }
 
     //Location Check Box
     var locationSearchChecked by remember { mutableStateOf(false) }
-    var filterColor = if (filterVisible) Color(0xFFF16B00) else Color(0xFFF2BA00)
+    val filterColor = if (filterVisible) Color(0xFFF16B00) else Color(0xFFF2BA00)
 
     //Search Bar
     var query by remember { mutableStateOf("") }
     val searchBarText = if(locationSearchChecked) "Search locations..." else "Search campsites..."
     val searchBarColor = if(locationSearchChecked) Color(0xFFF16B00) else MaterialTheme.colorScheme.outline
 
+
+
     //Displays Campsites that fit the filter requirements if there are any
-    val resultingCampsites = remember(query, capacityRange, locationSearchChecked, campsites) {
-        campsites.filter { campsite ->
-            val matchesQuery = when {
-                //If search bar is empty, matchesQuery is True
-                query.isBlank() -> true
-                //If search by location is on, only display based on location
-                locationSearchChecked -> campsite.location.contains(query, ignoreCase = true)
-                //If search by location is off, only display based on campsite name
-                else -> campsite.name.contains(query, ignoreCase = true)
-            }
+    val filterController = remember { FilterCampsiteController() }
 
-            //Checks if campsite is within capacity range
-            val matchesCapacity = campsite.capacity.toFloat() in capacityRange
+    val resultingCampsites = remember(
+        query,
+        capacityRange,
+        locationSearchChecked,
+        campsites,
+        lotteries,
+        startingDate,
+        endingDate
 
-
-            if(matchesQuery && matchesCapacity){
-                //If campsite is within capacity range and is valid based on the filters
-                //Then the campsite is approved and can be displayed
-                true
-            }
-            else{
-                //Otherwise we reject it and do not display it
-                false
-            }
-
-        }
+    ) {
+        filterController.filterCampsites(
+            query,
+            capacityRange,
+            locationSearchChecked,
+            campsites,
+            lotteries,
+            startingDate,
+            endingDate
+        )
     }
 
     //Scrollable Column
@@ -147,8 +154,12 @@ fun EntrantHomeList(
                 }
             }
         }
-        item {
-            if (filterVisible) {
+
+        //Filters
+
+        if (filterVisible) {
+            item {
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -161,35 +172,36 @@ fun EntrantHomeList(
                         onCheckedChange = { locationSearchChecked = it }
                     )
                 }
+
+
+            }
+            item {
+                    Text(
+                        text = "Filter By Dates",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    DateRangePickerField(
+                        label = "Available Dates",
+                        startMillis = startingDate,
+                        endMillis = endingDate,
+                        onRangeSelected = { s, e -> startingDate = s; endingDate = e },
+                        minDateMillis = todayUtcMillis()
+                    )
+
             }
 
-        }
 
-        // IN PROGRESS
-        if (maxDate > minDate && filterVisible) {
-            item(key = "dateRange") {
-                //Filter by Lottery Date
-                ValueRangeFilter(
-                    label = "Lottery Dates",
-                    range = dateRange,
-                    onRangeChange = { dateRange = it },
-                    valueRange = minDate.toFloat()..maxDate.toFloat(),
-                    steps = maxDate - minDate - 1
-                )
-            }
-        }
-
-
-        if (maxCapacity > minCapacity && filterVisible) {
-            item(key = "capacityRange") {
-                //Filter by Campsite Capacity
-                ValueRangeFilter(
-                    label = "Campsite Capacity",
-                    range = capacityRange,
-                    onRangeChange = { capacityRange = it },
-                    valueRange = minCapacity.toFloat()..maxCapacity.toFloat(),
-                    steps = maxCapacity - minCapacity - 1
-                )
+            if (maxCapacity > minCapacity) {
+                item(key = "capacityRange") {
+                    //Filter by Campsite Capacity
+                    ValueRangeFilter(
+                        label = "Capacity",
+                        range = capacityRange,
+                        onRangeChange = { capacityRange = it },
+                        valueRange = minCapacity.toFloat()..maxCapacity.toFloat(),
+                        steps = maxCapacity - minCapacity - 1
+                    )
+                }
             }
         }
 

@@ -38,7 +38,6 @@ fun EntrantHome(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
         ) {
             //Takes all the campsites from the firebase and inputs them into EntrantHomeList
             EntrantHomeList(
