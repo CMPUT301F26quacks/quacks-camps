@@ -17,6 +17,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
+import com.example.quackapp.Model.Reservation
+import com.example.quackapp.Model.ReservationRepository
+
+
+
 /**
  * Controller for the "Detailed Campsite" screen.
  *
@@ -50,6 +55,10 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
     val status: StateFlow<SaveStatus> = _status
     var rating by mutableStateOf("0.0")
         private set
+
+    var bookedReservations by mutableStateOf<List<Reservation>>(emptyList())
+        private set
+
     /**
      * Initialization
      *
@@ -72,6 +81,9 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     selectedTags = campsite.tags.toSet()
                     lotteryId = campsite.lotteryId
                     rating = campsite.rating.toString()
+
+
+
                 }
                 else {
                     _status.value = SaveStatus.Error("Campsite not found")
@@ -80,6 +92,11 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     val existingLottery = lotteryRef.document(lotteryId!!).get().await().toObject(Lottery::class.java)
                     lottery = existingLottery
                 }
+
+                ReservationRepository.getInstance()
+                    .getConfirmedReservations(campsiteId) { reservations ->
+                        bookedReservations = reservations }
+
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

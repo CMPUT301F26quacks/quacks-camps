@@ -1,13 +1,6 @@
 package com.example.quackapp.View
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,6 +13,8 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.example.quackapp.Controller.DetailedCampsiteController
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
+import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
+import com.example.quackapp.View.Entrant.EntrantHome
 
 /**
  * Sets up navigation between screens for whole app
@@ -50,28 +45,28 @@ fun QuackApp() {
         composable(
             route = "CampsiteOwnerHome/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
-        ) {
-            OwnerHome(navController)
-        }
-        composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
+        ) { OwnerHome(navController) }
+
+        composable(
+            route = "RegisterCampsite/{ownerId}",
+            arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
+        )
+        { RegisterCampsiteScreen(navController) }
+
         composable(
             route = "CampsiteDetails/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }))
-        {
-            DetailedCampsiteScreen(navController)
-        }
+        { DetailedCampsiteScreen(navController) }
+
         composable(
             route = "EditCampsite/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
-        ) {
-            EditCampsiteScreen(navController)
-        }
+        ) { EditCampsiteScreen(navController) }
+
         composable(
             route = "ListCampInLotteryScreen/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
-        ) {
-            ListCampInLotteryScreen(navController)
-        }
+        ) { ListCampInLotteryScreen(navController) }
         composable(
             route = "updateLottery/{lotteryId}",
             arguments = listOf(navArgument("lotteryId") { type = NavType.StringType })
@@ -97,6 +92,15 @@ fun QuackApp() {
                 navController = navController,
                 isEditing = true
             )
+        }
+        composable("OwnerProfile") {
+            UserProfile(
+                navController = navController,
+                isEditing = true
+            )
+        }
+        composable("OwnerReservationHistory") {
+            OwnerReservationHistoryScreen(navController = navController)
         }
     }
 }
