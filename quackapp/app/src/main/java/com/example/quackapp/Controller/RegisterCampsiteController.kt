@@ -68,7 +68,6 @@ class RegisterCampsiteController: ViewModel(){
     var selectedTags by mutableStateOf(setOf<String>())
         private set
 
-    // TODO make this automatically set to the device's location
     var latitude by mutableDoubleStateOf(0.00)
     var longitude by mutableDoubleStateOf(0.00)
     /**
@@ -122,6 +121,7 @@ class RegisterCampsiteController: ViewModel(){
             _status.value = SaveStatus.Error("Capacity must be non-zero")
             return
         }
+        //TODO decide if map location should be required
 
         // Start a coroutine that allows code to pause and await without freezing UI
         viewModelScope.launch {
@@ -226,7 +226,8 @@ class RegisterCampsiteController: ViewModel(){
     }
 
     /**
-     * Sets the map location based on a LatLng
+     * Sets the latitude and longitude location based on a LatLng
+     * @param loc the LatLng that gets separated into its parts
      */
     fun setMapLoc(loc: LatLng) {
         latitude = loc.latitude

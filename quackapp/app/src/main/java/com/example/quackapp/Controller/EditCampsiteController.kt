@@ -2,6 +2,7 @@ package com.example.quackapp.Controller
 
 import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +10,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
@@ -51,6 +53,10 @@ class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
     var existingImageUrl by mutableStateOf("")
         private set
 
+    var latitude by mutableDoubleStateOf(0.00)
+    var longitude by  mutableDoubleStateOf(0.00)
+
+
     var isLoading by mutableStateOf(true)
         private set
 
@@ -79,6 +85,8 @@ class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
                     for (tag in selectedTags){
                         tags = tags + tag
                     }
+                    latitude = campsite.latitude
+                    longitude = campsite.longitude
                 } else {
                     _status.value = SaveStatus.Error("Campsite not found")
                 }
@@ -139,7 +147,9 @@ class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
                         "cancellationPolicy" to cancellationPolicy,
                         "features" to features,
                         "rules" to rules,
-                        "tags" to selectedTags.toList()
+                        "tags" to selectedTags.toList(),
+                        "latitude" to latitude,
+                        "longitude" to longitude
                     )
                 ).await()
 
@@ -211,5 +221,13 @@ class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
         } else {
             selectedTags = selectedTags + existing
         }
+    }
+    /**
+     * Sets the latitude and longitude location based on a LatLng
+     * @param loc the LatLng that gets separated into its parts
+     */
+    fun setMapLoc(loc: LatLng) {
+        latitude = loc.latitude
+        longitude = loc.longitude
     }
 }

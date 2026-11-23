@@ -1,5 +1,10 @@
 package com.example.quackapp.View
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +18,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,7 +28,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -31,8 +41,8 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun MapPreviewCard(
@@ -66,18 +76,73 @@ fun MapPreviewCard(
 }
 
 @Composable
-fun LocationPicker(onConfirm: (LatLng) -> Unit) {
+fun LocationPicker(onConfirm: (LatLng) -> Unit, startLoc: LatLng?) {
     var selected by remember { mutableStateOf<LatLng?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(53.5461, -113.4938), 11f)
+        if (startLoc == null) {
+            position = CameraPosition.fromLatLngZoom(LatLng(53.5461, -113.4938), 11f)
+        }
+        else{
+            position = CameraPosition.fromLatLngZoom(startLoc, 11f)
+        }
+    }
+    val context = LocalContext.current
+    val fusedClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        hasPermission = results.values.any { it }
+    }
+
+    // Ask for location when the picker appears
+    LaunchedEffect(Unit) {
+        if (!hasPermission) {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    // Once granted, fetch the location and move the camera
+    LaunchedEffect(hasPermission) {
+        if (hasPermission) {
+            try {
+                val location = fusedClient
+                    .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
+                    .await()
+                location?.let {
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude), 15f)
+                    )
+                }
+            } catch (e: SecurityException) {
+                // permission was revoked; ignore
+            }
+        }
     }
 
     Box(modifier = Modifier
         .fillMaxWidth()
-        .height(300.dp)) {
+        .height(300.dp)
+        .clip(RoundedCornerShape(12.dp)),
+    ) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
@@ -91,6 +156,12 @@ fun LocationPicker(onConfirm: (LatLng) -> Unit) {
                 }
             }
         ) {
+            startLoc?.let {
+                Marker(
+                    state = MarkerState(position = it),
+                    title = "Old location"
+                )
+            }
             selected?.let {
                 Marker(
                     state = MarkerState(position = it),

@@ -57,8 +57,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.EditCampsiteController
+import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.SaveStatus
-
+import com.google.android.gms.maps.model.LatLng
+/**
+ * UI for campsite owners to edit [com.example.quackapp.Model.Campsite] details
+ *
+ * @param navController navController object used to navigate to this screen
+ * @param viewModel the controller used with this screen. Default [EditCampsiteController]
+ */
 @Composable
 fun EditCampsiteScreen(
     navController: NavController,
@@ -247,6 +254,15 @@ fun EditCampsiteScreen(
             ) {
                 Text("Add Rule")
             }
+        }
+        Text("Map Location")
+        // If statement here because the Map loads before location data is ready
+        // meaning it would default to (0.00, 0.00) instead of the real location
+        if (viewModel.latitude != 0.00 && viewModel.longitude != 0.00) {
+            LocationPicker(
+                onConfirm = { viewModel.setMapLoc(it) },
+                startLoc = LatLng(viewModel.latitude, viewModel.longitude)
+            )
         }
         Text("Promotional Image (Optional)")
         // Show the newly picked image if there is one, otherwise the saved one

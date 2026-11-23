@@ -2,6 +2,7 @@ package com.example.quackapp.Controller
 
 import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -42,6 +43,8 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
         private set
     var imageUrl by mutableStateOf("")
         private set
+    var latitude by mutableDoubleStateOf(0.00)
+    var longitude by mutableDoubleStateOf(0.00)
     var lottery by mutableStateOf<Lottery?>(null)
     var lotteryId: String? = null
     var isLoading by mutableStateOf(true)
@@ -72,6 +75,8 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     selectedTags = campsite.tags.toSet()
                     lotteryId = campsite.lotteryId
                     rating = campsite.rating.toString()
+                    longitude = campsite.longitude
+                    latitude = campsite.latitude
                 }
                 else {
                     _status.value = SaveStatus.Error("Campsite not found")
