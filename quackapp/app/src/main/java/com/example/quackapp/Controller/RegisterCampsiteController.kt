@@ -9,9 +9,12 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import android.net.Uri
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.installations.FirebaseInstallations
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +68,9 @@ class RegisterCampsiteController: ViewModel(){
     var selectedTags by mutableStateOf(setOf<String>())
         private set
 
+    // TODO make this automatically set to the device's location
+    var latitude by mutableDoubleStateOf(0.00)
+    var longitude by mutableDoubleStateOf(0.00)
     /**
      * Toggles the selection of a tag
      * @param tag Identifies the element to toggle
@@ -147,7 +153,9 @@ class RegisterCampsiteController: ViewModel(){
                     features = features,
                     rules = rules,
                     tags = selectedTags.toList(),
-                    ownerId = ownerId
+                    ownerId = ownerId,
+                    latitude = latitude,
+                    longitude = longitude
                 )
                 // upload to firestore
                 docRef.set(campsite).await()
@@ -215,5 +223,13 @@ class RegisterCampsiteController: ViewModel(){
      */
     fun removeRule(index: Int) {
         rules = rules.toMutableList().also { it.removeAt(index) }
+    }
+
+    /**
+     * Sets the map location based on a LatLng
+     */
+    fun setMapLoc(loc: LatLng) {
+        latitude = loc.latitude
+        longitude = loc.longitude
     }
 }

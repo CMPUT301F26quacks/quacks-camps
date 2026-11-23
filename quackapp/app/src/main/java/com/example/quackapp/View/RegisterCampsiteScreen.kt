@@ -72,6 +72,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.RegisterCampsiteController
 import com.example.quackapp.Controller.SaveStatus
+import com.google.firebase.firestore.GeoPoint
 
 @Composable
 fun RegisterCampsiteScreen(
@@ -278,6 +279,11 @@ fun RegisterCampsiteScreen(
                 Text("Add Rule")
             }
         }
+        Text("Map Location")
+        LocationPicker(onConfirm = {
+            viewModel.setMapLoc(it)
+        })
+
         Text("Promotional Image (Optional)")
         Box(
             modifier = Modifier
