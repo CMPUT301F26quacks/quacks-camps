@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.channels.awaitClose
@@ -32,10 +33,23 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val db = Firebase.firestore
-    val ownerId: String = savedStateHandle["ownerId"] ?: ""
+    var ownerId: String = savedStateHandle["ownerId"] ?: ""
+        private set
     private val imgStorage = Firebase.storage
     var deleteError by mutableStateOf<String?>(null)
         private set
+
+    init {  //prevent the ownerId from ever being blank -> get the deviceId if that ever happens
+        if (ownerId.isBlank()) {
+            DeviceIdGetter.getDeviceId(
+                onSuccess = { deviceId ->
+                    ownerId = deviceId
+                },
+                onFail = { }
+            )
+        }
+    }
+
     // define camps by going into the database in the campsites collection
     // and finding all documents that match the logged in userId
     val camps: StateFlow<List<Campsite>> = callbackFlow {
@@ -53,9 +67,11 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
             awaitClose { listener.remove() }
         }
         else{   //but if tapping on home button again, js use logged in device id
+            var listener: ListenerRegistration? = null
             DeviceIdGetter.getDeviceId(
                 onSuccess = {deviceId ->
-                    val listener = db.collection("campsites")
+                    ownerId = deviceId
+                    listener = db.collection("campsites")
                         .whereEqualTo("ownerId", deviceId)
                         .addSnapshotListener {snapshot, error ->
                             if(error != null){
@@ -69,7 +85,7 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                     trySend(emptyList())
                 }
             )
-            awaitClose {}
+            awaitClose { listener?.remove() }
         }
 
 

@@ -22,12 +22,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,34 +65,44 @@ fun OwnerReservationHistoryScreen(
     ownerViewModel: OwnerHomeController = viewModel()   //get only the owner's campsites
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
+
     val reservations by repository.reservations.collectAsState()
     val camps by ownerViewModel.camps.collectAsState()
-
     //ids of campsites belonging to the campsite owner
     val ownerCampsiteIds = remember(camps) { camps.map { it.campId } }
-
     //filter reservations for this campsite owner
     val ownerReservations = remember(reservations, ownerCampsiteIds) {
-        if (ownerCampsiteIds.isEmpty()) reservations
+        if (ownerCampsiteIds.isEmpty()) emptyList()
         else reservations.filter { it.campsiteId in ownerCampsiteIds }
     }
 
+    LaunchedEffect(ownerCampsiteIds) {
+        if (ownerCampsiteIds.isNotEmpty()) {
+            ownerCampsiteIds.forEach { campId ->
+                repository.syncReservationsForCampsite(campId)
+            }
+        }
+    }
 
-    // filtering the reservations by status (active,  past, cancelled)
+
+    // filtering the reservations by status (active, past, cancelled)
     val activeReservations = remember(ownerReservations) {
-        reservations.filter { it.status == ReservationStatus.CONFIRMED }
+        ownerReservations.filter { it.status == ReservationStatus.CONFIRMED }
     }
     val pastReservations = remember(ownerReservations) {
-        reservations.filter { it.status == ReservationStatus.COMPLETED }
+        ownerReservations.filter { it.status == ReservationStatus.COMPLETED }
     }
     val cancelledReservations = remember(ownerReservations) {
-        reservations.filter { it.status == ReservationStatus.CANCELLED || it.status == ReservationStatus.DECLINED }
+        ownerReservations.filter { it.status == ReservationStatus.CANCELLED || it.status == ReservationStatus.DECLINED }
     }
+
+    val snackbarHostState = remember { SnackbarHostState() }
 
     //var reservationToReject by remember { mutableStateOf<Reservation?>(null) } - ill add this once i implement the reject booking user story
 
     OwnerScaffold(
         navController = navController,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
