@@ -173,11 +173,6 @@ fun EntrantActiveCampsites(
                 title = {
                     Column {
                         Text("QuackCamps", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Text(
-                            "Entrant Portal",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
                     }
                 },
                 actions = {
