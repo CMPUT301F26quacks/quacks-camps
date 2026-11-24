@@ -30,6 +30,9 @@ import com.example.quackapp.Model.Campsite
  * These cards are added to a list of cards displayed in a lazy column.
  * When a card is clicked, it sends you to that campsite's information page
  *
+ * [US 01.01.04] As an entrant, I want to see campsite summary
+ * information including name, location, maximum occupancy, and rating.
+ *
  * @param campsite Takes as input a campsite and uses some of its info in the summary
  * @param onClick When onClick is triggered it sends you to that campsites info page
  * @param modifier Used if modifier is needed

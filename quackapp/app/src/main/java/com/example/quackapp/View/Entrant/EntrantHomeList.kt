@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,7 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.quackapp.Controller.FilterCampsiteController
 import com.example.quackapp.Model.Campsite
@@ -35,9 +37,6 @@ import com.example.quackapp.View.DateRangePickerField
 import com.example.quackapp.View.SearchBar
 import com.example.quackapp.View.ValueRangeFilter
 import com.example.quackapp.View.todayUtcMillis
-import com.google.firebase.Timestamp
-
-//TODO Add Tests
 
 /**
  * Displays campsite cards based on filters
@@ -45,7 +44,12 @@ import com.google.firebase.Timestamp
  * Looks at if the entrant has adjusted any filters, if so,
  * display results that fit the requirements of the filter.
  *
+ * [US 01.01.01] As an entrant, I want to search for campsites.
+ * [US 01.01.03] As an entrant, I want to see a list of campsites
+ * based on my filters.
+ *
  * @param campsites takes in a list of campsites to be displayed
+ * @param lotteries takes in a list of lotteries
  * @param campsiteCardClicked allows campsites to be clicked
  * @param modifier allows modifiers to be passed through
  */
@@ -62,19 +66,6 @@ fun EntrantHomeList(
     val maxCapacity = remember(campsites) { campsites.maxOfOrNull { it.capacity } ?: 0 }
     var capacityRange by remember(minCapacity, maxCapacity) {
         mutableStateOf(minCapacity.toFloat()..maxCapacity.toFloat())
-    }
-
-    //Lottery Dates Range Bar
-    //USELESS
-    //DELETE LATER
-    val minDate: Long = remember(lotteries) {
-        lotteries.mapNotNull { it.registrationPeriodStart?.seconds }.minOrNull() ?: 0L
-    }
-    val maxDate: Long = remember(lotteries) {
-        lotteries.mapNotNull { it.registrationPeriodEnd?.seconds }.maxOrNull() ?: 0L
-    }
-    var dateRange by remember(minDate, maxDate) {
-        mutableStateOf(minDate.toFloat()..maxDate.toFloat())
     }
 
     //Filter by Date
@@ -94,10 +85,8 @@ fun EntrantHomeList(
     val searchBarColor = if(locationSearchChecked) Color(0xFFF16B00) else MaterialTheme.colorScheme.outline
 
 
-
-    //Displays Campsites that fit the filter requirements if there are any
+    //Gets all Campsites that fit the filter requirements if there are any
     val filterController = remember { FilterCampsiteController() }
-
     val resultingCampsites = remember(
         query,
         capacityRange,
@@ -118,7 +107,6 @@ fun EntrantHomeList(
             endingDate
         )
     }
-
     //Scrollable Column
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -156,8 +144,37 @@ fun EntrantHomeList(
         }
 
         //Filters
-
         if (filterVisible) {
+            item{
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Filter",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.displaySmall
+                    )
+
+                    //Button that resets all fields
+                    Button(
+                        onClick = {
+                            startingDate = null
+                            endingDate = null
+                            capacityRange = minCapacity.toFloat()..maxCapacity.toFloat()
+                            locationSearchChecked = false
+                            query = ""
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF2BA00))
+
+
+                    ) {
+                        Text("Reset")
+                    }
+
+                }
+            }
             item {
 
                 Row(
@@ -166,7 +183,8 @@ fun EntrantHomeList(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     //Search by Location check box
-                    Text("Search By Location")
+                    Text("Search By Location",
+                        modifier = Modifier.testTag("searchByLocation"))
                     Checkbox(
                         checked = locationSearchChecked,
                         onCheckedChange = { locationSearchChecked = it }
@@ -177,11 +195,12 @@ fun EntrantHomeList(
             }
             item {
                     Text(
-                        text = "Filter By Dates",
+                        text = "Available Dates",
                         style = MaterialTheme.typography.titleMedium
                     )
+                    //Filter campsites by their availability
                     DateRangePickerField(
-                        label = "Available Dates",
+                        label = "Enter Dates",
                         startMillis = startingDate,
                         endMillis = endingDate,
                         onRangeSelected = { s, e -> startingDate = s; endingDate = e },
@@ -203,10 +222,12 @@ fun EntrantHomeList(
                     )
                 }
             }
+
         }
 
+
         item {
-            Text("Showing ${resultingCampsites.size} of ${campsites.size} campsites.")
+            Text("Showing ${resultingCampsites.size} of ${campsites.size} campsites.",)
         }
 
         //Displays Campsite Cards
@@ -215,6 +236,9 @@ fun EntrantHomeList(
                 campsite = campsite,
                 onClick = { campsiteCardClicked(campsite) }
             )
+        }
+        item {
+            Spacer(modifier = Modifier.height(80.dp))
         }
 
     }

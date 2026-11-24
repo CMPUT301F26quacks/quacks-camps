@@ -8,7 +8,10 @@ plugins {
 android {
     namespace = "com.example.quackapp"
     compileSdk {
-        version = release(37)
+        version = release(37){
+            minorApiLevel = 1
+        }
+
     }
 
     defaultConfig {
@@ -53,7 +56,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation.testing)
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.test.junit4)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
