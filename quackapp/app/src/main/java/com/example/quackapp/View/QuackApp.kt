@@ -49,30 +49,29 @@ fun QuackApp() {
         composable(
             route = "CampsiteOwnerHome/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
-        ) {
-            OwnerHome(navController)
-        }
-        composable("OwnerHome") { OwnerHome(navController) }
+        ) { OwnerHome(navController) }
 
-        composable("RegisterCampsite") { RegisterCampsiteScreen(navController) }
+        composable(
+            route = "RegisterCampsite/{ownerId}",
+            arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
+        )
+        { RegisterCampsiteScreen(navController) }
+
         composable(
             route = "CampsiteDetails/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }))
-        {
-            DetailedCampsiteScreen(navController)
-        }
+        { DetailedCampsiteScreen(navController) }
+
         composable(
             route = "EditCampsite/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
-        ) {
-            EditCampsiteScreen(navController)
-        }
+        ) { EditCampsiteScreen(navController) }
+
         composable(
             route = "ListCampInLotteryScreen/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
-        ) {
-            ListCampInLotteryScreen(navController)
-        }
+        ) { ListCampInLotteryScreen(navController) }
+
 
         composable("CreateEntrantProfile") {
             UserProfile(

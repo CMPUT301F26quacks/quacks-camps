@@ -3,6 +3,8 @@ package com.example.quackapp.View.Entrant
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.quackapp.Model.NavBarLists
 import com.example.quackapp.View.NavBar
