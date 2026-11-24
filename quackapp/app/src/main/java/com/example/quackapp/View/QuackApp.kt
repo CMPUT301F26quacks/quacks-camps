@@ -45,7 +45,6 @@ fun QuackApp() {
 
 
 
-
         composable(
             route = "CampsiteOwnerHome/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.StringType })

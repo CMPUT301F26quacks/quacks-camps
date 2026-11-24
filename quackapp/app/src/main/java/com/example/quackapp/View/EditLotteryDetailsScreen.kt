@@ -110,7 +110,8 @@ fun EditLotteryDetailsScreen(
                 startMillis = viewModel.registrationStart,
                 endMillis = viewModel.registrationEnd,
                 onRangeSelected = { s, e -> viewModel.registrationStart = s; viewModel.registrationEnd = e },
-                minDateMillis = todayUtcMillis()
+                minDateMillis = todayUtcMillis(),
+                modifier = Modifier.testTag("registrationDates")
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -126,8 +127,9 @@ fun EditLotteryDetailsScreen(
                 startMillis = viewModel.bookingStart,
                 endMillis = viewModel.bookingEnd,
                 onRangeSelected = { s, e -> viewModel.bookingStart = s; viewModel.bookingEnd = e },
-                minDateMillis = (viewModel.registrationEnd?.plus(86400000))?: todayUtcMillis() // 86400000 is one day in milliseconds
-            )
+                minDateMillis = (viewModel.registrationEnd?.plus(86400000))?: todayUtcMillis(), // 86400000 is one day in milliseconds
+                modifier = Modifier.testTag("bookingDates")
+                )
 
             Spacer(modifier = Modifier.height(10.dp))
             Text(
@@ -178,8 +180,9 @@ fun EditLotteryDetailsScreen(
                 startMillis = viewModel.availabilityStart,
                 endMillis = viewModel.availabilityEnd,
                 onRangeSelected = { s, e -> viewModel.availabilityStart = s; viewModel.availabilityEnd = e },
-                minDateMillis = (viewModel.bookingEnd?.plus(86400000))?: todayUtcMillis() // 86400000 is one day in milliseconds
-            )
+                minDateMillis = (viewModel.bookingEnd?.plus(86400000))?: todayUtcMillis(), // 86400000 is one day in milliseconds
+                modifier = Modifier.testTag("availabilityDates")
+                )
             (status as? SaveStatus.Error)?.let {
                 Text(
                     it.message,

@@ -21,10 +21,10 @@ import java.util.Date
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Controller for the editing lottery details
+ * Controller for the editing [Lottery] details
  *
  * Holds some state variables to display on the form.
- * Contains logic to create new lotteries for the selected [Campsite]
+ * Contains logic to edit the [Lottery] containing the [Campsite]
  *
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
@@ -108,7 +108,7 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
 
 
     /**
-     * Updates a [Lottery] object to the Firestore.
+     * Updates a [Lottery] object in the Firestore.
      *
      */
     fun updateLottery() {

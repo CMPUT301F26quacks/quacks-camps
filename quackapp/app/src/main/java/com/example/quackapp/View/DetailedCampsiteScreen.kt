@@ -250,6 +250,7 @@ fun DetailedCampsiteScreen(
 
                     if (currentLottery != null) {
                         Button(
+                            modifier = Modifier.testTag("editLotteryButton"),
                             onClick = {navController.navigate("editLottery/${viewModel.campsiteId}")}
                         ) {
                             Text("Edit details")
@@ -279,8 +280,8 @@ fun DetailedCampsiteScreen(
                             "No active lottery created for this campsite.",
                             fontSize = 16.sp
                         )
-                        // TEMPORARY
                         Button(
+                            modifier = Modifier.testTag("createLotteryButton"),
                             onClick = { navController.navigate("ListCampInLotteryScreen/${viewModel.campsiteId}") }
                         ) {
                             Text("Create Lottery")
