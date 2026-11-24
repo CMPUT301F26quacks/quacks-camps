@@ -5,7 +5,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.Lottery
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,6 +44,38 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
     }
         .catch { emit(null) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+
+    val lotteries: StateFlow<List<Lottery>> = callbackFlow {
+        //Looks for lottery
+        val listener = db.collection("lotteries")
+            .addSnapshotListener { snapshot, error ->
+                //If there's an error then stop
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                //Otherwise, it will be ready to be collected
+                trySend(snapshot?.toObjects(Lottery::class.java) ?: emptyList())
+            }
+        awaitClose { listener.remove() }
+    }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
+    //Enters the entrant into the lottery waitlist
+    fun enterLottery(lotteryId: String, deviceId: String) {
+        Firebase.firestore.collection("lotteries").document(lotteryId)
+            .update("waitlist", FieldValue.arrayUnion(deviceId))
+    }
+
+    //Removes the entrant from the lottery waitlist
+    fun leaveLottery(lotteryId: String, deviceId: String) {
+        Firebase.firestore.collection("lotteries").document(lotteryId)
+            .update("waitlist", FieldValue.arrayRemove(deviceId))
+    }
+
 
     /**
      * Save or update the entrant's rating for a campsite

@@ -111,10 +111,10 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                 // Make a new lottery object
                 val newLottery = Lottery(
                     lotteryID = docRef.id,
-                    registrationPeriodStart = Timestamp(Date(registrationStart!!)),
-                    registrationPeriodEnd = Timestamp(Date(registrationEnd!!)),
-                    bookingPeriodStart = Timestamp(Date(bookingStart!!)),
-                    bookingPeriodEnd = Timestamp(Date(bookingEnd!!)),
+                    registrationPeriodStart = registrationStart!!,
+                    registrationPeriodEnd = registrationEnd!!,
+                    bookingPeriodStart = bookingStart!!,
+                    bookingPeriodEnd = bookingEnd!!,
                     numLotteryWinners = numWinners,
                     optionalWaitlistCapacity = waitlistCap,
                     campIds = listOf(campsiteId),

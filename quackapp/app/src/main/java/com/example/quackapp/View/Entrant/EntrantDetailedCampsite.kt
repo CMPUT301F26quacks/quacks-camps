@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,10 +19,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +38,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.EntrantDetailedCampsiteController
+import com.example.quackapp.Model.User
+import com.google.firebase.installations.FirebaseInstallations
 
 /**
  * Campsite details screen for Entrant
@@ -58,11 +63,37 @@ fun EntrantDetailedCampsite(
 
     //uses controller to fetch the campsite that was clicked on
     val pulledCampsite by controller.campsite.collectAsState()
+    val pulledLotteries by controller.lotteries.collectAsState()
 
-    //Creates a local version of the campsite info
+    //Creates a local version of the campsite and lotteries info
     val campsite = pulledCampsite
+    val lotteries = pulledLotteries
 
-    var enteredLottery by remember { mutableStateOf(false) }
+    //Get device ID from firebase
+    var deviceId by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        FirebaseInstallations.getInstance().id
+            .addOnSuccessListener { deviceId = it }
+    }
+
+    //Gets Campsite lottery ID
+    val lotteryId = campsite?.lotteryId
+    //local version
+    val currentDeviceId = deviceId
+
+    var enteredLottery by remember(
+        lotteryId,
+        lotteries,
+        currentDeviceId)
+    {
+        mutableStateOf(
+        lotteryId != null &&
+                lotteries.any { lottery ->
+                    lottery.lotteryID == campsite.lotteryId &&
+                            lottery.waitlist.contains(currentDeviceId)
+                }
+        )
+    }
 
     //variables for the user the input a rating later
     var showRatingInput by remember {mutableStateOf(false)}
@@ -108,76 +139,83 @@ fun EntrantDetailedCampsite(
                 }
                 item {
                     Column {
-                        //Campsite Rating
-                        Text(
-                            text = "⭐ ${campsite.rating}",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
-                        )
-                        //User Make a Rating
-                        OutlinedButton(
-                            onClick = {showRatingInput = !showRatingInput}
+                        Row(modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            //Campsite Rating
                             Text(
-                                if(showRatingInput) "Close" else "Make a Rating"
+                                text = "⭐ ${campsite.rating}",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = Color(0xFFF2BA00)
                             )
-                        }
-
-                        //if user wants to rate campsite
-                        if(showRatingInput) {
-                            OutlinedTextField(
-                                value = ratingInput,
-                                onValueChange = { input ->
-                                    //only allow 1 number to be entered
-                                    if (input.length<=1) {
-                                        ratingInput = input
-                                        //ensure that the number is not outside of range
-                                        val ratingNum = input.toIntOrNull()
-                                        if(ratingNum == null || ratingNum < 0 || ratingNum > 5) {
-                                            errorMessage = "Please input a valid rating"
-                                        }
-                                        else{ //valid
-                                            errorMessage = null
-                                        }
-                                    }
-                                },
-                                label = {Text("Enter rating (0-5)")},
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                isError = errorMessage != null,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            //showing the error message when invalid
-                            errorMessage?.let {message ->
+                            //User Make a Rating
+                            OutlinedButton(
+                                onClick = { showRatingInput = !showRatingInput }
+                            ) {
                                 Text(
-                                    text=message,
-                                    color=Color.Red
+                                    if (showRatingInput) "Close" else "Make a Rating"
                                 )
                             }
 
-                            //submit button if valid (double verification, there will be no mistakes)
-                            val ratingNum = ratingInput.toIntOrNull()
-                            if(ratingNum != null){
-                                Button(
-                                    onClick = {
-                                        com.example.quackapp.Controller.DeviceIdGetter.getDeviceId(
-                                            onSuccess = {deviceId ->
-                                                controller.updateRating(ratingNum.toDouble(), deviceId)
-                                                showRatingInput = !showRatingInput
-                                                ratingInput = "" //set empty
-                                            },
-                                            onFail = {
-                                                errorMessage = "Rating failed to submit. Please try again."
+                            //if user wants to rate campsite
+                            if (showRatingInput) {
+                                OutlinedTextField(
+                                    value = ratingInput,
+                                    onValueChange = { input ->
+                                        //only allow 1 number to be entered
+                                        if (input.length <= 1) {
+                                            ratingInput = input
+                                            //ensure that the number is not outside of range
+                                            val ratingNum = input.toIntOrNull()
+                                            if (ratingNum == null || ratingNum < 0 || ratingNum > 5) {
+                                                errorMessage = "Please input a valid rating"
+                                            } else { //valid
+                                                errorMessage = null
                                             }
-                                        )
+                                        }
                                     },
-                                ) {
-                                    Text("Submit Rating")
+                                    label = { Text("Enter rating (0-5)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    singleLine = true,
+                                    isError = errorMessage != null,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                //showing the error message when invalid
+                                errorMessage?.let { message ->
+                                    Text(
+                                        text = message,
+                                        color = Color.Red
+                                    )
+                                }
+
+                                //submit button if valid (double verification, there will be no mistakes)
+                                val ratingNum = ratingInput.toIntOrNull()
+                                if (ratingNum != null) {
+                                    Button(
+                                        onClick = {
+                                            com.example.quackapp.Controller.DeviceIdGetter.getDeviceId(
+                                                onSuccess = { deviceId ->
+                                                    controller.updateRating(
+                                                        ratingNum.toDouble(),
+                                                        deviceId
+                                                    )
+                                                    showRatingInput = !showRatingInput
+                                                    ratingInput = "" //set empty
+                                                },
+                                                onFail = {
+                                                    errorMessage =
+                                                        "Rating failed to submit. Please try again."
+                                                }
+                                            )
+                                        },
+                                    ) {
+                                        Text("Submit Rating")
+                                    }
                                 }
                             }
                         }
-
 
                         //Campsite Location
                         Text(
@@ -273,7 +311,9 @@ fun EntrantDetailedCampsite(
 
 
             }
-                //Enter/Leave Lottery Button
+
+            if(campsite.lotteryId != null) {
+                //Enter / Leave Lottery Waitlist Button
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFF248AFF),
@@ -281,8 +321,11 @@ fun EntrantDetailedCampsite(
                     ),
                     //When Button is clicked, enter or leave the lottery
                     onClick = {
-                        //TODO Enter or Leave lottery logic
-                        enteredLottery = !enteredLottery
+                        if(lotteryId != null && currentDeviceId != null){
+                            if (enteredLottery) controller.leaveLottery(lotteryId, currentDeviceId)
+                            else controller.enterLottery(lotteryId, currentDeviceId)
+                            enteredLottery = !enteredLottery
+                        }
                     },
                     shape = RoundedCornerShape(20.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
@@ -305,6 +348,7 @@ fun EntrantDetailedCampsite(
                     )
 
                 }
+            }
 
         }
     }

@@ -43,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.Model.ReservationRepository
 import com.google.android.gms.maps.model.LatLng
 
 /**
@@ -253,11 +254,11 @@ fun DetailedCampsiteScreen(
                             "Status: ${currentLottery.status.name}"
                         )
                         Text(
-                            "Registration: ${currentLottery.registrationPeriodStart?.toDate()} to ${currentLottery.registrationPeriodEnd?.toDate()}",
+                            "Registration: ${currentLottery.registrationPeriodStart} to ${currentLottery.registrationPeriodEnd}",
                             fontSize = 16.sp
                         )
                         Text(
-                            "Booking Period: ${currentLottery.bookingPeriodStart?.toDate()} to ${currentLottery.bookingPeriodEnd?.toDate()}",
+                            "Booking Period: ${currentLottery.bookingPeriodStart} to ${currentLottery.bookingPeriodEnd}",
                             fontSize = 16.sp
                         )
                         Text(
