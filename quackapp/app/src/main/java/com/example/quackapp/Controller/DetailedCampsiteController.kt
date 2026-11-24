@@ -60,6 +60,8 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
         private set
 
     var bookedReservations by mutableStateOf<List<Reservation>>(emptyList())
+
+    var waitlistEntrants by mutableStateOf<List<String>>(emptyList())
         private set
 
     /**
@@ -93,6 +95,36 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                 if (lotteryId != null){
                     val existingLottery = lotteryRef.document(lotteryId!!).get().await().toObject(Lottery::class.java)
                     lottery = existingLottery
+
+                    //Loads waitlist entrants from Lottery.waitlist
+                    val rawIds = existingLottery?.waitlist?.filter { it.isNotBlank() } ?: emptyList()
+                    val entryIds = if (rawIds.isNotEmpty()) {
+                        rawIds
+                    } else {
+                        val waitlistSnap = Firebase.firestore.collection("waitlist")
+                            .whereEqualTo("lotteryID", lotteryId!!)
+                            .get()
+                            .await()
+                        waitlistSnap.documents
+                            .mapNotNull { it.getString("entrantID") }
+                            .filter { it.isNotBlank() }
+                    }
+
+                    //looks for each entrant's name from the "users" collection
+                    val usersRef = Firebase.firestore.collection("users")
+                    val namesList = mutableListOf<String>()
+
+                    for (id in entryIds) {
+                        val userDoc = usersRef.document(id).get().await()
+                        val userName = userDoc.getString("name")
+
+                        if (userName != null && userName != "") {
+                            namesList.add("$userName ($id)")
+                        } else {
+                            namesList.add(id)
+                        }
+                    }
+                    waitlistEntrants = namesList
                 }
 
                 ReservationRepository.getInstance()

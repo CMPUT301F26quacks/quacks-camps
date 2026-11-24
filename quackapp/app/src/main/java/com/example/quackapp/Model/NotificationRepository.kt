@@ -2,6 +2,7 @@ package com.example.quackapp.Model
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,7 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * Repository and Controller for managing platform notifications.
  * Synchronizes with Firebase Cloud Firestore ("notifications" collection),
- * with safe local memory fallback for offline use and unit tests.
+ * Holds no data until [syncFromFirestore] runs; unit tests load data with [setLocalData].
  *
  * Fulfills CRC card specifications:
  * - Encapsulates notification payload (type, message, timestamp, status).
@@ -28,56 +29,23 @@ class NotificationRepository private constructor() {
             null
         }
 
-    init {
-        loadInitialMockData()
-    }
+    // Live Firestore listener for the signed-in user's notifications
+    private var listener: ListenerRegistration? = null
 
     /**
-     * Resets notifications to standard mock seed data for testing.
+     * Replaces the locally held notifications. Used by unit tests to load test data without Firestore.
+     *
+     * @param notifications notifications to hold.
      */
-    fun resetToMockData() {
-        loadInitialMockData()
-    }
-
-    private fun loadInitialMockData() {
-        val initialList = listOf(
-            AppNotification(
-                id = "notif-win-01",
-                recipientDeviceId = "default_device",
-                title = "🎉 You Won the Lottery!",
-                message = "Congratulations! You have been selected in the Banff Victoria Day Long Weekend Draw. Select your campsite dates now to confirm your stay.",
-                type = NotificationType.LOTTERY_WIN,
-                relatedOfferId = "offer-banff-01",
-                isRead = false,
-                timestamp = System.currentTimeMillis() - 3600000L // 1 hour ago
-            ),
-            AppNotification(
-                id = "notif-loss-01",
-                recipientDeviceId = "default_device",
-                title = "Lottery Draw Result",
-                message = "You were not drawn for the Maligne Canyon Summer Solstice Lottery. Thank you for participating, and check back for future draws!",
-                type = NotificationType.LOTTERY_LOSS,
-                isRead = false,
-                timestamp = System.currentTimeMillis() - 7200000L // 2 hours ago
-            ),
-            AppNotification(
-                id = "notif-res-01",
-                recipientDeviceId = "default_device",
-                title = "🏕️ Reservation Confirmed",
-                message = "Your reservation at Hinton-Grande Cache Cookhouse (May 7 - May 9, 2027) is confirmed. Reservation ID: #res-101.",
-                type = NotificationType.RESERVATION_CONFIRMATION,
-                relatedReservationId = "res-101",
-                isRead = true,
-                timestamp = System.currentTimeMillis() - 86400000L // 1 day ago
-            )
-        )
-        _notifications.value = initialList
+    fun setLocalData(notifications: List<AppNotification>) {
+        _notifications.value = notifications
     }
 
     /**
      * Sends an in-app notification to the specified entrant device.
-     * Respects user preference: if [userPreferenceEnabled] is false (opted out),
-     * delivery is suppressed.
+     * Respects the opt-out preference (US 01.10.01) two ways: if [userPreferenceEnabled] is false
+     * nothing is sent, and before saving to Firestore the recipient's own `notificationsEnabled`
+     * field in "users" is checked, so callers (e.g. the lottery draw) don't need to look it up.
      *
      * @param recipientDeviceId Target device identifier.
      * @param title Title of notification.
@@ -86,7 +54,7 @@ class NotificationRepository private constructor() {
      * @param relatedOfferId Optional ID of associated lottery offer.
      * @param relatedReservationId Optional ID of associated reservation.
      * @param userPreferenceEnabled Whether user has notifications enabled.
-     * @return Dispatched [AppNotification], or null if suppressed by user preference.
+     * @return The [AppNotification] built for sending, or null if [userPreferenceEnabled] is false.
      */
     fun sendNotification(
         recipientDeviceId: String,
@@ -103,7 +71,7 @@ class NotificationRepository private constructor() {
         }
 
         val notification = AppNotification(
-            recipientDeviceId = recipientDeviceId.ifBlank { "default_device" },
+            recipientDeviceId = recipientDeviceId,
             title = title,
             message = message,
             type = type,
@@ -113,20 +81,31 @@ class NotificationRepository private constructor() {
             timestamp = System.currentTimeMillis()
         )
 
-        _notifications.value = listOf(notification) + _notifications.value
+        val db = firestore
+        if (db == null) {
+            // No Firebase (unit tests): keep it locally only
+            _notifications.value = listOf(notification) + _notifications.value
+            return notification
+        }
 
-        // Sync to Firestore
-        firestore?.let { db ->
-            try {
-                db.collection("notifications")
-                    .document(notification.id)
-                    .set(notification)
-                    .addOnFailureListener { e ->
-                        Log.w("NotificationRepo", "Failed to sync notification to Firestore", e)
-                    }
-            } catch (e: Throwable) {
-                Log.w("NotificationRepo", "Firestore error writing notification", e)
-            }
+        // Check the recipient's own opt-out setting (US 01.10.01) before saving.
+        // The recipient's live listener then shows it, so it is not added locally here.
+        try {
+            db.collection("users").document(recipientDeviceId).get()
+                .addOnSuccessListener { user ->
+                    if (user.getBoolean("notificationsEnabled") == false) return@addOnSuccessListener
+                    db.collection("notifications")
+                        .document(notification.id)
+                        .set(notification)
+                        .addOnFailureListener { e ->
+                            Log.w("NotificationRepo", "Failed to sync notification to Firestore", e)
+                        }
+                }
+                .addOnFailureListener { e ->
+                    Log.w("NotificationRepo", "Couldn't read recipient's notification preference", e)
+                }
+        } catch (e: Throwable) {
+            Log.w("NotificationRepo", "Firestore error writing notification", e)
         }
 
         return notification
@@ -208,16 +187,36 @@ class NotificationRepository private constructor() {
     }
 
     /**
-     * Retrieves all notifications applicable to the given entrant device.
+     * Notifies an entrant that they declined a lottery reservation offer.
+     * US 01.04.03: decline a reservation if I changed my mind.
+     *
+     * @param recipientDeviceId Entrant device identifier.
+     * @param offer The declined [LotteryOffer].
+     * @param userPreferenceEnabled Whether the entrant has notifications enabled.
+     */
+    fun notifyOfferDeclined(
+        recipientDeviceId: String,
+        offer: LotteryOffer,
+        userPreferenceEnabled: Boolean = true
+    ): AppNotification? {
+        return sendNotification(
+            recipientDeviceId = recipientDeviceId,
+            title = "Offer Declined: ${offer.lotteryTitle}",
+            message = "You declined your reservation offer for ${offer.lotteryTitle}. It will be offered to another entrant.",
+            type = NotificationType.GENERAL,
+            relatedOfferId = offer.id,
+            userPreferenceEnabled = userPreferenceEnabled
+        )
+    }
+
+    /**
+     * Retrieves all notifications for the given device.
      *
      * @param deviceId Target device ID. If blank, returns all notifications.
-     * @param includeDefaults Whether to also include general default mock notifications.
      */
-    fun getNotificationsForUser(deviceId: String = "", includeDefaults: Boolean = false): List<AppNotification> {
+    fun getNotificationsForUser(deviceId: String = ""): List<AppNotification> {
         return _notifications.value.filter { notif ->
-            deviceId.isBlank() ||
-                    notif.recipientDeviceId == deviceId ||
-                    (includeDefaults && notif.recipientDeviceId == "default_device")
+            deviceId.isBlank() || notif.recipientDeviceId == deviceId
         }
     }
 
@@ -225,7 +224,7 @@ class NotificationRepository private constructor() {
      * Returns count of unread notifications for the device.
      */
     fun getUnreadCount(deviceId: String = ""): Int {
-        return getNotificationsForUser(deviceId, includeDefaults = (deviceId == "default_device" || deviceId.isBlank())).count { !it.isRead }
+        return getNotificationsForUser(deviceId).count { !it.isRead }
     }
 
     /**
@@ -251,16 +250,10 @@ class NotificationRepository private constructor() {
     }
 
     /**
-     * Marks all notifications for a user as read.
+     * Marks all notifications for a user as read, locally and in Firestore.
      */
     fun markAllAsRead(deviceId: String = "") {
-        _notifications.value = _notifications.value.map { notif ->
-            if (deviceId.isBlank() || notif.recipientDeviceId == deviceId || notif.recipientDeviceId == "default_device") {
-                notif.copy(isRead = true)
-            } else {
-                notif
-            }
-        }
+        getNotificationsForUser(deviceId).filter { !it.isRead }.forEach { markAsRead(it.id) }
     }
 
     /**
@@ -280,43 +273,47 @@ class NotificationRepository private constructor() {
     }
 
     /**
-     * Synchronizes notifications from Cloud Firestore for the given recipient device.
+     * Starts a live Firestore listener for the given device's notifications,
+     * replacing any previous listener. New notifications appear in real time.
+     *
+     * @param deviceId The signed-in user's device identifier.
+     * @param onComplete Optional callback invoked with the user's notifications after the first load.
      */
-    fun syncFromFirestore(deviceId: String = "", onComplete: ((List<AppNotification>) -> Unit)? = null) {
-        val db = firestore ?: run {
+    fun syncFromFirestore(deviceId: String, onComplete: ((List<AppNotification>) -> Unit)? = null) {
+        val db = firestore
+        if (db == null || deviceId.isBlank()) {
             onComplete?.invoke(getNotificationsForUser(deviceId))
             return
         }
 
-        val targetDevice = if (deviceId.isBlank()) "default_device" else deviceId
-        db.collection("notifications")
-            .whereEqualTo("recipientDeviceId", targetDevice)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val fetched = snapshot.documents.mapNotNull { it.toObject(AppNotification::class.java) }
-                if (fetched.isNotEmpty()) {
-                    val fetchedIds = fetched.map { it.id }.toSet()
-                    val remaining = _notifications.value.filter { it.id !in fetchedIds }
-                    _notifications.value = fetched + remaining
+        listener?.remove()
+        var completed = false
+        listener = db.collection("notifications")
+            .whereEqualTo("recipientDeviceId", deviceId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.w("NotificationRepo", "Error syncing notifications from Firestore", error)
+                } else if (snapshot != null) {
+                    _notifications.value = snapshot.documents
+                        .mapNotNull { it.toObject(AppNotification::class.java) }
+                        .sortedByDescending { it.timestamp }
                 }
-                onComplete?.invoke(getNotificationsForUser(deviceId))
-            }
-            .addOnFailureListener { e ->
-                Log.w("NotificationRepo", "Error syncing notifications from Firestore", e)
-                onComplete?.invoke(getNotificationsForUser(deviceId))
+                if (!completed) {
+                    completed = true
+                    onComplete?.invoke(getNotificationsForUser(deviceId))
+                }
             }
     }
 
     /**
-     * Clears all notifications for a user.
+     * Deletes all notifications for a user, locally and in Firestore.
+     * With a blank [deviceId] it only clears local state (used by unit tests).
      */
     fun clearAll(deviceId: String = "") {
         if (deviceId.isBlank()) {
             _notifications.value = emptyList()
         } else {
-            _notifications.value = _notifications.value.filterNot {
-                it.recipientDeviceId == deviceId || it.recipientDeviceId == "default_device"
-            }
+            getNotificationsForUser(deviceId).forEach { deleteNotification(it.id) }
         }
     }
 

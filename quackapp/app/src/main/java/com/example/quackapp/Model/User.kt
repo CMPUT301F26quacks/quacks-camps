@@ -10,6 +10,7 @@ package com.example.quackapp.Model
  * @property phoneNumber Contact phone number.
  * @property notificationsEnabled User preference for receiving in-app and system notifications.
  * @property roles A list of roles this user has been assigned, ENTRANT, OWNER, and/or ADMIN
+ * @property profileImageUrl Firebase Storage download URL for the user's profile picture
  */
 open class User(
     var deviceId: String = "",
@@ -17,5 +18,6 @@ open class User(
     var email: String = "",
     var phoneNumber: String = "",
     var notificationsEnabled: Boolean = true,
-    var roles: List<String> = emptyList()
+    var roles: List<String> = emptyList(),
+    var profileImageUrl: String = ""
 ) {}

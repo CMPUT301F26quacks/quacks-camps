@@ -122,26 +122,20 @@ fun EntrantActiveCampsites(
     val offers by repository.offers.collectAsState()
     val notifications by notificationRepo.notifications.collectAsState()
 
-    var deviceId by remember { mutableStateOf("default_device") }
+    var deviceId by remember { mutableStateOf("") }
 
-    // Sync active reservations and notifications with Cloud Firestore
+    // Live sync of this entrant's reservations, lottery offers and notifications with Cloud Firestore
     LaunchedEffect(Unit) {
-        try {
-            DeviceIdGetter.getDeviceId(
-                onSuccess = { fid ->
-                    deviceId = fid
-                    repository.syncFromFirestore(fid)
-                    notificationRepo.syncFromFirestore(fid)
-                },
-                onFail = {
-                    repository.syncFromFirestore("default_device")
-                    notificationRepo.syncFromFirestore("default_device")
-                }
-            )
-        } catch (e: Throwable) {
-            repository.syncFromFirestore("default_device")
-            notificationRepo.syncFromFirestore("default_device")
-        }
+        DeviceIdGetter.getDeviceId(
+            onSuccess = { fid ->
+                deviceId = fid
+                repository.syncFromFirestore(fid)
+                notificationRepo.syncFromFirestore(fid)
+            },
+            onFail = {
+                Toast.makeText(context, "Unable to identify this device", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 
     val activeReservations = remember(reservations, deviceId) {
@@ -305,27 +299,6 @@ fun EntrantActiveCampsites(
                                 snackbarHostState.showSnackbar("Unable to confirm reservation. Please try again.")
                             }
                         }
-                    },
-                    onSimulateDraw = { isWin ->
-                        if (isWin) {
-                            val mockOfferId = "offer-demo-${System.currentTimeMillis() % 1000}"
-                            notificationRepo.notifyLotteryWin(
-                                recipientDeviceId = deviceId,
-                                lotteryTitle = "Rocky Mountain Sunrise Draw",
-                                offerId = mockOfferId
-                            )
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("🏆 New Lottery Win notification received!")
-                            }
-                        } else {
-                            notificationRepo.notifyLotteryLoss(
-                                recipientDeviceId = deviceId,
-                                lotteryTitle = "Lake Louise Peak Season Draw"
-                            )
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("ℹ️ Lottery draw result notification received.")
-                            }
-                        }
                     }
                 )
                 2 -> PastReservationsList(
@@ -432,8 +405,8 @@ fun EntrantActiveCampsites(
         NotificationsDialog(
             notifications = notifications,
             onDismiss = { showNotificationsDialog = false },
-            onMarkAllAsRead = { notificationRepo.markAllAsRead() },
-            onClearAll = { notificationRepo.clearAll() },
+            onMarkAllAsRead = { notificationRepo.markAllAsRead(deviceId) },
+            onClearAll = { notificationRepo.clearAll(deviceId) },
             onNotificationClick = { notif ->
                 notificationRepo.markAsRead(notif.id)
                 if (notif.type == NotificationType.LOTTERY_WIN) {
@@ -469,7 +442,9 @@ fun EntrantActiveCampsites(
             confirmButton = {
                 Button(
                     onClick = {
-                        repository.declineOffer(offer.id)
+                        if (repository.declineOffer(offer.id)) {
+                            notificationRepo.notifyOfferDeclined(deviceId, offer)
+                        }
                         offerToDecline = null
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar("You declined the reservation offer.")
@@ -697,8 +672,7 @@ fun LotteryOffersList(
     offers: List<LotteryOffer>,
     notifications: List<AppNotification>,
     onDecline: (LotteryOffer) -> Unit,
-    onConfirm: (offer: LotteryOffer, campsite: CampsiteSummary, chosenDate: String, numGuests: Int) -> Unit,
-    onSimulateDraw: (isWin: Boolean) -> Unit
+    onConfirm: (offer: LotteryOffer, campsite: CampsiteSummary, chosenDate: String, numGuests: Int) -> Unit
 ) {
     val lossNotifications = remember(notifications) {
         notifications.filter { it.type == NotificationType.LOTTERY_LOSS }
@@ -710,35 +684,6 @@ fun LotteryOffersList(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Lottery Simulation Testing Bar (great for evaluation & grading)
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Simulate Lottery Draw", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        Text("Test Win (US 01.03.01) or Loss (US 01.03.02)", fontSize = 11.sp, color = MaterialTheme.colorScheme.outline)
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        OutlinedButton(onClick = { onSimulateDraw(true) }) {
-                            Text("Win", fontSize = 12.sp)
-                        }
-                        OutlinedButton(onClick = { onSimulateDraw(false) }) {
-                            Text("Loss", fontSize = 12.sp)
-                        }
-                    }
-                }
-            }
-        }
-
         // Recent Lottery Losses section (US 01.03.02)
         if (lossNotifications.isNotEmpty()) {
             item {
