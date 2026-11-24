@@ -2,14 +2,18 @@ package com.example.quackapp.Model
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Repository and Controller for managing Entrant reservations and lottery win offers.
- * Synchronizes with Firebase Cloud Firestore ("reservations" and "lottery_offers" collections),
- * with safe local memory fallback for offline use and unit tests.
+ * Synchronizes live with Firebase Cloud Firestore ("reservations" and "lottery_offers" collections).
+ * Holds no data until [syncFromFirestore] runs; unit tests load data with [setLocalData].
+ *
+ * Outstanding: lottery offers are created by the lottery draw (US 02.05.01, not on dev yet).
+ * Date ranges are stored as display strings, so overlap checks are not possible yet.
  */
 class ReservationRepository private constructor() {
 
@@ -30,89 +34,27 @@ class ReservationRepository private constructor() {
             null
         }
 
-    init {
-        loadInitialMockData()
+    // Live Firestore listeners for the signed-in entrant; replaced on each sync
+    private var reservationListener: ListenerRegistration? = null
+    private var offerListener: ListenerRegistration? = null
+
+    /**
+     * Replaces the locally held reservations and offers.
+     * Used by unit tests to load test data without Firestore.
+     *
+     * @param reservations reservations to hold.
+     * @param offers lottery offers to hold.
+     */
+    fun setLocalData(reservations: List<Reservation>, offers: List<LotteryOffer>) {
+        _reservations.value = reservations
+        _offers.value = offers
     }
 
     /**
-     * Resets repository state to the initial mock data set.
+     * Removes all locally held reservations and offers.
      */
-    fun resetToMockData() {
-        loadInitialMockData()
-    }
-
-    private fun loadInitialMockData() {
-        val initialReservations = listOf(
-            Reservation(
-                id = "res-101",
-                campsiteId = "site-hinton",
-                campsiteName = "Hinton-Grande Cache Cookhouse",
-                campsiteLocation = "Hinton / Grande Cache, AB",
-                entrantDeviceId = "default_device",
-                entrantName = "Default Entrant",
-                dateRange = "May 7 - May 9, 2027",
-                numGuests = 4,
-                totalPrice = 130.0,
-                status = ReservationStatus.CONFIRMED
-            )
-        )
-
-        val banffSite = CampsiteSummary(
-            campsiteId = "site-banff-two-jack",
-            name = "Two Jack Lakeside Campground",
-            location = "Banff National Park, AB",
-            pricePerNight = 65.0,
-            maxOccupancy = 6,
-            description = "Lakeside camping with scenic views, fire pits, and hiking trails."
-        )
-
-        val jasperWapitiSite = CampsiteSummary(
-            campsiteId = "site-jasper-wapiti",
-            name = "Wapiti Campground",
-            location = "Jasper National Park, AB",
-            pricePerNight = 58.0,
-            maxOccupancy = 6,
-            description = "Year-round forested campground along the Athabasca River."
-        )
-
-        val jasperWhistlersSite = CampsiteSummary(
-            campsiteId = "site-jasper-whistlers",
-            name = "Whistlers Campground",
-            location = "Jasper National Park, AB",
-            pricePerNight = 62.0,
-            maxOccupancy = 8,
-            description = "Recently updated campsites with modern bike trails and campfire pits."
-        )
-
-        val initialOffers = listOf(
-            LotteryOffer(
-                id = "offer-banff-01",
-                lotteryTitle = "Banff Victoria Day Long Weekend Draw",
-                entrantDeviceId = "default_device",
-                campsites = listOf(banffSite),
-                availableDateRanges = listOf(
-                    "May 14 - May 16, 2027",
-                    "May 21 - May 24, 2027 (Long Weekend)",
-                    "May 28 - May 30, 2027"
-                ),
-                status = OfferStatus.PENDING_RESPONSE
-            ),
-            LotteryOffer(
-                id = "offer-jasper-02",
-                lotteryTitle = "Jasper Summer Solstice Multi-Site Draw",
-                entrantDeviceId = "default_device",
-                campsites = listOf(jasperWapitiSite, jasperWhistlersSite),
-                availableDateRanges = listOf(
-                    "June 4 - June 6, 2027",
-                    "June 11 - June 13, 2027",
-                    "June 18 - June 20, 2027"
-                ),
-                status = OfferStatus.PENDING_RESPONSE
-            )
-        )
-
-        _reservations.value = initialReservations
-        _offers.value = initialOffers
+    fun clear() {
+        setLocalData(emptyList(), emptyList())
     }
 
     /**
@@ -124,7 +66,7 @@ class ReservationRepository private constructor() {
     fun getActiveReservations(deviceId: String = ""): List<Reservation> {
         return _reservations.value.filter { res ->
             res.status == ReservationStatus.CONFIRMED &&
-                    (deviceId.isBlank() || res.entrantDeviceId == deviceId || res.entrantDeviceId == "default_device")
+                    (deviceId.isBlank() || res.entrantDeviceId == deviceId)
         }
     }
 
@@ -137,7 +79,7 @@ class ReservationRepository private constructor() {
     fun getPendingOffers(deviceId: String = ""): List<LotteryOffer> {
         return _offers.value.filter { offer ->
             offer.status == OfferStatus.PENDING_RESPONSE &&
-                    (deviceId.isBlank() || offer.entrantDeviceId == deviceId || offer.entrantDeviceId == "default_device")
+                    (deviceId.isBlank() || offer.entrantDeviceId == deviceId)
         }
     }
 
@@ -148,7 +90,7 @@ class ReservationRepository private constructor() {
     fun getPastReservations(deviceId: String = ""): List<Reservation> {
         return _reservations.value.filter { res ->
             (res.status == ReservationStatus.CANCELLED || res.status == ReservationStatus.DECLINED || res.status == ReservationStatus.COMPLETED) &&
-                    (deviceId.isBlank() || res.entrantDeviceId == deviceId || res.entrantDeviceId == "default_device")
+                    (deviceId.isBlank() || res.entrantDeviceId == deviceId)
         }
     }
 
@@ -209,7 +151,7 @@ class ReservationRepository private constructor() {
             campsiteId = campsite.campsiteId,
             campsiteName = campsite.name,
             campsiteLocation = campsite.location,
-            entrantDeviceId = if (deviceId.isBlank()) "default_device" else deviceId,
+            entrantDeviceId = deviceId,
             entrantName = entrantName.ifBlank { "Entrant (${deviceId.take(6)})" },
             dateRange = chosenDate,
             numGuests = numGuests.coerceIn(1, campsite.maxOccupancy),
@@ -306,35 +248,91 @@ class ReservationRepository private constructor() {
         return true
     }
 
+
+/**
+ * Rejects an existing reservation as a campsite owner.
+ * Starts live Firestore listeners for this entrant's reservations ("reservations")
+ * and lottery win offers ("lottery_offers"), replacing any previous listeners.
+ * Local state updates automatically whenever Firestore changes (real-time status updates).
+ *
+ * @param reservationId Identifier of reservation to reject.
+ * @return True if found and rejected; false otherwise.
+ **/
+    fun rejectReservation(reservationId: String): Boolean {
+        val currentReservations = _reservations.value
+        val resIndex = currentReservations.indexOfFirst { it.id == reservationId && it.status == ReservationStatus.CONFIRMED }
+        if (resIndex != -1) {
+            val res = currentReservations[resIndex]
+            val updatedRes = res.copy(status = ReservationStatus.DECLINED)
+            val updatedList = currentReservations.toMutableList()
+            updatedList[resIndex] = updatedRes
+            _reservations.value = updatedList
+        } else if (firestore == null) {
+            return false
+        }
+
+        firestore?.let { db ->
+            try {
+                db.collection("reservations")
+                    .document(reservationId)
+                    .update("status", ReservationStatus.DECLINED.name)
+                    .addOnFailureListener { e ->
+                        Log.w("ReservationRepo", "Failed to update rejection in Firestore", e)
+                    }
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore rejectReservation failed", e)
+            }
+        }
+
+        return true
+    }
+
+
+
     /**
-     * Synchronizes reservations from Cloud Firestore for the given entrant device.
-     * Merges fetched Firestore documents into the local state flow.
+     * Starts live Firestore listeners for this entrant's reservations ("reservations")
+     * and lottery win offers ("lottery_offers"), replacing any previous listeners.
+     * Local state updates automatically whenever Firestore changes (real-time status updates).
      *
-     * @param deviceId The entrant device identifier.
-     * @param onComplete Callback invoked with refreshed reservations list.
+     * @param deviceId The signed-in entrant's device identifier.
+     * @param onComplete Optional callback invoked with active reservations after the first load.
      */
-    fun syncFromFirestore(deviceId: String = "", onComplete: ((List<Reservation>) -> Unit)? = null) {
-        val db = firestore ?: run {
+    fun syncFromFirestore(deviceId: String, onComplete: ((List<Reservation>) -> Unit)? = null) {
+        val db = firestore
+        if (db == null || deviceId.isBlank()) {
             onComplete?.invoke(getActiveReservations(deviceId))
             return
         }
 
-        val targetDevice = if (deviceId.isBlank()) "default_device" else deviceId
-        db.collection("reservations")
-            .whereEqualTo("entrantDeviceId", targetDevice)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
-                if (fetched.isNotEmpty()) {
-                    val fetchedIds = fetched.map { it.id }.toSet()
-                    val remaining = _reservations.value.filter { it.id !in fetchedIds }
-                    _reservations.value = fetched + remaining
+        reservationListener?.remove()
+        offerListener?.remove()
+
+        var completed = false
+        reservationListener = db.collection("reservations")
+            .whereEqualTo("entrantDeviceId", deviceId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.w("ReservationRepo", "Error syncing reservations from Firestore", error)
+                } else if (snapshot != null) {
+                    val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
+                    // keep reservations of other users (e.g. loaded for an owner's campsite)
+                    _reservations.value = fetched + _reservations.value.filter { it.entrantDeviceId != deviceId }
                 }
-                onComplete?.invoke(getActiveReservations(deviceId))
+                if (!completed) {
+                    completed = true
+                    onComplete?.invoke(getActiveReservations(deviceId))
+                }
             }
-            .addOnFailureListener { e ->
-                Log.w("ReservationRepo", "Error syncing reservations from Firestore", e)
-                onComplete?.invoke(getActiveReservations(deviceId))
+
+        offerListener = db.collection("lottery_offers")
+            .whereEqualTo("entrantDeviceId", deviceId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.w("ReservationRepo", "Error syncing lottery offers from Firestore", error)
+                    return@addSnapshotListener
+                }
+                val fetched = snapshot?.documents?.mapNotNull { it.toObject(LotteryOffer::class.java) } ?: return@addSnapshotListener
+                _offers.value = fetched + _offers.value.filter { it.entrantDeviceId != deviceId }
             }
     }
 

@@ -46,6 +46,16 @@ sealed class NavBarItem(
         NavBarItem("Profile",
                    Icons.Filled.ManageAccounts,
                    "OwnerProfile")
+
+    object AdminHome:
+        NavBarItem("Home",
+                   Icons.Filled.Home,
+                   "AdminHome")
+
+    object AdminProfile:
+        NavBarItem("Profile",
+                   Icons.Filled.ManageAccounts,
+                   "EditProfile")
 }
 
 

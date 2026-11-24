@@ -27,16 +27,33 @@ class NotificationRepositoryTest {
     @Before
     fun setUp() {
         notificationRepo = NotificationRepository.getInstance()
-        notificationRepo.resetToMockData()
+        notificationRepo.setLocalData(emptyList())
     }
 
+    /**
+     * Each entrant only sees notifications sent to their own device.
+     */
     @Test
-    fun testInitialMockNotificationsLoaded() {
-        val notifs = notificationRepo.getNotificationsForUser("default_device")
-        assertTrue("Should have initial mock notifications", notifs.isNotEmpty())
-        assertTrue("Should have an initial lottery win notification", notifs.any { it.type == NotificationType.LOTTERY_WIN })
-        assertTrue("Should have an initial lottery loss notification", notifs.any { it.type == NotificationType.LOTTERY_LOSS })
-        assertTrue("Should have an initial reservation confirmation", notifs.any { it.type == NotificationType.RESERVATION_CONFIRMATION })
+    fun testNotificationsOnlyShownToRecipient() {
+        notificationRepo.notifyLotteryWin("device_a", "Draw A", "offer-1")
+        notificationRepo.notifyLotteryLoss("device_b", "Draw B")
+
+        val notifs = notificationRepo.getNotificationsForUser("device_a")
+        assertEquals(1, notifs.size)
+        assertEquals(NotificationType.LOTTERY_WIN, notifs.first().type)
+    }
+
+    /**
+     * US 01.04.03: Declining an offer notifies the entrant.
+     */
+    @Test
+    fun testNotifyOfferDeclinedDispatchesAlert() {
+        val offer = ReservationTestData.offers.first()
+        val notif = notificationRepo.notifyOfferDeclined("device_a", offer)
+
+        assertNotNull(notif)
+        assertEquals(offer.id, notif!!.relatedOfferId)
+        assertTrue(notif.message.contains(offer.lotteryTitle))
     }
 
     /**

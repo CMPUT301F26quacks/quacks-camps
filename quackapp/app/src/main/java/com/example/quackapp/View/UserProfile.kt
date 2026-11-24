@@ -19,7 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Controller.UserRepository
+import com.example.quackapp.Model.Admin
 import com.example.quackapp.Model.User
+import androidx.compose.material3.TextButton
 
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.Alignment
@@ -29,6 +31,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
+
+import android.net.Uri
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+
+import coil.compose.AsyncImage
 
 /**
  * Shared screen for creating and editing a user profile.
@@ -43,6 +57,7 @@ import androidx.compose.material3.OutlinedButton
  * US 01.08.01 - Delete profile.
  * US 01.10.01 - Opt out of notifications.
  * US 01.11.01 - View app policy and guidelines.
+ * US 03.11.01 - Admins see "Switch back to Admin" after switching to an entrant/owner profile.
  *
  * @param navController controls navigation after profile actions.
  * @param selectedRole role assigned when registering a new user.
@@ -67,6 +82,10 @@ fun UserProfile(
 
     var userRoles by remember { mutableStateOf<List<String>>(emptyList()) }
 
+    var profileImageUrl by remember { mutableStateOf("") }
+
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     var policyExpanded by remember { mutableStateOf<Boolean>(false) }
@@ -85,12 +104,14 @@ fun UserProfile(
                         deviceId = id,
 
                         onResult = { user ->
+                            // loading an existing user
                             if (user != null) {
                                 name = user.name
                                 email = user.email
                                 phoneNumber = user.phoneNumber
                                 notificationsEnabled = user.notificationsEnabled
                                 userRoles = user.roles
+                                profileImageUrl = user.profileImageUrl
                             } else {
                                 errorMessage = "Unable to find User Profile"
                             }
@@ -113,6 +134,16 @@ fun UserProfile(
 
     }
 
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+
+        if (uri != null) {
+            selectedImageUri = uri
+        }
+
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -121,6 +152,32 @@ fun UserProfile(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
+        AsyncImage(
+            model = selectedImageUri ?: profileImageUrl,
+            contentDescription = "User profile picture",
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+        )
+
+        Button(
+            onClick = {
+                imagePicker.launch(
+                    PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                )
+            }
+        ) {
+            Text(
+                if (profileImageUrl.isBlank()) {
+                    "Add Profile Picture"
+                } else {
+                    "Change Profile Picture"
+                }
+            )
+        }
+
         Text(
             text = if (isEditing) {
                 "Edit User Profile"
@@ -128,6 +185,20 @@ fun UserProfile(
                 "Create User Profile"
             }
         )
+
+        // US 03.11.01: an admin using the app as an entrant/owner can go back to admin tools
+        if (isEditing && Admin.isAdmin(userRoles)) {
+            TextButton(
+                onClick = {
+                    navController.navigate("AdminHome") {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            ) {
+                Text("Switch back to Admin", color = Color(0xFF2E7D32))
+            }
+        }
 
         OutlinedTextField(
             value = name,
@@ -181,19 +252,57 @@ fun UserProfile(
                     errorMessage = "Unable to identify this device"
                 } else if (isEditing) {
 
-                    UserRepository.updateUser(
-                        deviceId = id,
-                        name = name,
-                        email = email,
-                        phoneNumber = phoneNumber,
-                        notificationsEnabled = notificationsEnabled,
-                        onSuccess = {
-                            navController.popBackStack()
-                        },
-                        onFail = {
-                            exception -> errorMessage = exception.message ?: "Unable to update User Profile"
-                        }
-                    )
+                    val imageUri = selectedImageUri
+
+                    if (imageUri != null) {
+                        // uploading a new image before saving the profile
+                        UserRepository.uploadProfilePic(
+                            deviceId = id,
+                            imageUri = imageUri,
+
+                            onSuccess = { downloadUrl ->
+
+                                UserRepository.updateUser(
+                                    deviceId = id,
+                                    name = name,
+                                    email = email,
+                                    phoneNumber = phoneNumber,
+                                    notificationsEnabled = notificationsEnabled,
+                                    profileImageUrl = downloadUrl,
+
+                                    onSuccess = {
+                                        navController.popBackStack()
+                                    },
+
+                                    onFail = {
+                                        exception -> errorMessage = exception.message ?: "Unable to update User Profile"
+                                    }
+                                )
+                            },
+
+                            onFail = {
+                                exception -> errorMessage = exception.message ?: "Unable to upload profile picture"
+                            }
+                        )
+
+                    } else {
+                        UserRepository.updateUser(
+                            deviceId = id,
+                            name = name,
+                            email = email,
+                            phoneNumber = phoneNumber,
+                            notificationsEnabled = notificationsEnabled,
+                            profileImageUrl = profileImageUrl,
+
+                            onSuccess = {
+                                navController.popBackStack()
+                            },
+                            onFail = { exception ->
+                                errorMessage = exception.message ?: "Unable to update User Profile"
+                            }
+                        )
+                    }
+
                 } else if (selectedRole != null) {
 
                     val user = User(

@@ -27,11 +27,11 @@ class ReservationRepositoryTest {
     @Before
     fun setUp() {
         repository = ReservationRepository.getInstance()
-        repository.resetToMockData()
+        repository.setLocalData(ReservationTestData.reservations, ReservationTestData.offers)
     }
 
     @Test
-    fun testInitialMockDataLoadsActiveReservationsAndOffers() {
+    fun testTestDataLoadsActiveReservationsAndOffers() {
         val activeReservations = repository.getActiveReservations()
         val pendingOffers = repository.getPendingOffers()
 
@@ -136,7 +136,7 @@ class ReservationRepositoryTest {
     @Test
     fun testEntrantModelIntegration() {
         val entrant = Entrant(
-            deviceId = "default_device",
+            deviceId = ReservationTestData.DEVICE,
             name = "Test Entrant",
             email = "entrant@ualberta.ca",
             phoneNumber = "780-555-0100"
@@ -184,6 +184,15 @@ class ReservationRepositoryTest {
 
         assertNotNull("Reservation with custom calendar dates should succeed", reservation)
         assertEquals(customRange, reservation?.dateRange)
+    }
+
+    /**
+     * US 01.06.01: An entrant only sees their own reservations and offers, never another user's.
+     */
+    @Test
+    fun testOtherEntrantSeesNoReservationsOrOffers() {
+        assertTrue(repository.getActiveReservations("another_device").isEmpty())
+        assertTrue(repository.getPendingOffers("another_device").isEmpty())
     }
 
     @Test

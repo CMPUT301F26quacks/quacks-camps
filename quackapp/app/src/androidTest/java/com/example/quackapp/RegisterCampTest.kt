@@ -156,14 +156,29 @@ class RegisterCampTest {
             .onNodeWithTag("capacityField")
             .performTextInput("10")
 
+        composeRule
+            .onNodeWithTag("map")
+            .performScrollTo()
+            .performClick()
 
+        composeRule.waitUntil(10_000) {
+            composeRule
+                .onAllNodesWithTag("confirmMap")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeRule
+            .onNodeWithTag("confirmMap")
+            .performScrollTo()
+            .performClick()
         composeRule
             .onNodeWithText("Submit")
             .performScrollTo()
             .performClick()
 
         waitFor("Campsites")
-
+        waitFor("Kool Kids Camp")
         composeRule
             .onNodeWithText("Kool Kids Camp")
             .assertExists()
@@ -272,6 +287,23 @@ class RegisterCampTest {
             .performTextInput("Have fun")
 
         composeRule
+            .onNodeWithTag("map")
+            .performScrollTo()
+            .performClick()
+
+        composeRule.waitUntil(10_000) {
+            composeRule
+                .onAllNodesWithTag("confirmMap")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeRule
+            .onNodeWithTag("confirmMap")
+            .performScrollTo()
+            .performClick()
+
+        composeRule
             .onNodeWithText("Smoke Free")
             .performScrollTo()
             .performClick()
@@ -323,6 +355,10 @@ class RegisterCampTest {
             .assertExists()
 
         composeRule
+            .onNodeWithTag("mapLocation")
+            .assertExists()
+
+        composeRule
             .onNodeWithTag("rule2")
             .assertExists()
 
@@ -355,7 +391,7 @@ class RegisterCampTest {
     }
 
     @Test
-    fun editName(){
+    fun makeCampAndEditName(){
         launch()
         waitFor("No campsites registered")
 
@@ -382,6 +418,23 @@ class RegisterCampTest {
         composeRule
             .onNodeWithTag("capacityField")
             .performTextInput("5")
+
+        composeRule
+            .onNodeWithTag("map")
+            .performScrollTo()
+            .performClick()
+
+        composeRule.waitUntil(10_000) {
+            composeRule
+                .onAllNodesWithTag("confirmMap")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeRule
+            .onNodeWithTag("confirmMap")
+            .performScrollTo()
+            .performClick()
 
         composeRule
             .onNodeWithTag("submitButton")
