@@ -1,7 +1,5 @@
 package com.example.quackapp.Controller
 
-package com.example.quackapp.Controller
-
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue

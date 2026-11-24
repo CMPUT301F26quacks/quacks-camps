@@ -42,6 +42,7 @@ import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.quackapp.Controller.EditLotteryDetailsController
+import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
 
@@ -54,7 +55,7 @@ import com.example.quackapp.Model.Lottery
 @Composable
 fun ListCampInLotteryScreen(
     navController: NavController,
-    viewModel: EditLotteryDetailsController = viewModel()
+    viewModel: ListCampInLotteryController = viewModel()
     ) {
 
     var numWinners by remember { mutableStateOf("") }
