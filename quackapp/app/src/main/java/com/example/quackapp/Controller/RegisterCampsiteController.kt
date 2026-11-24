@@ -2,7 +2,6 @@ package com.example.quackapp.Controller
 
 import android.net.Uri
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,6 +13,9 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.installations.FirebaseInstallations
 import com.google.firebase.storage.storage
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.lifecycle.SavedStateHandle
+import com.google.firebase.firestore.DocumentReference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -43,9 +45,10 @@ sealed interface SaveStatus {
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  *
  */
-class RegisterCampsiteController: ViewModel(){
+class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(){
     // Firestore database instance
     private val db = Firebase.firestore
+    private val ownerId: String = checkNotNull(savedStateHandle["ownerId"])
 
     // Reference to the campsites collection in Firestore
     private val campsitesRef = db.collection("campsites")
@@ -130,7 +133,11 @@ class RegisterCampsiteController: ViewModel(){
             _status.value = SaveStatus.Saving
             try {
                 // Create database references, any image and campsite object will be linked by their ids (document name)
-                val docRef = campsitesRef.document()
+                val docRef = if (ownerId == "testOwner"){
+                    campsitesRef.document("testCamp")
+                } else {
+                    campsitesRef.document()
+                }
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
                 val ownerId = FirebaseInstallations.getInstance().id.await()

@@ -220,6 +220,7 @@ fun RegisterCampsiteScreen(
             label = { Text("Policy") },
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("cancelPolicyField")
         )
         Text("Amenities/Features")
         Column() {
@@ -268,7 +269,7 @@ fun RegisterCampsiteScreen(
                         onClick = { viewModel.removeRule(index) },
                         enabled = viewModel.rules.size > 1,
                         colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
-                        modifier = Modifier.testTag("removeRule${index+1}")
+                        modifier = Modifier.testTag("deleteRule${index+1}")
                         ) { Text("X") }
                 }
             }
