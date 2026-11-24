@@ -248,6 +248,47 @@ class ReservationRepository private constructor() {
         return true
     }
 
+
+/**
+ * Rejects an existing reservation as a campsite owner.
+ * Starts live Firestore listeners for this entrant's reservations ("reservations")
+ * and lottery win offers ("lottery_offers"), replacing any previous listeners.
+ * Local state updates automatically whenever Firestore changes (real-time status updates).
+ *
+ * @param reservationId Identifier of reservation to reject.
+ * @return True if found and rejected; false otherwise.
+ **/
+    fun rejectReservation(reservationId: String): Boolean {
+        val currentReservations = _reservations.value
+        val resIndex = currentReservations.indexOfFirst { it.id == reservationId && it.status == ReservationStatus.CONFIRMED }
+        if (resIndex != -1) {
+            val res = currentReservations[resIndex]
+            val updatedRes = res.copy(status = ReservationStatus.DECLINED)
+            val updatedList = currentReservations.toMutableList()
+            updatedList[resIndex] = updatedRes
+            _reservations.value = updatedList
+        } else if (firestore == null) {
+            return false
+        }
+
+        firestore?.let { db ->
+            try {
+                db.collection("reservations")
+                    .document(reservationId)
+                    .update("status", ReservationStatus.DECLINED.name)
+                    .addOnFailureListener { e ->
+                        Log.w("ReservationRepo", "Failed to update rejection in Firestore", e)
+                    }
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore rejectReservation failed", e)
+            }
+        }
+
+        return true
+    }
+
+
+
     /**
      * Starts live Firestore listeners for this entrant's reservations ("reservations")
      * and lottery win offers ("lottery_offers"), replacing any previous listeners.
