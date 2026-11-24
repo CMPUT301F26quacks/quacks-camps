@@ -307,6 +307,41 @@ class ReservationRepository private constructor() {
     }
 
     /**
+     * Rejects an existing reservation as a campsite owner.
+     *
+     * @param reservationId Identifier of reservation to reject.
+     * @return True if found and rejected; false otherwise.
+     */
+    fun rejectReservation(reservationId: String): Boolean {
+        val currentReservations = _reservations.value
+        val resIndex = currentReservations.indexOfFirst { it.id == reservationId && it.status == ReservationStatus.CONFIRMED }
+        if (resIndex != -1) {
+            val res = currentReservations[resIndex]
+            val updatedRes = res.copy(status = ReservationStatus.DECLINED)
+            val updatedList = currentReservations.toMutableList()
+            updatedList[resIndex] = updatedRes
+            _reservations.value = updatedList
+        } else if (firestore == null) {
+            return false
+        }
+
+        firestore?.let { db ->
+            try {
+                db.collection("reservations")
+                    .document(reservationId)
+                    .update("status", ReservationStatus.DECLINED.name)
+                    .addOnFailureListener { e ->
+                        Log.w("ReservationRepo", "Failed to update rejection in Firestore", e)
+                    }
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore rejectReservation failed", e)
+            }
+        }
+
+        return true
+    }
+
+    /**
      * Synchronizes reservations from Cloud Firestore for the given entrant device.
      * Merges fetched Firestore documents into the local state flow.
      *
