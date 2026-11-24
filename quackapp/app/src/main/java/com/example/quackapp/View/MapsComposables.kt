@@ -3,6 +3,7 @@ package com.example.quackapp.View
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -82,61 +83,66 @@ fun LocationPicker(onConfirm: (LatLng) -> Unit, startLoc: LatLng?) {
     val scope = rememberCoroutineScope()
     val cameraPositionState = rememberCameraPositionState {
         if (startLoc == null) {
+            // Default Edmonton
             position = CameraPosition.fromLatLngZoom(LatLng(53.5461, -113.4938), 11f)
         }
         else{
             position = CameraPosition.fromLatLngZoom(startLoc, 11f)
         }
     }
-    val context = LocalContext.current
-    val fusedClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-
-    var hasPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context, Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.ACCESS_COARSE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        hasPermission = results.values.any { it }
-    }
-
-    // Ask for location when the picker appears
-    LaunchedEffect(Unit) {
-        if (!hasPermission) {
-            permissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
-    }
-
-    // Once granted, fetch the location and move the camera
-    LaunchedEffect(hasPermission) {
-        if (hasPermission) {
-            try {
-                val location = fusedClient
-                    .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
-                    .await()
-                location?.let {
-                    cameraPositionState.animate(
-                        CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude), 15f)
-                    )
-                }
-            } catch (e: SecurityException) {
-                // permission was revoked; ignore
-            }
-        }
-    }
+//    val context = LocalContext.current
+//    val fusedClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+//    var hasPermission by remember {
+//        mutableStateOf(
+//            ContextCompat.checkSelfPermission(
+//                context, Manifest.permission.ACCESS_FINE_LOCATION
+//            ) == PackageManager.PERMISSION_GRANTED ||
+//                    ContextCompat.checkSelfPermission(
+//                        context, Manifest.permission.ACCESS_COARSE_LOCATION
+//                    ) == PackageManager.PERMISSION_GRANTED
+//        )
+//    }
+//
+//    val permissionLauncher = rememberLauncherForActivityResult(
+//        ActivityResultContracts.RequestMultiplePermissions()
+//    ) { results ->
+//        hasPermission = results.values.any { it }
+//    }
+//
+//    // Ask for location when the picker appears
+//    LaunchedEffect(Unit) {
+//        if (!hasPermission) {
+//            permissionLauncher.launch(
+//                arrayOf(
+//                    Manifest.permission.ACCESS_FINE_LOCATION,
+//                    Manifest.permission.ACCESS_COARSE_LOCATION
+//                )
+//            )
+//        }
+//    }
+//
+//    // Once granted, fetch the location and move the camera
+//    LaunchedEffect(hasPermission) {
+//        Log.d("LocPicker", "hasPermission = $hasPermission")
+//        if (hasPermission) {
+//            try {
+//                val location = fusedClient
+//                    .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
+//                    .await()
+//                    ?: fusedClient.lastLocation.await()   // fallback
+//                Log.d("LocPicker", "location = $location")
+//                location?.let {
+//                    if (startLoc == null) {
+//                        cameraPositionState.move(
+//                            CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude), 15f)
+//                        )
+//                    }
+//                }
+//            } catch (e: Exception) {
+//                Log.e("LocPicker", "location failed", e)
+//            }
+//        }
+//    }
 
     Box(modifier = Modifier
         .fillMaxWidth()

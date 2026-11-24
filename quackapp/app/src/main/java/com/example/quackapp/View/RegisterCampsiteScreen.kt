@@ -284,7 +284,12 @@ fun RegisterCampsiteScreen(
                 Text("Add Rule")
             }
         }
-        Text("Map Location")
+        Text(text = buildAnnotatedString {
+            append("Map Location ")
+            withStyle(style = SpanStyle(color = Color.Red)) {
+                append("*")
+            }
+        })
         LocationPicker(
             onConfirm = { viewModel.setMapLoc(it) },
             startLoc = null

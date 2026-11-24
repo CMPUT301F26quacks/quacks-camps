@@ -1,21 +1,19 @@
 package com.example.quackapp.Controller
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import com.google.firebase.storage.storage
-import android.net.Uri
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.viewModelScope
-import com.google.android.gms.maps.model.LatLng
-import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.installations.FirebaseInstallations
+import com.google.firebase.storage.storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -121,7 +119,10 @@ class RegisterCampsiteController: ViewModel(){
             _status.value = SaveStatus.Error("Capacity must be non-zero")
             return
         }
-        //TODO decide if map location should be required
+        else if (longitude == 0.00 && latitude == 0.00){
+            _status.value = SaveStatus.Error("Please set a map location")
+            return
+        }
 
         // Start a coroutine that allows code to pause and await without freezing UI
         viewModelScope.launch {
