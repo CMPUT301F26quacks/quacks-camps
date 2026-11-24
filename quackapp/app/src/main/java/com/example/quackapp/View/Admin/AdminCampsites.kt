@@ -15,11 +15,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,7 +62,8 @@ fun AdminCampsites(
         AdminCampsitesContent(
             modifier = Modifier.padding(innerPadding),
             campsites = campsites,
-            onCampsiteClick = { navController.navigate("AdminCampsiteReviews/${it.campId}") }
+            onCampsiteClick = { navController.navigate("AdminCampsiteReviews/${it.campId}") },
+            onDeleteCampsite = { viewModel.deleteCampsite(it) }
         )
     }
 }
@@ -69,16 +73,17 @@ fun AdminCampsites(
  *
  * @param campsites every campsite.
  * @param onCampsiteClick called when the admin taps a campsite card.
- * @param onDeleteCampsiteClick called when admin taps X to delete the campsite.
+ * @param onDeleteCampsite called when admin confirms deleting a campsite.
  */
 @Composable
 fun AdminCampsitesContent(
     modifier: Modifier = Modifier,
     campsites: List<Campsite>,
     onCampsiteClick: (Campsite) -> Unit,
-    onDeleteCampsiteClick: ((Campsite) -> Unit)? = null
+    onDeleteCampsite: (Campsite) -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
+    var campToDelete by remember { mutableStateOf<Campsite?>(null) }
     val shown = campsites.filter { it.name.contains(query.trim(), ignoreCase = true) }
 
     Column(modifier.fillMaxSize()) {
@@ -109,11 +114,31 @@ fun AdminCampsitesContent(
                     AdminCampsiteCard(
                         campsite = camp,
                         onClick = { onCampsiteClick(camp) },
-                        onDeleteClick = { onDeleteCampsiteClick?.invoke(camp) }
+                        onDeleteClick = { campToDelete = camp }
                     )
                 }
             }
         }
+    }
+
+    campToDelete?.let { camp ->
+        AlertDialog(
+            onDismissRequest = { campToDelete = null },
+            title = { Text("Delete campsite?") },
+            text = { Text("\"${camp.name}\" will be permanently deleted. This can't be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteCampsite(camp)
+                        campToDelete = null
+                    },
+                    modifier = Modifier.testTag("confirmDelete")
+                ) { Text("Delete", color = Color.Red) }
+            },
+            dismissButton = {
+                TextButton(onClick = { campToDelete = null }) { Text("Cancel") }
+            }
+        )
     }
 }
 

@@ -96,6 +96,20 @@ class AdminController : ViewModel() {
             }
         }
     }
+
+    fun deleteCampsite(campsite: Campsite) {
+        viewModelScope.launch {
+            try {
+                // Delete the document first; the list updates automatically
+                db.collection("campsites").document(campsite.campId).delete().await()
+
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                deleteError = e.message ?: "Couldn't delete campsite"
+            }
+        }
+    }
 }
 
 /**
