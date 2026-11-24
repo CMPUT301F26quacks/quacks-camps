@@ -23,5 +23,5 @@ class Campsite (
     var rating: Double = 0.00
     var qrCode: String = ""
     var lotteryId: String? = null //holds lottery property - none if by default campsite not in lottery
-//    var availability: List<String> = [] //I'm assuming it's a list of all da dates
+    var availability: List<Long> = listOf()
 }

@@ -29,7 +29,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewModel() {
     val lotteryId: String = checkNotNull(savedStateHandle["lotteryId"])
-    private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
+//    private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
     private val db = Firebase.firestore
     private val lotteryRef = db.collection("lotteries")
 
@@ -50,25 +50,25 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
      * Takes all data from the given campId from Firestore and fill
      * each state variable with its value
      */
-    init {
-        viewModelScope.launch {
-            try {
-                val campsite = campsiteRef.get().await().toObject(Campsite::class.java)
-                if (campsite != null) {
-                    name = campsite.name
-                    lottery = campsite.lotteryId
-                } else {
-                    _status.value = SaveStatus.Error("Campsite not found")
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _status.value = SaveStatus.Error(e.message ?: "Couldn't load campsite")
-            } finally {
-                isLoading = false
-            }
-        }
-    }
+//    init {
+//        viewModelScope.launch {
+//            try {
+//                val campsite = campsiteRef.get().await().toObject(Campsite::class.java)
+//                if (campsite != null) {
+//                    name = campsite.name
+//                    lottery = campsite.lotteryId
+//                } else {
+//                    _status.value = SaveStatus.Error("Campsite not found")
+//                }
+//            } catch (e: CancellationException) {
+//                throw e
+//            } catch (e: Exception) {
+//                _status.value = SaveStatus.Error(e.message ?: "Couldn't load campsite")
+//            } finally {
+//                isLoading = false
+//            }
+//        }
+//    }
 
     /**
      * Validates the inputted registration and booking periods
@@ -92,43 +92,43 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
      * @param numWinners the number of winners allowed for the lottery
      * @param waitlistCap the number of people allowed in the waitlist, or null if no limit
      */
-    fun addLottery(
-        numWinners: Int,
-        waitlistCap: Int?,
-    ) {
-        validateDates()?.let {
-            _status.value = SaveStatus.Error(it)
-            return
-        }
-        viewModelScope.launch {
-            // Change status to saving
-            _status.value = SaveStatus.Saving
-            try {
-                // Create database references, any image and campsite object will be linked by their ids (document name)
-                val docRef = lotteryRef.document()
-
-                // Make a new lottery object
-                val newLottery = Lottery(
-                    lotteryID = docRef.id,
-                    registrationPeriodStart = Timestamp(Date(registrationStart!!)),
-                    registrationPeriodEnd = Timestamp(Date(registrationEnd!!)),
-                    bookingPeriodStart = Timestamp(Date(bookingStart!!)),
-                    bookingPeriodEnd = Timestamp(Date(bookingEnd!!)),
-                    numLotteryWinners = numWinners,
-                    optionalWaitlistCapacity = waitlistCap,
-                    campIds = listOf(campsiteId),
-                    status = LotteryStatus.OPEN
-                )
-
-                // upload to firestore
-                docRef.set(newLottery).await()
-                // update the campsite to have an active lottery
-                campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
-                _status.value = SaveStatus.Success
-            } catch (e: Exception) {
-                _status.value = SaveStatus.Error(e.message ?: "Something went wrong")
-            }
-
-        }
-    }
+//    fun addLottery(
+//        numWinners: Int,
+//        waitlistCap: Int?,
+//    ) {
+//        validateDates()?.let {
+//            _status.value = SaveStatus.Error(it)
+//            return
+//        }
+//        viewModelScope.launch {
+//            // Change status to saving
+//            _status.value = SaveStatus.Saving
+//            try {
+//                // Create database references, any image and campsite object will be linked by their ids (document name)
+//                val docRef = lotteryRef.document()
+//
+//                // Make a new lottery object
+//                val newLottery = Lottery(
+//                    lotteryID = docRef.id,
+//                    registrationPeriodStart = Timestamp(Date(registrationStart!!)),
+//                    registrationPeriodEnd = Timestamp(Date(registrationEnd!!)),
+//                    bookingPeriodStart = Timestamp(Date(bookingStart!!)),
+//                    bookingPeriodEnd = Timestamp(Date(bookingEnd!!)),
+//                    numLotteryWinners = numWinners,
+//                    optionalWaitlistCapacity = waitlistCap,
+//                    campIds = listOf(campsiteId),
+//                    status = LotteryStatus.OPEN
+//                )
+//
+//                // upload to firestore
+//                docRef.set(newLottery).await()
+//                // update the campsite to have an active lottery
+//                campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
+//                _status.value = SaveStatus.Success
+//            } catch (e: Exception) {
+//                _status.value = SaveStatus.Error(e.message ?: "Something went wrong")
+//            }
+//
+//        }
+//    }
 }

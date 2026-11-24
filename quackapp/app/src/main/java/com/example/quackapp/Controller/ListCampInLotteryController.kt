@@ -1,6 +1,7 @@
 package com.example.quackapp.Controller
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -39,6 +40,9 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
     var bookingStart by mutableStateOf<Long?>(null)
     var bookingEnd by mutableStateOf<Long?>(null)
     var name by mutableStateOf("")
+    var availability by mutableStateOf(listOf<Long>())
+    var availabilityStart by mutableStateOf<Long?>(null)
+    var availabilityEnd by mutableStateOf<Long?>(null)
     var lottery by mutableStateOf<String?>(null)
     var isLoading by mutableStateOf(true)
         private set
@@ -83,6 +87,8 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
         if (close < open) return "Registration must close after it opens"
         if (start <= close) return "Booking must start after registration closes"
         if (end < start) return "Booking must end after it starts"
+        availabilityStart?.let { if (it < end) return "Availability must start after booking ends" }
+        if (availabilityEnd == 0L || availabilityEnd == null || availabilityEnd!! <= availabilityStart!!) return "Availability must be after booking period"
         return null
     }
 
@@ -125,6 +131,8 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                 docRef.set(newLottery).await()
                 // update the campsite to have an active lottery
                 campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
+                availability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
+                campsiteRef.update(mapOf("availability" to availability))
                 _status.value = SaveStatus.Success
             } catch (e: Exception) {
                 _status.value = SaveStatus.Error(e.message ?: "Something went wrong")

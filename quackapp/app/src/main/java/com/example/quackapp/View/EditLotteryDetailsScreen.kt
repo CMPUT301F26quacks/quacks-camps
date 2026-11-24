@@ -1,7 +1,5 @@
 package com.example.quackapp.View
 
-package com.example.quackapp.View
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -71,10 +69,10 @@ fun EditLotteryDetailsScreen(
             viewModel.bookingEnd = null
             numWinners = ""
             waitlistCap = ""
-            navController.navigate(route = "campsiteDetails/${viewModel.campsiteId}")
-            {
-                popUpTo("campsiteDetails/${viewModel.campsiteId}") { inclusive = true }
-            }
+//            navController.navigate(route = "campsiteDetails/${viewModel.campsiteId}")
+//            {
+//                popUpTo("campsiteDetails/${viewModel.campsiteId}") { inclusive = true }
+//            }
         }
     }
 
@@ -185,10 +183,10 @@ fun EditLotteryDetailsScreen(
                     if (waitlistCap != ""){
                         cap = waitlistCap.toInt()
                     }
-                    viewModel.addLottery(
-                        numWinners = numWinners.toInt(),
-                        waitlistCap = cap,
-                    )
+//                    viewModel.addLottery(
+//                        numWinners = numWinners.toInt(),
+//                        waitlistCap = cap,
+//                    )
                 },
                 enabled = status !is SaveStatus.Saving,
                 modifier = Modifier

@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.quackapp.Controller.EditLotteryDetailsController
 import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
@@ -178,6 +177,21 @@ fun ListCampInLotteryScreen(
                     fontSize = 18.sp
                 )
             }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(text = buildAnnotatedString {
+                append("Available Dates ")
+                withStyle(style = SpanStyle(color = Color.Red)) {
+                    append("*")
+                }
+            }, fontSize = 24.sp)
+
+            DateRangePickerField(
+                label = "Available Dates",
+                startMillis = viewModel.availabilityStart,
+                endMillis = viewModel.availabilityEnd,
+                onRangeSelected = { s, e -> viewModel.availabilityStart = s; viewModel.availabilityEnd = e },
+                minDateMillis = (viewModel.bookingEnd?.plus(86400000))?: todayUtcMillis() // 86400000 is one day in milliseconds
+            )
             Button(
                 onClick = {
                     var cap:Int? = null
