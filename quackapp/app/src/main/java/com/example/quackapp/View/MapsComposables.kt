@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
@@ -59,7 +60,8 @@ fun MapPreviewCard(
         modifier = modifier
             .fillMaxWidth()
             .height(300.dp)
-            .clip(RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(12.dp))
+            .testTag("mapLocation"),
         cameraPositionState = cameraPositionState,
         // Hide default map toolbar buttons (directions/open in Maps) if desired
         uiSettings = MapUiSettings(
@@ -150,7 +152,9 @@ fun LocationPicker(onConfirm: (LatLng) -> Unit, startLoc: LatLng?) {
         .clip(RoundedCornerShape(12.dp)),
     ) {
         GoogleMap(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("map"),
             cameraPositionState = cameraPositionState,
             onMapClick = { latLng ->
                 selected = latLng
@@ -186,7 +190,7 @@ fun LocationPicker(onConfirm: (LatLng) -> Unit, startLoc: LatLng?) {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(24.dp)
-
+                    .testTag("confirmMap")
             ) {
                 Text("Confirm (${"%.4f".format(loc.latitude)}, ${"%.4f".format(loc.longitude)})")
             }

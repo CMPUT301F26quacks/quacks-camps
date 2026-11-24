@@ -52,14 +52,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.EditCampsiteController
-import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.SaveStatus
 import com.google.android.gms.maps.model.LatLng
+
 /**
  * UI for campsite owners to edit [com.example.quackapp.Model.Campsite] details
  *

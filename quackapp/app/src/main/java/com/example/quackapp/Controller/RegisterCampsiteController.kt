@@ -140,8 +140,6 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                 }
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
-                val ownerId = FirebaseInstallations.getInstance().id.await()
-
                 // Upload the image if one was selected
                 var url = ""
                 if (uri != null) {
