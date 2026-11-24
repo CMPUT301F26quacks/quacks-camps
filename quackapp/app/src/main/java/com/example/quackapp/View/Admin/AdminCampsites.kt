@@ -6,12 +6,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -38,8 +43,7 @@ import com.example.quackapp.Model.Campsite
  *
  * Supports US 03.04.01 (browse campsites) as the entry point to US 03.09.01 / 03.10.01.
  *
- * Outstanding: the "X" remove-campsite button from the mockup belongs to US 03.01.01
- * and can be added to [AdminCampsiteCard].
+ * Includes the "X" remove-campsite button on [AdminCampsiteCard] (US 03.01.01).
  *
  * @param navController used to open a campsite's reviews and by the nav bar.
  * @param viewModel provides every campsite.
@@ -65,12 +69,14 @@ fun AdminCampsites(
  *
  * @param campsites every campsite.
  * @param onCampsiteClick called when the admin taps a campsite card.
+ * @param onDeleteCampsiteClick called when admin taps X to delete the campsite.
  */
 @Composable
 fun AdminCampsitesContent(
     modifier: Modifier = Modifier,
     campsites: List<Campsite>,
-    onCampsiteClick: (Campsite) -> Unit
+    onCampsiteClick: (Campsite) -> Unit,
+    onDeleteCampsiteClick: ((Campsite) -> Unit)? = null
 ) {
     var query by remember { mutableStateOf("") }
     val shown = campsites.filter { it.name.contains(query.trim(), ignoreCase = true) }
@@ -100,7 +106,11 @@ fun AdminCampsitesContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(shown, key = { it.campId }) { camp ->
-                    AdminCampsiteCard(camp, onClick = { onCampsiteClick(camp) })
+                    AdminCampsiteCard(
+                        campsite = camp,
+                        onClick = { onCampsiteClick(camp) },
+                        onDeleteClick = { onDeleteCampsiteClick?.invoke(camp) }
+                    )
                 }
             }
         }
@@ -108,25 +118,41 @@ fun AdminCampsitesContent(
 }
 
 /**
- * Blue campsite card from the mockup: name, location and price per night.
+ * Blue campsite card from the mockup: name, location, price per night, and an "X" remove button.
  *
  * @param campsite campsite to show.
  * @param onClick called when the card is tapped.
+ * @param onDeleteClick called when X is tapped.
  */
 @Composable
-fun AdminCampsiteCard(campsite: Campsite, onClick: () -> Unit) {
-    Column(
+fun AdminCampsiteCard(
+    campsite: Campsite,
+    onClick: () -> Unit,
+    onDeleteClick: (() -> Unit)? = null
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(AdminBlue, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(12.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(campsite.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text(
-            "${campsite.location}    $${campsite.price} per night",
-            color = Color.White,
-            fontSize = 12.sp
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(campsite.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "${campsite.location}    $${campsite.price} per night",
+                color = Color.White,
+                fontSize = 12.sp
+            )
+        }
+        IconButton(onClick = { onDeleteClick?.invoke() }) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Remove campsite",
+                tint = Color.White
+            )
+        }
     }
 }
