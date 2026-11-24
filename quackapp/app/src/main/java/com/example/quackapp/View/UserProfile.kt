@@ -30,6 +30,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
 
+import android.net.Uri
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+
+import coil.compose.AsyncImage
+
 /**
  * Shared screen for creating and editing a user profile.
  *
@@ -67,6 +79,10 @@ fun UserProfile(
 
     var userRoles by remember { mutableStateOf<List<String>>(emptyList()) }
 
+    var profileImageUrl by remember { mutableStateOf("") }
+
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     var policyExpanded by remember { mutableStateOf<Boolean>(false) }
@@ -85,12 +101,14 @@ fun UserProfile(
                         deviceId = id,
 
                         onResult = { user ->
+                            // loading an existing user
                             if (user != null) {
                                 name = user.name
                                 email = user.email
                                 phoneNumber = user.phoneNumber
                                 notificationsEnabled = user.notificationsEnabled
                                 userRoles = user.roles
+                                profileImageUrl = user.profileImageUrl
                             } else {
                                 errorMessage = "Unable to find User Profile"
                             }
@@ -113,6 +131,16 @@ fun UserProfile(
 
     }
 
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+
+        if (uri != null) {
+            selectedImageUri = uri
+        }
+
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -120,6 +148,32 @@ fun UserProfile(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        AsyncImage(
+            model = selectedImageUri ?: profileImageUrl,
+            contentDescription = "User profile picture",
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+        )
+
+        Button(
+            onClick = {
+                imagePicker.launch(
+                    PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                )
+            }
+        ) {
+            Text(
+                if (profileImageUrl.isBlank()) {
+                    "Add Profile Picture"
+                } else {
+                    "Change Profile Picture"
+                }
+            )
+        }
 
         Text(
             text = if (isEditing) {
@@ -181,19 +235,57 @@ fun UserProfile(
                     errorMessage = "Unable to identify this device"
                 } else if (isEditing) {
 
-                    UserRepository.updateUser(
-                        deviceId = id,
-                        name = name,
-                        email = email,
-                        phoneNumber = phoneNumber,
-                        notificationsEnabled = notificationsEnabled,
-                        onSuccess = {
-                            navController.popBackStack()
-                        },
-                        onFail = {
-                            exception -> errorMessage = exception.message ?: "Unable to update User Profile"
-                        }
-                    )
+                    val imageUri = selectedImageUri
+
+                    if (imageUri != null) {
+                        // uploading a new image before saving the profile
+                        UserRepository.uploadProfilePic(
+                            deviceId = id,
+                            imageUri = imageUri,
+
+                            onSuccess = { downloadUrl ->
+
+                                UserRepository.updateUser(
+                                    deviceId = id,
+                                    name = name,
+                                    email = email,
+                                    phoneNumber = phoneNumber,
+                                    notificationsEnabled = notificationsEnabled,
+                                    profileImageUrl = downloadUrl,
+
+                                    onSuccess = {
+                                        navController.popBackStack()
+                                    },
+
+                                    onFail = {
+                                        exception -> errorMessage = exception.message ?: "Unable to update User Profile"
+                                    }
+                                )
+                            },
+
+                            onFail = {
+                                exception -> errorMessage = exception.message ?: "Unable to upload profile picture"
+                            }
+                        )
+
+                    } else {
+                        UserRepository.updateUser(
+                            deviceId = id,
+                            name = name,
+                            email = email,
+                            phoneNumber = phoneNumber,
+                            notificationsEnabled = notificationsEnabled,
+                            profileImageUrl = profileImageUrl,
+
+                            onSuccess = {
+                                navController.popBackStack()
+                            },
+                            onFail = { exception ->
+                                errorMessage = exception.message ?: "Unable to update User Profile"
+                            }
+                        )
+                    }
+
                 } else if (selectedRole != null) {
 
                     val user = User(
