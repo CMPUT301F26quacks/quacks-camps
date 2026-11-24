@@ -41,6 +41,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.Model.Reservation
+
 /**
  * Owner-side UI for viewing the details of their campsite
  */
@@ -61,6 +63,7 @@ fun DetailedCampsiteScreen(
                 ) {
                     Text(text = viewModel.name, fontSize = 36.sp)
                     IconButton(
+                        modifier = Modifier.testTag("backButton"),
                         colors = iconButtonColors(
                             containerColor = Color(0xFFFF9800),
                             contentColor = Color.White,
@@ -85,7 +88,7 @@ fun DetailedCampsiteScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-            ) {
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -119,7 +122,8 @@ fun DetailedCampsiteScreen(
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Card(   //location
+                Card(
+                    //location
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF248AFF)),
                     shape = RoundedCornerShape(8.dp),
                 ) {
@@ -136,7 +140,11 @@ fun DetailedCampsiteScreen(
                 ) {
                     Column(modifier = Modifier.padding(4.dp)) {
                         Text(text = "Cost:", fontSize = 24.sp, color = Color.White)
-                        Text(text = "$${viewModel.price} per night", fontSize = 18.sp, color = Color.White)
+                        Text(
+                            text = "$${viewModel.price} per night",
+                            fontSize = 18.sp,
+                            color = Color.White
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -147,7 +155,11 @@ fun DetailedCampsiteScreen(
                 ) {
                     Column(modifier = Modifier.padding(4.dp)) {
                         Text(text = "Capacity:", fontSize = 24.sp, color = Color.White)
-                        Text(text = "${viewModel.capacity} people", fontSize = 18.sp, color = Color.White)
+                        Text(
+                            text = "${viewModel.capacity} people",
+                            fontSize = 18.sp,
+                            color = Color.White
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -156,21 +168,19 @@ fun DetailedCampsiteScreen(
 
 
             Text(text = "Cancellation Policy:", fontSize = 30.sp)
-            if (viewModel.cancellationPolicy == ""){
+            if (viewModel.cancellationPolicy == "") {
                 Text(text = "No cancellation policy", fontSize = 24.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-            }
-            else{
+            } else {
                 Text(text = viewModel.cancellationPolicy, fontSize = 24.sp)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Amenities:", fontSize = 30.sp)
             Column() {
-                if (viewModel.features == listOf("")){
+                if (viewModel.features == listOf("")) {
                     Text(text = "No listed amenities/features", fontSize = 24.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                }
-                else {
+                } else {
                     viewModel.features.forEachIndexed { index, value ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
@@ -185,15 +195,14 @@ fun DetailedCampsiteScreen(
             }
             Text(text = "Rules:", fontSize = 30.sp)
             Column() {
-                if (viewModel.rules == listOf("")){
+                if (viewModel.rules == listOf("")) {
                     Text(text = "No listed amenities/features", fontSize = 24.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                }
-                else {
+                } else {
                     viewModel.rules.forEachIndexed { index, value ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "\tRule ${index+1}: $value",
+                                text = "\tRule ${index + 1}: $value",
                                 fontSize = 24.sp,
                                 modifier = Modifier.testTag("rule${index + 1}")
                             )
@@ -254,15 +263,47 @@ fun DetailedCampsiteScreen(
                             fontSize = 16.sp
                         )
                         // TEMPORARY
-                        Button(onClick = {navController.navigate("ListCampInLotteryScreen/${viewModel.campsiteId}")}) {
+                        Button(onClick = { navController.navigate("ListCampInLotteryScreen/${viewModel.campsiteId}") }) {
                             Text("Create Lottery")
+                        }
+                    }
+                }
+
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = 0.5f
+                    )
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Currently Booked Dates", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+
+
+                    if (viewModel.bookedReservations.isEmpty()) {
+                        Text(
+                            text = "No dates are currently booked for this campsite.",
+                            fontSize = 16.sp
+                        )
+                    } else {
+                        viewModel.bookedReservations.forEachIndexed { index, reservation ->
+                            Text(
+                                text = "${reservation.dateRange} (${reservation.entrantName})",
+                                fontSize = 16.sp,
+                                modifier = Modifier.testTag("bookedDate${index + 1}")
+                            )
                         }
                     }
                 }
             }
         }
-
-
-
     }
 }
+
