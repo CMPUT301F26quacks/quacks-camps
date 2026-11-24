@@ -1,20 +1,21 @@
 package com.example.quackapp.Controller
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import com.google.firebase.storage.storage
-import android.net.Uri
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.installations.FirebaseInstallations
+import com.google.firebase.storage.storage
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.lifecycle.SavedStateHandle
+import com.google.firebase.firestore.DocumentReference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -68,6 +69,8 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
     var selectedTags by mutableStateOf(setOf<String>())
         private set
 
+    var latitude by mutableDoubleStateOf(0.00)
+    var longitude by mutableDoubleStateOf(0.00)
     /**
      * Toggles the selection of a tag
      * @param tag Identifies the element to toggle
@@ -119,6 +122,10 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
             _status.value = SaveStatus.Error("Capacity must be non-zero")
             return
         }
+        else if (longitude == 0.00 && latitude == 0.00){
+            _status.value = SaveStatus.Error("Please set a map location")
+            return
+        }
 
         // Start a coroutine that allows code to pause and await without freezing UI
         viewModelScope.launch {
@@ -132,7 +139,6 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     campsitesRef.document()
                 }
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
-
 
                 // Upload the image if one was selected
                 var url = ""
@@ -153,7 +159,9 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     features = features,
                     rules = rules,
                     tags = selectedTags.toList(),
-                    ownerId = ownerId
+                    ownerId = ownerId,
+                    latitude = latitude,
+                    longitude = longitude
                 )
                 // upload to firestore
                 docRef.set(campsite).await()
@@ -221,5 +229,14 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
      */
     fun removeRule(index: Int) {
         rules = rules.toMutableList().also { it.removeAt(index) }
+    }
+
+    /**
+     * Sets the latitude and longitude location based on a LatLng
+     * @param loc the LatLng that gets separated into its parts
+     */
+    fun setMapLoc(loc: LatLng) {
+        latitude = loc.latitude
+        longitude = loc.longitude
     }
 }

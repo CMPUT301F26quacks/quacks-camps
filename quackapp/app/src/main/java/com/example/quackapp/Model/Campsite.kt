@@ -1,5 +1,8 @@
 package com.example.quackapp.Model
 
+import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.GeoPoint
+
 
 class Campsite (
     /**-name, owner, location, price, capacity,
@@ -9,7 +12,7 @@ class Campsite (
     tags,
     class holds all attributes mentioned in entrant and campsite user stories*/
     val campId: String = "",
-    val name: String ="",
+    val name: String = "",
     val location: String = "",
     val price: Int = -1,
     val capacity: Int = -1,
@@ -18,8 +21,10 @@ class Campsite (
     var rules: List<String> = listOf(""),
     var cancellationPolicy: String = "",
     var tags: List<String> = listOf(""),
-    val ownerId: String = ""
-){
+    val ownerId: String = "",
+    val longitude: Double = 0.00,
+    val latitude: Double = 0.00
+    ){
     var rating: Double = 0.00
     var qrCode: String = ""
     var lotteryId: String? = null //holds lottery property - none if by default campsite not in lottery

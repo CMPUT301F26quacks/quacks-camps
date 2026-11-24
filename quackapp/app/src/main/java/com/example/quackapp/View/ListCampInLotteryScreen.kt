@@ -48,15 +48,15 @@ import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.quackapp.Controller.ListCampInLotteryController
+import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
 import okhttp3.internal.wait
 /**
  * Screen for listing [Campsite] into a [Lottery]
- *
- * @param navController the number of winners allowed for the lottery
- * @param viewModel the number of people allowed in the waitlist, or null if no limit
- */
+ * @param navController navController object used to navigate to this screen
+ * @param viewModel the controller used with this screen. Default [ListCampInLotteryController]
+*/
 @Composable
 fun ListCampInLotteryScreen(
     navController: NavController,
