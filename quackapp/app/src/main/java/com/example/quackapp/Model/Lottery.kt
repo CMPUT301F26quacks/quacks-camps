@@ -35,6 +35,7 @@ class Lottery(
 )
 
 //entrants in da waitlist for optimal holding capacity+firebase db considerations
+//not currently implemented
 class WaitlistEntry(
     var status: WaitlistStatus = WaitlistStatus.WAITING,
     var entryID: String = "",   //for the firebase db (id)

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,7 +23,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,21 +36,23 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.EntrantDetailedCampsiteController
-import com.example.quackapp.Model.User
 import com.google.firebase.installations.FirebaseInstallations
 
 /**
  * Campsite details screen for Entrant
  *
  * When an entrant clicks on an EntrantHomeCard, it sends them to this page
- * with information on the campsite and the ability to enter that campsites lottery
+ * with information on the campsite and the ability to enter or leave
+ * that campsites lottery waitlist
  *
  * [US 01.01.05] As an entrant, I want to see details of a campsite.
+ * [US 01.01.06] As an entrant, I want to join an active lottery from
+ * the campsite details screen.
  *
  * @param modifier mainly for padding
  * @param navController allows entrant to use navigation bar
  * @param controller uses EntrantDetailedCampsiteController to fetch the
- * corresponding campsite
+ * corresponding campsite, all lotteries and use various other functions
  */
 @Composable
 fun EntrantDetailedCampsite(
@@ -81,17 +81,16 @@ fun EntrantDetailedCampsite(
     //local version
     val currentDeviceId = deviceId
 
+    //Checks if the user is currently entered into the waitlist or not
     var enteredLottery by remember(
         lotteryId,
         lotteries,
         currentDeviceId)
     {
-        mutableStateOf(
-        lotteryId != null &&
-                lotteries.any { lottery ->
-                    lottery.lotteryID == campsite.lotteryId &&
-                            lottery.waitlist.contains(currentDeviceId)
-                }
+        mutableStateOf(controller.checkIfIdInLottery(
+            lotteryId,
+            currentDeviceId,
+            lotteries)
         )
     }
 
@@ -139,10 +138,6 @@ fun EntrantDetailedCampsite(
                 }
                 item {
                     Column {
-                        Row(modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
                             //Campsite Rating
                             Text(
                                 text = "⭐ ${campsite.rating}",
@@ -215,7 +210,7 @@ fun EntrantDetailedCampsite(
                                     }
                                 }
                             }
-                        }
+
 
                         //Campsite Location
                         Text(
@@ -312,8 +307,9 @@ fun EntrantDetailedCampsite(
 
             }
 
+            //If campsite is in a lottery, then display button
             if(campsite.lotteryId != null) {
-                //Enter / Leave Lottery Waitlist Button
+                //Enter or Leave Lottery Waitlist Button
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFF248AFF),

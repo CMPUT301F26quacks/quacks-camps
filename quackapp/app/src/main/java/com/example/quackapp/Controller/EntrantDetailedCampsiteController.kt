@@ -19,7 +19,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 /**
+ * Provides campsite and lottery data from firebase as well as useful functions
+ *
  * Pulls campsite from campsite database for entrant
+ * Pulls all lotteries from lottery database for entrant
+ * Functions enterLottery and leaveLottery for adding and removing userId from firebase
  *
  * @param savedStateHandle Contains the camp id
  */
@@ -64,16 +68,50 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
-    //Enters the entrant into the lottery waitlist
+
+    /**
+     * Enters the entrant into the lottery waitlist
+     * [US 01.02.01] As an entrant, I want to join the waiting list
+     * for a campsite lottery.
+     *
+     * @param lotteryId the id of the lottery being entered
+     * @param deviceId the id of the device entering that lottery's waitlist
+     */
     fun enterLottery(lotteryId: String, deviceId: String) {
         Firebase.firestore.collection("lotteries").document(lotteryId)
             .update("waitlist", FieldValue.arrayUnion(deviceId))
     }
 
-    //Removes the entrant from the lottery waitlist
+    /**
+     * Removes the entrant's  from the lottery waitlist
+     * [US 01.02.02] As an entrant, I want to leave the waiting list
+     * for a campsite lottery.
+     *
+     * @param lotteryId the id of the lottery being left
+     * @param deviceId the id of the device leaving that lottery's waitlist
+     */
     fun leaveLottery(lotteryId: String, deviceId: String) {
         Firebase.firestore.collection("lotteries").document(lotteryId)
             .update("waitlist", FieldValue.arrayRemove(deviceId))
+    }
+
+    /**
+     * Checks if user is in a particular lottery
+     * [US 01.02.02] As an entrant, I want to leave the waiting list
+     * for a campsite lottery.
+     *
+     * @param lotteryId the id of the lottery being left
+     * @param deviceId the id of the device leaving that lottery's waitlist
+     */
+    fun checkIfIdInLottery(
+        lotteryId: String?,
+        currentDeviceId: String?,
+        lotteries: List<Lottery>
+    ): Boolean {
+        return lotteries.any { lottery ->
+                lottery.lotteryID == lotteryId &&
+                        lottery.waitlist.contains(currentDeviceId)
+            }
     }
 
 
