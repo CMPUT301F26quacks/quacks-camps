@@ -43,11 +43,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
-import com.example.quackapp.Model.Reservation
-import com.example.quackapp.Model.ReservationRepository
+import com.google.android.gms.maps.model.LatLng
 
 /**
  * Owner-side UI for viewing the details of their campsite
+ * @param navController navController object used to navigate to this screen
+ * @param viewModel the controller used with this screen. Default [DetailedCampsiteController]
  */
 @Composable
 fun DetailedCampsiteScreen(
@@ -125,8 +126,7 @@ fun DetailedCampsiteScreen(
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Card(
-                    //location
+                Card(   //location
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF248AFF)),
                     shape = RoundedCornerShape(8.dp),
                 ) {
@@ -167,8 +167,15 @@ fun DetailedCampsiteScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }
-
-
+            // If statement here because the Map loads before location data is ready
+            // meaning it would default to (0.00, 0.00) instead of the real location
+            if (viewModel.latitude != 0.00 && viewModel.longitude != 0.00) {
+                MapPreviewCard(
+                    location = LatLng(viewModel.latitude, viewModel.longitude),
+                    title = viewModel.name,
+                    onMapClick = {},
+                )
+            }
 
             Text(text = "Cancellation Policy:", fontSize = 30.sp)
             if (viewModel.cancellationPolicy == "") {

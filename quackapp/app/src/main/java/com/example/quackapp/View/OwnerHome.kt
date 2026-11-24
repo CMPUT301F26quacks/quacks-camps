@@ -50,13 +50,14 @@ import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.CampsiteOwner
+import com.example.quackapp.Model.Lottery
 
 /**
  * UI for the home page that Campsite owners are directed to
  *
- * Uses [navController] to navigate to other screens
- * Uses [OwnerHomeController] to deal with user input
- */
+ * @param navController navController object used to navigate to this screen
+ * @param viewModel the controller used with this screen. Default [OwnerHomeController]
+*/
 @Composable
 fun OwnerHome(
     navController: NavController,

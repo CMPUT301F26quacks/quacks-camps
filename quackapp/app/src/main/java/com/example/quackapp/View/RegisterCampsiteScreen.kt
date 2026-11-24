@@ -72,7 +72,13 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.RegisterCampsiteController
 import com.example.quackapp.Controller.SaveStatus
-
+import com.google.firebase.firestore.GeoPoint
+/**
+ * UI for the page that campsite owners use to register new campsites
+ *
+ * @param navController the number of winners allowed for the lottery
+ * @param viewModel the number of people allowed in the waitlist, or null if no limit
+ */
 @Composable
 fun RegisterCampsiteScreen(
     navController: NavController,
@@ -279,6 +285,17 @@ fun RegisterCampsiteScreen(
                 Text("Add Rule")
             }
         }
+        Text(text = buildAnnotatedString {
+            append("Map Location ")
+            withStyle(style = SpanStyle(color = Color.Red)) {
+                append("*")
+            }
+        })
+        LocationPicker(
+            onConfirm = { viewModel.setMapLoc(it) },
+            startLoc = null
+        )
+
         Text("Promotional Image (Optional)")
         Box(
             modifier = Modifier
