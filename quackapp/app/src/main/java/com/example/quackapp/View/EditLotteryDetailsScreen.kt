@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,22 +58,15 @@ fun EditLotteryDetailsScreen(
     viewModel: EditLotteryDetailsController = viewModel()
 ) {
 
-    var numWinners by remember { mutableStateOf("") }
-    var waitlistCap by remember { mutableStateOf("") }
+
     val status by viewModel.status.collectAsState()
 
     LaunchedEffect(status) {
         if (status is SaveStatus.Success){
-            viewModel.registrationStart = null
-            viewModel.registrationEnd = null
-            viewModel.bookingStart = null
-            viewModel.bookingEnd = null
-            numWinners = ""
-            waitlistCap = ""
-//            navController.navigate(route = "campsiteDetails/${viewModel.campsiteId}")
-//            {
-//                popUpTo("campsiteDetails/${viewModel.campsiteId}") { inclusive = true }
-//            }
+            navController.navigate(route = "CampsiteDetails/${viewModel.campsiteId}")
+            {
+                popUpTo("CampsiteDetails/${viewModel.campsiteId}") { inclusive = true }
+            }
         }
     }
 
@@ -145,10 +139,10 @@ fun EditLotteryDetailsScreen(
                 fontSize = 24.sp
             )
             OutlinedTextField(
-                value = numWinners,
+                value = viewModel.numWinners,
                 onValueChange = { input ->
                     if (input.isDigitsOnly() && input.isNotEmpty()) {
-                        numWinners = input
+                        viewModel.numWinners = input
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -159,16 +153,32 @@ fun EditLotteryDetailsScreen(
             Spacer(modifier = Modifier.height(10.dp))
             Text("Waitlist Capacity", fontSize = 24.sp)
             OutlinedTextField(
-                value = waitlistCap,
+                value = viewModel.waitlistCap,
                 onValueChange = { input ->
                     if (input.isDigitsOnly()) {
-                        waitlistCap = input
+                        viewModel.waitlistCap = input
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("waitlistCapField")
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(text = buildAnnotatedString {
+                append("Available Dates ")
+                withStyle(style = SpanStyle(color = Color.Red)) {
+                    append("*")
+                }
+            }, fontSize = 24.sp)
+
+            DateRangePickerField(
+                label = "Available Dates",
+                startMillis = viewModel.availabilityStart,
+                endMillis = viewModel.availabilityEnd,
+                onRangeSelected = { s, e -> viewModel.availabilityStart = s; viewModel.availabilityEnd = e },
+                minDateMillis = (viewModel.bookingEnd?.plus(86400000))?: todayUtcMillis() // 86400000 is one day in milliseconds
             )
             (status as? SaveStatus.Error)?.let {
                 Text(
@@ -179,25 +189,18 @@ fun EditLotteryDetailsScreen(
             }
             Button(
                 onClick = {
-                    var cap:Int? = null
-                    if (waitlistCap != ""){
-                        cap = waitlistCap.toInt()
-                    }
-//                    viewModel.addLottery(
-//                        numWinners = numWinners.toInt(),
-//                        waitlistCap = cap,
-//                    )
+                    viewModel.updateLottery()
                 },
                 enabled = status !is SaveStatus.Saving,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("submitButton"),
+                    .testTag("saveButton"),
                 colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
             ) {
                 if (status is SaveStatus.Saving) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Submit")
+                    Text("Save")
                 }
             }
         }

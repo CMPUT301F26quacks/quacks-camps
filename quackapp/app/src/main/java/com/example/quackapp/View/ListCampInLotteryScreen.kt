@@ -69,9 +69,9 @@ fun ListCampInLotteryScreen(
             viewModel.bookingEnd = null
             numWinners = ""
             waitlistCap = ""
-            navController.navigate(route = "campsiteDetails/${viewModel.campsiteId}")
+            navController.navigate(route = "CampsiteDetails/${viewModel.campsiteId}")
             {
-                popUpTo("campsiteDetails/${viewModel.campsiteId}") { inclusive = true }
+                popUpTo("CampsiteDetails/${viewModel.campsiteId}") { inclusive = true }
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.example.quackapp.Controller
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -28,17 +29,23 @@ import kotlin.coroutines.cancellation.CancellationException
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
 class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewModel() {
-    val lotteryId: String = checkNotNull(savedStateHandle["lotteryId"])
-//    private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
-    private val db = Firebase.firestore
-    private val lotteryRef = db.collection("lotteries")
+    val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
 
+    private val db = Firebase.firestore
+    private val campsiteRef = db.collection("campsites").document(campsiteId)
+    private val lotteryRef = db.collection("lotteries")
     var registrationStart by mutableStateOf<Long?>(null)
     var registrationEnd by mutableStateOf<Long?>(null)
     var bookingStart by mutableStateOf<Long?>(null)
     var bookingEnd by mutableStateOf<Long?>(null)
+    var numWinners by mutableStateOf("")
+    var waitlistCap by mutableStateOf("")
+    var newAvailability by mutableStateOf(listOf<Long>())
+    var availabilityStart by mutableStateOf<Long?>(null)
+    var availabilityEnd by mutableStateOf<Long?>(null)
+
     var name by mutableStateOf("")
-    var lottery by mutableStateOf<String?>(null)
+    var lotteryId by mutableStateOf<String>("")
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
@@ -50,25 +57,37 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
      * Takes all data from the given campId from Firestore and fill
      * each state variable with its value
      */
-//    init {
-//        viewModelScope.launch {
-//            try {
-//                val campsite = campsiteRef.get().await().toObject(Campsite::class.java)
-//                if (campsite != null) {
-//                    name = campsite.name
-//                    lottery = campsite.lotteryId
-//                } else {
-//                    _status.value = SaveStatus.Error("Campsite not found")
-//                }
-//            } catch (e: CancellationException) {
-//                throw e
-//            } catch (e: Exception) {
-//                _status.value = SaveStatus.Error(e.message ?: "Couldn't load campsite")
-//            } finally {
-//                isLoading = false
-//            }
-//        }
-//    }
+    init {
+        viewModelScope.launch {
+            try {
+                val campsite = campsiteRef.get().await().toObject(Campsite::class.java)
+                if (campsite != null) {
+                    name = campsite.name
+                    // If this file is active, a lottery must exist
+                    lotteryId = campsite.lotteryId!!
+                    availabilityStart = campsite.availability[0]
+                    availabilityEnd = campsite.availability.last()
+                } else {
+                    _status.value = SaveStatus.Error("Campsite not found")
+                }
+                val lottery = lotteryRef.document(lotteryId).get().await().toObject(Lottery::class.java)
+                registrationStart = lottery!!.registrationPeriodStart
+                registrationEnd = lottery.registrationPeriodEnd
+                bookingStart = lottery.bookingPeriodStart
+                bookingEnd = lottery.bookingPeriodEnd
+                lottery.optionalWaitlistCapacity?.let{
+                    waitlistCap = lottery.optionalWaitlistCapacity.toString()
+                }
+                numWinners = lottery.numLotteryWinners.toString()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _status.value = SaveStatus.Error(e.message ?: "Couldn't load campsite")
+            } finally {
+                isLoading = false
+            }
+        }
+    }
 
     /**
      * Validates the inputted registration and booking periods
@@ -82,53 +101,46 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
         if (close < open) return "Registration must close after it opens"
         if (start <= close) return "Booking must start after registration closes"
         if (end < start) return "Booking must end after it starts"
+        availabilityStart?.let { if (it < end) return "Availability must start after booking ends" }
+        if (availabilityEnd == null || availabilityEnd!! <= availabilityStart!!) return "Availability must be after booking period"
         return null
     }
 
 
     /**
-     * Adds a new [Lottery] object to the Firestore.
+     * Updates a [Lottery] object to the Firestore.
      *
-     * @param numWinners the number of winners allowed for the lottery
-     * @param waitlistCap the number of people allowed in the waitlist, or null if no limit
      */
-//    fun addLottery(
-//        numWinners: Int,
-//        waitlistCap: Int?,
-//    ) {
-//        validateDates()?.let {
-//            _status.value = SaveStatus.Error(it)
-//            return
-//        }
-//        viewModelScope.launch {
-//            // Change status to saving
-//            _status.value = SaveStatus.Saving
-//            try {
-//                // Create database references, any image and campsite object will be linked by their ids (document name)
-//                val docRef = lotteryRef.document()
-//
-//                // Make a new lottery object
-//                val newLottery = Lottery(
-//                    lotteryID = docRef.id,
-//                    registrationPeriodStart = Timestamp(Date(registrationStart!!)),
-//                    registrationPeriodEnd = Timestamp(Date(registrationEnd!!)),
-//                    bookingPeriodStart = Timestamp(Date(bookingStart!!)),
-//                    bookingPeriodEnd = Timestamp(Date(bookingEnd!!)),
-//                    numLotteryWinners = numWinners,
-//                    optionalWaitlistCapacity = waitlistCap,
-//                    campIds = listOf(campsiteId),
-//                    status = LotteryStatus.OPEN
-//                )
-//
-//                // upload to firestore
-//                docRef.set(newLottery).await()
-//                // update the campsite to have an active lottery
-//                campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
-//                _status.value = SaveStatus.Success
-//            } catch (e: Exception) {
-//                _status.value = SaveStatus.Error(e.message ?: "Something went wrong")
-//            }
-//
-//        }
-//    }
+    fun updateLottery() {
+        validateDates()?.let {
+            _status.value = SaveStatus.Error(it)
+            return
+        }
+        viewModelScope.launch {
+            // Change status to saving
+            _status.value = SaveStatus.Saving
+            try {
+                // Create database references, any image and campsite object will be linked by their ids (document name)
+                val docRef = lotteryRef.document(lotteryId)
+
+                docRef.update(
+                    mapOf(
+                        "registrationPeriodStart" to registrationStart,
+                        "registrationPeriodEnd" to registrationEnd,
+                        "bookingPeriodStart" to bookingStart,
+                        "bookingPeriodEnd" to bookingEnd,
+                        "numLotteryWinners" to numWinners.toInt(),
+                        "optionalWaitlistCapacity" to if (waitlistCap != "") waitlistCap.toInt() else null,
+                    )
+                ).await()
+                newAvailability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
+                // update the campsite's availability'
+                campsiteRef.update(mapOf("availability" to newAvailability)).await()
+                _status.value = SaveStatus.Success
+            } catch (e: Exception) {
+                _status.value = SaveStatus.Error(e.message ?: "Something went wrong")
+            }
+
+        }
+    }
 }

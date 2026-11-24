@@ -88,7 +88,7 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
         if (start <= close) return "Booking must start after registration closes"
         if (end < start) return "Booking must end after it starts"
         availabilityStart?.let { if (it < end) return "Availability must start after booking ends" }
-        if (availabilityEnd == 0L || availabilityEnd == null || availabilityEnd!! <= availabilityStart!!) return "Availability must be after booking period"
+        if (availabilityEnd == null || availabilityEnd!! <= availabilityStart!!) return "Availability must be after booking period"
         return null
     }
 
@@ -117,10 +117,10 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                 // Make a new lottery object
                 val newLottery = Lottery(
                     lotteryID = docRef.id,
-                    registrationPeriodStart = Timestamp(Date(registrationStart!!)),
-                    registrationPeriodEnd = Timestamp(Date(registrationEnd!!)),
-                    bookingPeriodStart = Timestamp(Date(bookingStart!!)),
-                    bookingPeriodEnd = Timestamp(Date(bookingEnd!!)),
+                    registrationPeriodStart = registrationStart,
+                    registrationPeriodEnd = registrationEnd,
+                    bookingPeriodStart = bookingStart,
+                    bookingPeriodEnd = bookingEnd,
                     numLotteryWinners = numWinners,
                     optionalWaitlistCapacity = waitlistCap,
                     campIds = listOf(campsiteId),
