@@ -4,6 +4,9 @@ import com.example.quackapp.Model.User
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 
+import android.net.Uri
+import com.google.firebase.storage.FirebaseStorage
+
 /**
  * Repository responsible for storing and retrieving User profiles in Firestore.
  *
@@ -101,6 +104,7 @@ object UserRepository {
         email: String,
         phoneNumber: String,
         notificationsEnabled: Boolean,
+        profileImageUrl: String,
         onSuccess: () -> Unit,
         onFail: (Exception) -> Unit
     ) {
@@ -114,7 +118,8 @@ object UserRepository {
                     "name" to name,
                     "email" to email,
                     "phoneNumber" to phoneNumber,
-                    "notificationsEnabled" to notificationsEnabled
+                    "notificationsEnabled" to notificationsEnabled,
+                    "profileImageUrl" to profileImageUrl
                 )
             )
 
@@ -125,6 +130,110 @@ object UserRepository {
                 onFail(exception)
             }
 
+    }
+
+    /**
+     * Uploads or replaces the profile picture associated with a user.
+     *
+     * Firebase Installation ID (FID) is used as image filename so each user profile has only one profile picture.
+     *
+     * Supports US 01.08.02,
+     *
+     * @param deviceId FID identifying user device
+     * @param imageUri local URI of selected image
+     * @param onSuccess returns the Firebase Storage download URL
+     * @param onFail returns if the upload or URL retrieval fails
+     */
+    fun uploadProfilePic(
+        deviceId: String,
+        imageUri: Uri,
+        onSuccess: (String) -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        val storage = FirebaseStorage.getInstance()
+
+        val imageReference = storage.reference
+            .child("profileImages/$deviceId.jpg")
+
+        imageReference.putFile(imageUri)
+            .addOnSuccessListener {
+
+                //Retrieves public download URL after image upload finishes
+                imageReference.downloadUrl
+                    .addOnSuccessListener {
+                        downloadUri -> onSuccess(downloadUri.toString())
+                    }
+                    .addOnFailureListener {
+                        exception -> onFail(exception)
+                    }
+            }
+            .addOnFailureListener {
+                exception -> onFail(exception)
+            }
+    }
+
+    /**
+     * Saves the download URL for a user's profile picture
+     */
+    fun updateProfilePicUrl(
+        deviceId: String,
+        profileImageUrl: String,
+        onSuccess: () -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        val database = FirebaseFirestore.getInstance()
+
+        database.collection("users")
+            .document(deviceId)
+            .update(
+                "profileImageUrl", profileImageUrl
+            )
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener {
+                exception -> onFail(exception)
+            }
+    }
+
+    /**
+     * Removes a user's profile picture from Firebase Storage and clears
+     * the saved image URL from their Firestore user profile.
+     *
+     * Supports US 01.08.02
+     */
+    fun removeProfilePic(
+        deviceId: String,
+        onSuccess: () -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        val storage = FirebaseStorage.getInstance()
+        val database = FirebaseFirestore.getInstance()
+
+        val imageReference = storage.reference
+            .child("profileImages/$deviceId.jpg")
+
+        imageReference.delete()
+            .addOnSuccessListener {
+
+                database.collection("users")
+                    .document(deviceId)
+                    .update(
+                        "profileImageUrl", ""
+                    )
+                    .addOnSuccessListener {
+                        onSuccess()
+                    }
+                    .addOnFailureListener {
+                        exception -> onFail(exception)
+                    }
+            }
+            .addOnFailureListener {
+                exception -> onFail(exception)
+            }
     }
 
     /**
