@@ -19,7 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Controller.UserRepository
+import com.example.quackapp.Model.Admin
 import com.example.quackapp.Model.User
+import androidx.compose.material3.TextButton
 
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.Alignment
@@ -55,6 +57,7 @@ import coil.compose.AsyncImage
  * US 01.08.01 - Delete profile.
  * US 01.10.01 - Opt out of notifications.
  * US 01.11.01 - View app policy and guidelines.
+ * US 03.11.01 - Admins see "Switch back to Admin" after switching to an entrant/owner profile.
  *
  * @param navController controls navigation after profile actions.
  * @param selectedRole role assigned when registering a new user.
@@ -182,6 +185,20 @@ fun UserProfile(
                 "Create User Profile"
             }
         )
+
+        // US 03.11.01: an admin using the app as an entrant/owner can go back to admin tools
+        if (isEditing && Admin.isAdmin(userRoles)) {
+            TextButton(
+                onClick = {
+                    navController.navigate("AdminHome") {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            ) {
+                Text("Switch back to Admin", color = Color(0xFF2E7D32))
+            }
+        }
 
         OutlinedTextField(
             value = name,

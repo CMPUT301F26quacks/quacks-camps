@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Controller.UserRepository
+import com.example.quackapp.Model.Admin
 import com.example.quackapp.Model.User
 import com.example.quackapp.R
 
@@ -188,24 +189,29 @@ fun UserStart(navController: NavController) {
     LaunchedEffect(currentUser) {
 
         val user = currentUser ?: return@LaunchedEffect
+        val route = startRouteFor(user.roles, user.deviceId) ?: return@LaunchedEffect
 
-        when {
-            "ENTRANT" in user.roles && "OWNER" !in user.roles -> {
-                navController.navigate("EntrantHome") {
-                    popUpTo("UserStart") {
-                        inclusive = true
-                    }
-                }
-            }
-
-            "OWNER" in user.roles && "ENTRANT" !in user.roles -> {
-                navController.navigate("CampsiteOwnerHome/${currentUser!!.deviceId}") {
-                    popUpTo("UserStart") {
-                        inclusive = true
-                    }
-                }
+        navController.navigate(route) {
+            popUpTo("UserStart") {
+                inclusive = true
             }
         }
-
     }
+}
+
+/**
+ * Decides which home screen a signed-in user starts on, based on their roles.
+ *
+ * Admins always start on the Admin home, even if they also hold other roles,
+ * because they can switch to entrant/owner from there (US 03.11.01).
+ *
+ * @param roles roles stored on the user's profile.
+ * @param deviceId the user's FID, needed for the owner home route.
+ * @return the route to navigate to, or null if the roles don't match a single home.
+ */
+fun startRouteFor(roles: List<String>, deviceId: String): String? = when {
+    Admin.isAdmin(roles) -> "AdminHome"
+    "ENTRANT" in roles && "OWNER" !in roles -> "EntrantHome"
+    "OWNER" in roles && "ENTRANT" !in roles -> "CampsiteOwnerHome/$deviceId"
+    else -> null
 }

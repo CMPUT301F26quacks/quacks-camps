@@ -21,11 +21,9 @@ object NavBarLists {
         NavBarItem.OwnerProfile
     )
 
-    //Admin list of icons wanted for Admin Nav Bar to-do
-
-    /*
+    // Admin message/notification logs (US 03.08.01, 03.12.01) can add a middle icon here
     val admin = listOf(
-        #TO-DO
+        NavBarItem.AdminHome,
+        NavBarItem.AdminProfile
     )
-     */
 }
