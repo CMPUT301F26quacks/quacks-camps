@@ -336,6 +336,13 @@ class ReservationRepository private constructor() {
             }
     }
 
+    /**
+     * Fetches confirmed reservations for a campsite from Firestore ("reservations"),
+     * Local state (_reservations) is updated with any newly fetched records.
+     *
+     * @param campsiteId The unique identifier of the campsite.
+     * @param onResult Callback invoked with the matching list of confirmed [Reservation]s.
+     */
     fun getConfirmedReservations(
         campsiteId: String,
         onResult: (List<Reservation>) -> Unit
@@ -343,14 +350,10 @@ class ReservationRepository private constructor() {
         val localMatches = _reservations.value.filter {
             it.campsiteId == campsiteId && it.status == ReservationStatus.CONFIRMED
         }
-
-
         val db = firestore ?: run {
             onResult(localMatches)
             return
         }
-
-
         db.collection("reservations")
             .whereEqualTo("campsiteId", campsiteId)
             .whereEqualTo("status", ReservationStatus.CONFIRMED.name)
@@ -358,7 +361,6 @@ class ReservationRepository private constructor() {
             .addOnSuccessListener { snapshot ->
                 val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
                 if (fetched.isNotEmpty()) {
-                    // Merge into local StateFlow so cache stays up to date
                     val fetchedIds = fetched.map { it.id }.toSet()
                     val remaining = _reservations.value.filter { it.id !in fetchedIds }
                     _reservations.value = fetched + remaining
@@ -370,13 +372,8 @@ class ReservationRepository private constructor() {
             .addOnFailureListener { e ->
                 Log.w("ReservationRepo", "Error fetching campsite reservations", e)
                 onResult(localMatches)
-
-
             }
     }
-
-
-
 
     companion object {
         @Volatile

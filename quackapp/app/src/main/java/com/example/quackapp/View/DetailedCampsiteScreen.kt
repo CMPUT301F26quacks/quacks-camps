@@ -43,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.Model.ReservationRepository
 import com.google.android.gms.maps.model.LatLng
 
 /**
@@ -295,8 +296,6 @@ fun DetailedCampsiteScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Currently Booked Dates", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(4.dp))
-
-
                     if (viewModel.bookedReservations.isEmpty()) {
                         Text(
                             text = "No dates are currently booked for this campsite.",
@@ -332,7 +331,7 @@ fun DetailedCampsiteScreen(
                                 ),
                                 modifier = Modifier.testTag("rejectReservation${index + 1}")
                                 ) {
-                                Text("Reject", color = Color.White)
+                                Text("Reject", color = Color.White) //reject button to reject any reservations made
                               }
                             }
                         }
