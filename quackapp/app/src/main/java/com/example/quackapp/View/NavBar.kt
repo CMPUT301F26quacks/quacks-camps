@@ -48,6 +48,10 @@ private fun RowScope.AddItem(
     currentRoute: String?,
     navController: NavController
 ) {
+    //
+    val isSelected = currentRoute == screen.sendsTo ||
+            (screen == NavBarItem.OwnerHome && currentRoute?.startsWith("CampsiteOwnerHome") == true)
+
     NavigationBarItem(
         label = { Text(screen.name) },
         icon = { Icon(
@@ -55,10 +59,13 @@ private fun RowScope.AddItem(
             contentDescription = screen.name,
             tint = Color(0xFFF16B00)
         ) },
-        selected = currentRoute == screen.sendsTo,
+        selected = isSelected,
         alwaysShowLabel = true,
         onClick = {
-            val returned = navController.popBackStack(screen.sendsTo, inclusive = false)
+            var returned = navController.popBackStack(screen.sendsTo, inclusive = false)
+            if (!returned && screen == NavBarItem.OwnerHome) {
+                returned = navController.popBackStack("CampsiteOwnerHome/{ownerId}", inclusive = false) //make sure that the backstack includes the owner's Id so it doesn't reroute to a page with no campsiteowner
+            }
             if (!returned) {
                 navController.navigate(screen.sendsTo) {
                     popUpTo("UserStart") { saveState = true }
