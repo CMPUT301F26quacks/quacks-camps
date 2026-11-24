@@ -15,6 +15,10 @@ import com.example.quackapp.Controller.DetailedCampsiteController
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
 import com.example.quackapp.View.Entrant.EntrantHome
+import com.example.quackapp.View.Admin.AdminHome
+import com.example.quackapp.View.Admin.AdminImageGallery
+import com.example.quackapp.View.Admin.AdminCampsites
+import com.example.quackapp.View.Admin.AdminCampsiteReviews
 
 /**
  * Sets up navigation between screens for whole app
@@ -94,6 +98,16 @@ fun QuackApp() {
         }
         composable("OwnerReservationHistory") {
             OwnerReservationHistoryScreen(navController = navController)
+        }
+
+        composable("AdminHome") { AdminHome(navController) }
+        composable("AdminImageGallery") { AdminImageGallery(navController) }
+        composable("AdminCampsites") { AdminCampsites(navController) }
+        composable(
+            route = "AdminCampsiteReviews/{campId}",
+            arguments = listOf(navArgument("campId") { type = NavType.StringType })
+        ) {
+            AdminCampsiteReviews(navController)
         }
     }
 }

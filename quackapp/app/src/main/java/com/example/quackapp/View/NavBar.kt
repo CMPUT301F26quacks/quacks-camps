@@ -11,6 +11,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.quackapp.Model.NavBarItem
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 /**
  * Creates Navigation bar for bottom of a screen
@@ -25,7 +26,7 @@ fun NavBar(navController: NavController, items: List<NavBarItem>) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    NavigationBar {
+    NavigationBar{
         items.forEach { item ->
             AddItem(item, currentRoute, navController)
         }
