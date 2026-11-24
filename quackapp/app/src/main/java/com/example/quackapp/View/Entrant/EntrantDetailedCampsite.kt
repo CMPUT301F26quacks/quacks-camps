@@ -42,6 +42,8 @@ import com.example.quackapp.Controller.EntrantDetailedCampsiteController
  * When an entrant clicks on an EntrantHomeCard, it sends them to this page
  * with information on the campsite and the ability to enter that campsites lottery
  *
+ * [US 01.01.05] As an entrant, I want to see details of a campsite.
+ *
  * @param modifier mainly for padding
  * @param navController allows entrant to use navigation bar
  * @param controller uses EntrantDetailedCampsiteController to fetch the
