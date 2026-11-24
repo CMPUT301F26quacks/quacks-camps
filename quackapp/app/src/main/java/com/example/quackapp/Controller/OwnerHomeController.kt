@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.channels.awaitClose
@@ -53,9 +54,10 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
             awaitClose { listener.remove() }
         }
         else{   //but if tapping on home button again, js use logged in device id
+            var listener: ListenerRegistration? = null
             DeviceIdGetter.getDeviceId(
                 onSuccess = {deviceId ->
-                    val listener = db.collection("campsites")
+                    listener = db.collection("campsites")
                         .whereEqualTo("ownerId", deviceId)
                         .addSnapshotListener {snapshot, error ->
                             if(error != null){
@@ -69,7 +71,7 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                     trySend(emptyList())
                 }
             )
-            awaitClose {}
+            awaitClose { listener?.remove() }
         }
 
 

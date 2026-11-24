@@ -39,8 +39,7 @@ fun QuackApp() {
             EntrantDetailedCampsite(navController = navController)
         }
 
-
-
+        composable("OwnerHome") { OwnerHome(navController) }
 
         composable(
             route = "CampsiteOwnerHome/{ownerId}",
