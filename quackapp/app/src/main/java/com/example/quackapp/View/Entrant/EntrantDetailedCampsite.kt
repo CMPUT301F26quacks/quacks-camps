@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -133,7 +134,8 @@ fun EntrantDetailedCampsite(
                         //Campsite Name
                         text = campsite.name,
                         style = MaterialTheme.typography.displayMedium,
-                        color = Color(0xFFF16B00)
+                        color = Color(0xFFF16B00),
+                        modifier = Modifier.testTag("campsiteTitle")
                     )
                 }
                 item {
@@ -142,11 +144,13 @@ fun EntrantDetailedCampsite(
                             Text(
                                 text = "⭐ ${campsite.rating}",
                                 style = MaterialTheme.typography.headlineSmall,
-                                color = Color(0xFFF2BA00)
+                                color = Color(0xFFF2BA00),
+                                modifier = Modifier.testTag("rating")
                             )
                             //User Make a Rating
                             OutlinedButton(
-                                onClick = { showRatingInput = !showRatingInput }
+                                onClick = { showRatingInput = !showRatingInput },
+                                modifier = Modifier.testTag("makeRating")
                             ) {
                                 Text(
                                     if (showRatingInput) "Close" else "Make a Rating"
@@ -216,25 +220,29 @@ fun EntrantDetailedCampsite(
                         Text(
                             text = "\uD83D\uDCCC ${campsite.location}",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
+                            color = Color(0xFFF2BA00),
+                            modifier = Modifier.testTag("location")
                         )
                         //Campsite price per night
                         Text(
                             text = "$${campsite.price} per night",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
+                            color = Color(0xFFF2BA00),
+                            modifier = Modifier.testTag("pricePerNight")
                         )
                         //Campsite capacity
                         Text(
                             text = "Up to ${campsite.capacity} people",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
+                            color = Color(0xFFF2BA00),
+                            modifier = Modifier.testTag("capacity")
                         )
                         //Days left on campsite lottery
                         Text(
                             text = "(TO-DO) days left on lottery",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
+                            color = Color(0xFFF2BA00),
+                            modifier = Modifier.testTag("lotteryDaysLeft")
                         )
                     }
                 }
@@ -264,14 +272,16 @@ fun EntrantDetailedCampsite(
                             Text(
                                 text = "Features",
                                 style = MaterialTheme.typography.headlineMedium,
-                                color = Color(0xFFF16B00)
+                                color = Color(0xFFF16B00),
+                                modifier = Modifier.testTag("feature")
                             )
                             //Displays all Campsite Features in bullet point
                             features.forEach { feature ->
                                 Text(
                                     text = "\u2022 $feature",
                                     style = MaterialTheme.typography.headlineSmall,
-                                    color = Color(0xFFF2BA00)
+                                    color = Color(0xFFF2BA00),
+                                    modifier = Modifier.testTag("featureItem")
                                 )
                             }
                         }
