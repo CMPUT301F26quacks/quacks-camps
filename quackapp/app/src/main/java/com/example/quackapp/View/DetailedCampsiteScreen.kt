@@ -237,7 +237,7 @@ fun DetailedCampsiteScreen(
             }
             val currentLottery = viewModel.lottery
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("lotteryInfo"),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(

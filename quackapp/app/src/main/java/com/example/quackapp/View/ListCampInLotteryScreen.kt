@@ -93,7 +93,8 @@ fun ListCampInLotteryScreen(
                     disabledContainerColor = Color.Gray,
                     disabledContentColor = Color.LightGray
                 ),
-                onClick = { navController.popBackStack() }
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.testTag("backButton")
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -172,13 +173,6 @@ fun ListCampInLotteryScreen(
                     .fillMaxWidth()
                     .testTag("waitlistCapField")
             )
-            (status as? SaveStatus.Error)?.let {
-                Text(
-                    it.message,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 18.sp
-                )
-            }
             Spacer(modifier = Modifier.height(10.dp))
             Text(text = buildAnnotatedString {
                 append("Available Dates ")
@@ -204,13 +198,9 @@ fun ListCampInLotteryScreen(
             }
             Button(
                 onClick = {
-                    var cap:Int? = null
-                    if (waitlistCap != ""){
-                        cap = waitlistCap.toInt()
-                    }
                     viewModel.addLottery(
-                        numWinners = numWinners.toInt(),
-                        waitlistCap = cap,
+                        numWinners = numWinners,
+                        waitlistCap = waitlistCap
                     )
                 },
                 enabled = status !is SaveStatus.Saving,

@@ -6,6 +6,11 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -13,8 +18,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.printToLog
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
@@ -22,10 +30,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.testing.TestNavHostController
 import com.example.quackapp.Controller.DetailedCampsiteController
 import com.example.quackapp.Controller.EditCampsiteController
+import com.example.quackapp.Controller.EditLotteryDetailsController
+import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.RegisterCampsiteController
 import com.example.quackapp.View.DetailedCampsiteScreen
 import com.example.quackapp.View.EditCampsiteScreen
+import com.example.quackapp.View.EditLotteryDetailsScreen
+import com.example.quackapp.View.ListCampInLotteryScreen
 import com.example.quackapp.View.OwnerHome
 import com.example.quackapp.View.RegisterCampsiteScreen
 import org.junit.Rule
@@ -46,6 +58,22 @@ class CreateLotteryTests {
         }
     }
 
+    private fun waitForTag(tag: String){
+        composeRule.waitUntil(10_000) {
+            composeRule
+                .onAllNodesWithTag(tag)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+    }
+
+    private lateinit var lotteryVM: ListCampInLotteryController
+    private lateinit var editLotteryVM: EditLotteryDetailsController
+
+    private fun millis(y: Int, m: Int, d: Int) =
+        java.time.LocalDate.of(y, m, d)
+            .atStartOfDay(java.time.ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
     private fun launch() {
         val homeVM = OwnerHomeController(SavedStateHandle(mapOf("ownerId" to ownerId)))
         val registerVM = RegisterCampsiteController(SavedStateHandle(mapOf("ownerId" to ownerId)))
@@ -63,20 +91,30 @@ class CreateLotteryTests {
                     }
                     DetailedCampsiteScreen(navController, detailVM)
                 }
-                composable("EditCampsite/{id}") { entry ->
+                composable("ListCampInLotteryScreen/{id}") { entry ->
+                    val id = entry.arguments?.getString("id").orEmpty()
+                    val vm = remember(id) {
+                        ListCampInLotteryController(SavedStateHandle(mapOf("campsiteId" to id)))
+                    }
+                    lotteryVM = vm
+                    ListCampInLotteryScreen(navController, vm)
+                }
+                composable("editLottery/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()
                     val editVM = remember(id) {
-                        EditCampsiteController(SavedStateHandle(mapOf("campsiteId" to id)))
+                        EditLotteryDetailsController(SavedStateHandle(mapOf("campsiteId" to id)))
                     }
-                    EditCampsiteScreen(navController, editVM)
+                    editLotteryVM = editVM
+                    EditLotteryDetailsScreen(navController, editLotteryVM)
                 }
             }
         }
     }
 
     @Test
-    fun failToFillRequiredFields(){
+    fun failToFillRequiredFieldsThenFillThem(){
         launch()
+
         waitFor("No campsites registered")
 
         composeRule
@@ -89,7 +127,7 @@ class CreateLotteryTests {
 
         composeRule
             .onNodeWithTag("nameField")
-            .performTextInput("Kool Kids Camp")
+            .performTextInput("Test Camp")
 
         composeRule
             .onNodeWithTag("locationField")
@@ -108,12 +146,7 @@ class CreateLotteryTests {
             .performScrollTo()
             .performClick()
 
-        composeRule.waitUntil(10_000) {
-            composeRule
-                .onAllNodesWithTag("confirmMap")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
-        }
+        waitForTag("confirmMap")
 
         composeRule
             .onNodeWithTag("confirmMap")
@@ -125,203 +158,156 @@ class CreateLotteryTests {
             .performClick()
 
         waitFor("Campsites")
-        waitFor("Kool Kids Camp")
-        composeRule
-            .onNodeWithText("Kool Kids Camp")
-            .assertExists()
+        waitFor("Test Camp")
+        waitForTag("detailsTest Camp")
 
-        composeRule
-            .onNodeWithTag("deleteKool Kids Camp")
-            .performClick()
-
-        composeRule
-            .onNodeWithTag("confirmDelete")
-            .performClick()
-
-        composeRule
-            .onNodeWithText("Kool Kids Camp")
-            .assertDoesNotExist()
-    }
-
-    @Test
-    fun addFullCampAndViewDetails(){
-        launch()
-        waitFor("No campsites registered")
-
-
-        composeRule
-            .onNodeWithTag("addCampsiteButton")
-            .performClick()
-
-        composeRule
-            .onNodeWithText("Register Campsite")
-            .assertExists()
-
-        composeRule
-            .onNodeWithTag("nameField")
-            .performTextInput("Test Camp")
-
-        composeRule
-            .onNodeWithTag("locationField")
-            .performTextInput("Quackada")
-
-        composeRule
-            .onNodeWithTag("priceField")
-            .performTextInput("50")
-
-        composeRule
-            .onNodeWithTag("capacityField")
-            .performTextInput("10")
-
-        composeRule
-            .onNodeWithTag("cancelPolicyField")
-            .performTextInput("24 hour notice")
-
-        composeRule
-            .onNodeWithTag("amenity1")
-            .performTextInput("Water")
-
-        composeRule
-            .onNodeWithTag("addAmenity")
-            .performClick()
-
-        composeRule
-            .onNodeWithTag("amenity2")
-            .performTextInput("Food")
-
-        composeRule
-            .onNodeWithTag("deleteAmenity1")
-            .performClick()
-
-        composeRule
-            .onNodeWithTag("amenity2")
-            .assertDoesNotExist()
-
-        composeRule
-            .onNodeWithTag("addAmenity")
-            .performClick()
-
-        composeRule
-            .onNodeWithTag("amenity2")
-            .performTextInput("Water")
-
-        composeRule
-            .onNodeWithTag("rule1")
-            .performTextInput("No running")
-
-        composeRule
-            .onNodeWithTag("addRule")
-            .performClick()
-
-        composeRule
-            .onNodeWithTag("rule2")
-            .performTextInput("No dancing")
-
-        composeRule
-            .onNodeWithTag("deleteRule1")
-            .performClick()
-
-        composeRule
-            .onNodeWithTag("rule2")
-            .assertDoesNotExist()
-
-        composeRule
-            .onNodeWithTag("addRule")
-            .performClick()
-
-        composeRule
-            .onNodeWithTag("rule2")
-            .performTextInput("Have fun")
-
-        composeRule
-            .onNodeWithTag("map")
-            .performScrollTo()
-            .performClick()
-
-        composeRule.waitUntil(10_000) {
-            composeRule
-                .onAllNodesWithTag("confirmMap")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
-        }
-
-        composeRule
-            .onNodeWithTag("confirmMap")
-            .performScrollTo()
-            .performClick()
-
-        composeRule
-            .onNodeWithText("Smoke Free")
-            .performScrollTo()
-            .performClick()
-
-        composeRule
-            .onNodeWithTag("newTagField")
-            .performTextInput("Cool")
-
-        composeRule
-            .onNodeWithTag("addTagButton")
-            .performScrollTo()
-            .performClick()
-
-        composeRule
-            .onNodeWithText("Submit")
-            .performScrollTo()
-            .performClick()
-
-        waitFor("Campsites")
-
-        composeRule
-            .onNodeWithText("Test Camp")
-            .assertExists()
 
         composeRule
             .onNodeWithTag("detailsTest Camp")
             .performClick()
 
+        composeRule
+            .onNodeWithTag("lotteryInfo")
+            .performScrollTo()
+
+        composeRule
+            .onNodeWithTag("createLotteryButton")
+            .performScrollTo()
+            .performClick()
+
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
+
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
+
+
+        composeRule.runOnIdle {
+            lotteryVM.registrationStart = millis(2026, 12, 10)
+            lotteryVM.registrationEnd = millis(2026, 12, 14)
+        }
+
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
+
+        composeRule.runOnIdle {
+            lotteryVM.bookingStart = millis(2026, 12, 15)
+            lotteryVM.bookingEnd = millis(2026, 12, 16)
+        }
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
+
+        composeRule.runOnIdle {
+            lotteryVM.availabilityStart = millis(2026, 12, 20)
+            lotteryVM.availabilityEnd = millis(2026, 12, 24)
+        }
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
+
+        composeRule
+            .onNodeWithTag("numWinnersField")
+            .performTextInput("Ten")
+
+        composeRule
+            .onNodeWithTag("numWinnersField")
+            .assert(
+                SemanticsMatcher("EditableText is empty") { node ->
+                    node.config.getOrNull(SemanticsProperties.EditableText)?.text.isNullOrEmpty()
+                }
+            )
+
+        composeRule
+            .onNodeWithTag("numWinnersField")
+            .performTextInput("5")
+
+        composeRule
+            .onNodeWithTag("waitlistCapField")
+            .performTextInput("Ten")
+
+        composeRule
+            .onNodeWithTag("waitlistCapField")
+            .assert(
+                SemanticsMatcher("EditableText is empty") { node ->
+                    node.config.getOrNull(SemanticsProperties.EditableText)?.text.isNullOrEmpty()
+                }
+            )
+
+        composeRule
+            .onNodeWithTag("waitlistCapField")
+            .performTextInput("50")
+
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+
+        waitForTag("editLotteryButton")
+        composeRule
+            .onNodeWithTag("editLotteryButton")
+            .performScrollTo()
+
+        waitFor("Registration: Dec 10, 2026 to Dec 14, 2026")
+
+        composeRule
+            .onNodeWithText("Registration: Dec 10, 2026 to Dec 14, 2026")
+            .performScrollTo()
+            .assertExists()
+
+        waitFor("Booking Period: Dec 15, 2026 to Dec 16, 2026")
+        composeRule
+            .onNodeWithText("Booking Period: Dec 15, 2026 to Dec 16, 2026")
+            .performScrollTo()
+            .assertExists()
+
+        composeRule
+            .onNodeWithText("Winners to Draw: 5")
+            .performScrollTo()
+            .assertExists()
+
+        composeRule
+            .onNodeWithTag("editLotteryButton")
+            .performClick()
+
+        composeRule.runOnIdle {
+            editLotteryVM.bookingStart = millis(2026, 12, 16)
+            editLotteryVM.bookingEnd = millis(2026, 12, 18)
+        }
+        waitForTag("saveButton")
+        composeRule
+            .onNodeWithTag("saveButton")
+            .performClick()
         waitFor("Test Camp")
+        waitForTag("lotteryInfo")
 
         composeRule
-            .onNodeWithText("Quackada")
-            .assertExists()
+            .onNodeWithTag("lotteryInfo")
+            .performScrollTo()
 
-        composeRule
-            .onNodeWithText("$50 per night")
-            .assertExists()
-
-        composeRule
-            .onNodeWithText("10 people")
-            .assertExists()
-
-        composeRule
-            .onNodeWithText("24 hour notice")
-            .assertExists()
-
-        composeRule
-            .onNodeWithTag("amenity2")
-            .assertExists()
-
-        composeRule
-            .onNodeWithTag("mapLocation")
-            .assertExists()
-
-        composeRule
-            .onNodeWithTag("rule2")
-            .assertExists()
-
-        composeRule
-            .onNodeWithText("Smoke Free")
-            .assertExists()
-
-        composeRule
-            .onNodeWithText("Cool")
-            .assertExists()
+        waitFor("Booking Period: Dec 16, 2026 to Dec 18, 2026")
 
         composeRule
             .onNodeWithTag("backButton")
             .performClick()
-
-        waitFor("Campsites")
 
         composeRule
             .onNodeWithTag("deleteTest Camp")
@@ -331,15 +317,15 @@ class CreateLotteryTests {
             .onNodeWithTag("confirmDelete")
             .performClick()
 
-
         composeRule
             .onNodeWithText("Test Camp")
             .assertDoesNotExist()
     }
 
     @Test
-    fun makeCampAndEditName(){
+    fun fillOverlappingFieldsOutOfOrder(){
         launch()
+
         waitFor("No campsites registered")
 
         composeRule
@@ -360,77 +346,154 @@ class CreateLotteryTests {
 
         composeRule
             .onNodeWithTag("priceField")
-            .performTextInput("10")
+            .performTextInput("25")
 
         composeRule
             .onNodeWithTag("capacityField")
-            .performTextInput("5")
+            .performTextInput("8")
 
         composeRule
             .onNodeWithTag("map")
             .performScrollTo()
             .performClick()
 
-        composeRule.waitUntil(10_000) {
-            composeRule
-                .onAllNodesWithTag("confirmMap")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
-        }
+        waitForTag("confirmMap")
 
         composeRule
             .onNodeWithTag("confirmMap")
             .performScrollTo()
             .performClick()
+        composeRule
+            .onNodeWithText("Submit")
+            .performScrollTo()
+            .performClick()
+
+        waitFor("Campsites")
+        waitFor("Test Camp")
+        waitForTag("detailsTest Camp")
+
+
+        composeRule
+            .onNodeWithTag("detailsTest Camp")
+            .performClick()
+
+        composeRule
+            .onNodeWithTag("lotteryInfo")
+            .performScrollTo()
+
+        composeRule
+            .onNodeWithTag("createLotteryButton")
+            .performScrollTo()
+            .performClick()
+
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
 
         composeRule
             .onNodeWithTag("submitButton")
-            .performScrollTo()
             .performClick()
 
-        waitFor("Test Camp")
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
 
-        composeRule.waitUntil(10_000) {
-            composeRule
-                .onAllNodesWithTag("editTest Camp")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+        composeRule.runOnIdle {
+            lotteryVM.bookingStart = millis(2026, 12, 10)
+            lotteryVM.bookingEnd = millis(2026, 12, 14)
+            lotteryVM.registrationStart = millis(2026, 12, 15)
+            lotteryVM.registrationEnd = millis(2026, 12, 16)
+            lotteryVM.availabilityStart = millis(2026, 12, 20)
+            lotteryVM.availabilityEnd = millis(2026, 12, 24)
         }
         composeRule
-            .onNodeWithTag("editTest Camp")
+            .onNodeWithTag("submitButton")
             .performClick()
-
-        waitFor("Test Camp")
-
         composeRule
-            .onNodeWithTag("nameField")
-            .performTextClearance()
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
 
-        composeRule
-            .onNodeWithTag("nameField")
-            .performTextInput("Test Again")
-
-        composeRule
-            .onNodeWithTag("saveButton")
-            .performScrollTo()
-            .performClick()
-
-        waitFor("Test Again")
-        composeRule.waitUntil(10_000) {
-            composeRule
-                .onAllNodesWithTag("deleteTest Again")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+        composeRule.runOnIdle {
+            lotteryVM.availabilityStart = millis(2026, 12, 1)
+            lotteryVM.availabilityEnd = millis(2026, 12, 9)
+            lotteryVM.bookingStart = millis(2026, 12, 10)
+            lotteryVM.bookingEnd = millis(2026, 12, 14)
+            lotteryVM.registrationStart = millis(2026, 12, 15)
+            lotteryVM.registrationEnd = millis(2026, 12, 16)
         }
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
+
+        composeRule.runOnIdle {
+            lotteryVM.availabilityStart = millis(2026, 12, 1)
+            lotteryVM.availabilityEnd = millis(2026, 12, 3)
+            lotteryVM.registrationStart = millis(2026, 12, 4)
+            lotteryVM.registrationEnd = millis(2026, 12, 6)
+            lotteryVM.bookingStart = millis(2026, 12, 14)
+            lotteryVM.bookingEnd = millis(2026, 12, 15)
+        }
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
+
+        composeRule.runOnIdle {
+            lotteryVM.registrationStart = millis(2026, 12, 4)
+            lotteryVM.registrationEnd = millis(2026, 12, 6)
+            lotteryVM.availabilityStart = millis(2026, 12, 7)
+            lotteryVM.availabilityEnd = millis(2026, 12, 9)
+            lotteryVM.bookingStart = millis(2026, 12, 14)
+            lotteryVM.bookingEnd = millis(2026, 12, 15)
+        }
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
+
+        composeRule.runOnIdle {
+            lotteryVM.registrationStart = millis(2026, 12, 4)
+            lotteryVM.registrationEnd = millis(2026, 12, 6)
+            lotteryVM.bookingStart = millis(2026, 12, 5)
+            lotteryVM.bookingEnd = millis(2026, 12, 13)
+            lotteryVM.availabilityStart = millis(2026, 12, 15)
+            lotteryVM.availabilityEnd = millis(2026, 12, 30)
+        }
+        composeRule
+            .onNodeWithTag("submitButton")
+            .performClick()
+        composeRule
+            .onNodeWithText("Test Camp Lottery")
+            .assertExists()
 
         composeRule
-            .onNodeWithTag("deleteTest Again")
+            .onNodeWithTag("backButton")
+            .performClick()
+
+        waitForTag("backButton")
+        composeRule
+            .onNodeWithTag("backButton")
+            .performClick()
+
+        waitForTag("deleteTest Camp")
+        composeRule
+            .onNodeWithTag("deleteTest Camp")
             .performClick()
 
         composeRule
             .onNodeWithTag("confirmDelete")
             .performClick()
 
+        composeRule
+            .onNodeWithText("Test Camp")
+            .assertDoesNotExist()
     }
 
 }
