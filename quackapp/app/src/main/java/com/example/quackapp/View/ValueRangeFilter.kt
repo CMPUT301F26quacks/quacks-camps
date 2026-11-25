@@ -42,7 +42,7 @@ fun ValueRangeFilter(
             value = range,
             onValueChange = onRangeChange,
             valueRange = valueRange,
-            steps = steps,
+            steps = maxOf(0, steps),
             colors = SliderDefaults.colors(
                 thumbColor = Color(0xFFF2BA00),
                 activeTrackColor = Color(0xFFF16B00)

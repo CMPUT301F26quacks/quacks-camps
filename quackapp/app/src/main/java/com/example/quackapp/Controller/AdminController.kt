@@ -40,7 +40,6 @@ class AdminController : ViewModel() {
     var deleteError by mutableStateOf<String?>(null)
         private set
 
-    /** Every campsite in the app, live. */
     val campsites: StateFlow<List<Campsite>> = callbackFlow {
         val listener = db.collection("campsites")
             .addSnapshotListener { snapshot, error ->
@@ -48,7 +47,14 @@ class AdminController : ViewModel() {
                     close(error)
                     return@addSnapshotListener
                 }
-                trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+                val list = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(Campsite::class.java)
+                    } catch (_: Exception) {
+                        null
+                    }
+                } ?: emptyList()
+                trySend(list)
             }
         awaitClose { listener.remove() }
     }

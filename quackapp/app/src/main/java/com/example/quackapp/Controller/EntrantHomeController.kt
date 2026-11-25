@@ -29,7 +29,14 @@ class EntrantHomeController: ViewModel(){
                     return@addSnapshotListener
                 }
                 //Otherwise, it will be ready to be collected
-                trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+                val list = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(Campsite::class.java)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } ?: emptyList()
+                trySend(list)
             }
         awaitClose { listener.remove() }
     }
@@ -47,7 +54,14 @@ class EntrantHomeController: ViewModel(){
                     return@addSnapshotListener
                 }
                 //Otherwise, it will be ready to be collected
-                trySend(snapshot?.toObjects(Lottery::class.java) ?: emptyList())
+                val list = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(Lottery::class.java)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } ?: emptyList()
+                trySend(list)
             }
         awaitClose { listener.remove() }
     }

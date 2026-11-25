@@ -49,7 +49,14 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                         close(error)
                         return@addSnapshotListener
                     }
-                    trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+                    val list = snapshot?.documents?.mapNotNull { doc ->
+                        try {
+                            doc.toObject(Campsite::class.java)
+                        } catch (_: Exception) {
+                            null
+                        }
+                    } ?: emptyList()
+                    trySend(list)
                 }
             awaitClose { listener.remove() }
         }
@@ -64,7 +71,14 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                                 close(error)
                                 return@addSnapshotListener
                             }
-                            trySend(snapshot?.toObjects(Campsite::class.java)?: emptyList())
+                            val list = snapshot?.documents?.mapNotNull { doc ->
+                                try {
+                                    doc.toObject(Campsite::class.java)
+                                } catch (_: Exception) {
+                                    null
+                                }
+                            } ?: emptyList()
+                            trySend(list)
                         }
                 },
                 onFail = {
