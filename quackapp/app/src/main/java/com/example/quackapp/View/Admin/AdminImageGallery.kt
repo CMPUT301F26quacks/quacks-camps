@@ -112,7 +112,7 @@ fun AdminImageGalleryContent(
             )
             if (items.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No uploaded images")
+                    Text(if (query.isBlank()) "No uploaded images yet" else "No images match \"$query\"")
                 }
             } else {
                 LazyVerticalGrid(
