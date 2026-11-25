@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,6 +45,7 @@ import coil.compose.AsyncImage
 import com.example.quackapp.Controller.AdminController
 import com.example.quackapp.Controller.imageGalleryItems
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.R
 
 /**
  * Admin "Image Gallery" screen (Manage Uploaded Media in the mockup).
@@ -128,6 +130,7 @@ fun AdminImageGalleryContent(
                         ) {
                             AsyncImage(
                                 model = camp.optionalPromoImage,
+                                error = painterResource(R.drawable.duck),
                                 contentDescription = "Image of ${camp.name}",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -155,6 +158,7 @@ fun AdminImageGalleryContent(
             }
             AsyncImage(
                 model = current.optionalPromoImage,
+                error = painterResource(R.drawable.duck),
                 contentDescription = "Full image of ${current.name}",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
