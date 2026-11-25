@@ -23,13 +23,13 @@ enum class WaitlistStatus {WAITING, SELECTED, NOT_SELECTED}
 
 class Lottery(
     var lotteryID: String = "",
-    var registrationPeriodStart: Timestamp? = null,
-    var registrationPeriodEnd: Timestamp? = null,
-    var bookingPeriodStart: Timestamp? = null,
-    var bookingPeriodEnd: Timestamp? = null,
+    var registrationPeriodStart: Long? = null,
+    var registrationPeriodEnd: Long? = null,
+    var bookingPeriodStart: Long? = null,
+    var bookingPeriodEnd: Long? = null,
     var numLotteryWinners: Int = 1,
     var optionalWaitlistCapacity: Int? = null, //since optional we use null - idk if this is the best practice tho
-    var waitlist: List<String> = listOf(""), //list of entrants
+    var waitlist: List<String> = listOf(), //list of entrants
     var status: LotteryStatus = LotteryStatus.CLOSED,
     var campIds: List<String> = listOf("")
 )

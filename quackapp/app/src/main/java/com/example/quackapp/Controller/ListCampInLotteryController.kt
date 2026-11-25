@@ -1,6 +1,8 @@
 package com.example.quackapp.Controller
 
+import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -39,6 +41,9 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
     var bookingStart by mutableStateOf<Long?>(null)
     var bookingEnd by mutableStateOf<Long?>(null)
     var name by mutableStateOf("")
+    var availability by mutableStateOf(listOf<Long>())
+    var availabilityStart by mutableStateOf<Long?>(null)
+    var availabilityEnd by mutableStateOf<Long?>(null)
     var lottery by mutableStateOf<String?>(null)
     var isLoading by mutableStateOf(true)
         private set
@@ -78,11 +83,17 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
     private fun validateDates(): String? {
         val open = registrationStart; val close = registrationEnd
         val start = bookingStart; val end = bookingEnd
+        val availStart = availabilityStart; val availEnd = availabilityEnd
+
         if (open == null || close == null || start == null || end == null)
             return "Pick registration and booking dates"
+        if (availStart == null || availEnd == null)
+            return "Pick availability dates"
         if (close < open) return "Registration must close after it opens"
         if (start <= close) return "Booking must start after registration closes"
         if (end < start) return "Booking must end after it starts"
+        if (availStart < end) return "Availability must start after booking ends"
+        if (availEnd <= availStart) return "Availability must end after it starts"
         return null
     }
 
@@ -94,29 +105,38 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
      * @param waitlistCap the number of people allowed in the waitlist, or null if no limit
      */
     fun addLottery(
-        numWinners: Int,
-        waitlistCap: Int?,
+        numWinners: String,
+        waitlistCap: String,
     ) {
         validateDates()?.let {
             _status.value = SaveStatus.Error(it)
             return
         }
+        if (numWinners.isBlank()) {
+            _status.value = SaveStatus.Error("Lottery must have winners")
+            return
+        }
+
+
         viewModelScope.launch {
             // Change status to saving
             _status.value = SaveStatus.Saving
             try {
-                // Create database references, any image and campsite object will be linked by their ids (document name)
+                // Create database references, campsite object will be linked by their ids (document name)
                 val docRef = lotteryRef.document()
-
+                var cap: Int? = null
+                if (waitlistCap != ""){
+                    cap = waitlistCap.toInt()
+                }
                 // Make a new lottery object
                 val newLottery = Lottery(
                     lotteryID = docRef.id,
-                    registrationPeriodStart = Timestamp(Date(registrationStart!!)),
-                    registrationPeriodEnd = Timestamp(Date(registrationEnd!!)),
-                    bookingPeriodStart = Timestamp(Date(bookingStart!!)),
-                    bookingPeriodEnd = Timestamp(Date(bookingEnd!!)),
-                    numLotteryWinners = numWinners,
-                    optionalWaitlistCapacity = waitlistCap,
+                    registrationPeriodStart = registrationStart,
+                    registrationPeriodEnd = registrationEnd,
+                    bookingPeriodStart = bookingStart,
+                    bookingPeriodEnd = bookingEnd,
+                    numLotteryWinners = numWinners.toInt(),
+                    optionalWaitlistCapacity = cap,
                     campIds = listOf(campsiteId),
                     status = LotteryStatus.OPEN
                 )
@@ -125,6 +145,8 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                 docRef.set(newLottery).await()
                 // update the campsite to have an active lottery
                 campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
+                availability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
+                campsiteRef.update(mapOf("availability" to availability))
                 _status.value = SaveStatus.Success
             } catch (e: Exception) {
                 _status.value = SaveStatus.Error(e.message ?: "Something went wrong")

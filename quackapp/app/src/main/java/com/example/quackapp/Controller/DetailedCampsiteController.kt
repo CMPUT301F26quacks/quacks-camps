@@ -51,7 +51,7 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
     var latitude by mutableDoubleStateOf(0.00)
     var longitude by mutableDoubleStateOf(0.00)
     var lottery by mutableStateOf<Lottery?>(null)
-    var lotteryId: String? = null
+    var lotteryId by mutableStateOf<String?>(null)
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
