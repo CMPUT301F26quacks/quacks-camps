@@ -336,16 +336,9 @@ class ReservationRepository private constructor() {
             }
     }
 
-    /**
-<<<<<<< HEAD
-     * Fetches confirmed reservations for a campsite from Firestore ("reservations"),
-     * Local state (_reservations) is updated with any newly fetched records.
-     *
-     * @param campsiteId The unique identifier of the campsite.
-     * @param onResult Callback invoked with the matching list of confirmed [Reservation]s.
-     */
-=======
-     * Synchronizes all reservations from Cloud Firestore for a specific campsite.
+
+     /**
+      *  Synchronizes all reservations from Cloud Firestore for a specific campsite.
      * Merges fetched Firestore documents into the local StateFlow regardless of reservation status.
      *
      * @param campsiteId The campsite identifier.
@@ -382,7 +375,13 @@ class ReservationRepository private constructor() {
             }
     }
 
->>>>>>> origin/dev
+    /**
+     * Fetches confirmed reservations for a campsite from Firestore ("reservations"),
+     * Local state (_reservations) is updated with any newly fetched records.
+     *
+     * @param campsiteId The unique identifier of the campsite.
+     * @param onResult Callback invoked with the matching list of confirmed [Reservation]s.
+     */
     fun getConfirmedReservations(
         campsiteId: String,
         onResult: (List<Reservation>) -> Unit

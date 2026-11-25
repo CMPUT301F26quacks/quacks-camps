@@ -121,7 +121,7 @@ class AdminController : ViewModel() {
             }
         }
     }
-<<<<<<< HEAD
+
     /**
      * Removes the `"OWNER"` role from a user profile in Firestore (`"users"` collection)
      * when they violate app policy, keeping their `"ENTRANT"` profile intact if present.
@@ -141,7 +141,10 @@ class AdminController : ViewModel() {
             } catch (e: Exception) {
                 Log.w("AdminController", "Couldn't remove owner role", e)
                 deleteError = e.message ?: "Couldn't remove owner"
-=======
+
+            }
+        }
+    }
 
     fun deleteCampsite(campsite: Campsite) {
         viewModelScope.launch {
@@ -153,7 +156,6 @@ class AdminController : ViewModel() {
                 throw e
             } catch (e: Exception) {
                 deleteError = e.message ?: "Couldn't delete campsite"
->>>>>>> origin/dev
             }
         }
     }
@@ -169,7 +171,6 @@ class AdminController : ViewModel() {
 fun imageGalleryItems(campsites: List<Campsite>, query: String): List<Campsite> =
     campsites.filter { camp ->
         camp.optionalPromoImage.isNotBlank() &&
-            (camp.name.contains(query.trim(), ignoreCase = true) ||
-                camp.location.contains(query.trim(), ignoreCase = true))
+                (camp.name.contains(query.trim(), ignoreCase = true) ||
+                        camp.location.contains(query.trim(), ignoreCase = true))
     }
-
