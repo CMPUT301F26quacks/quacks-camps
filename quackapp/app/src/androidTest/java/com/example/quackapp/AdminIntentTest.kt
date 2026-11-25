@@ -27,8 +27,7 @@ import org.junit.Test
 /**
  * Intent (UI) tests for the admin screens.
  *
- * The screens' stateless "Content" composables are given realistic fake data, so these tests
- * check the UI flow without reading or writing the real Firestore database.
+ * Composables are given fake data, so tests check the UI flow without reading or writing to the real Firestore database.
  *
  * Covers US 03.06.01, 03.09.01, 03.10.01 and 03.11.01.
  */
@@ -162,6 +161,41 @@ class AdminIntentTest {
         }
         composeRule.onNodeWithText("Whistlers").performClick()
         assertEquals("camp-jasper-1", clicked?.campId)
+    }
+
+    @Test
+    fun manageCampsitesDeleteCampsite() {   //test whether campsite was deleted
+        composeRule.setContent {
+            var camps by remember { mutableStateOf(listOf(tunnelMountain)) }
+            AdminCampsitesContent(
+                campsites = camps,
+                onCampsiteClick = {},
+                onDeleteCampsite = { deleted ->
+                    camps = camps.filterNot { it.campId == deleted.campId }
+                }
+            )
+        }
+        composeRule.onNodeWithText("Tunnel Mountain").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Remove campsite").performClick()
+        composeRule.onNodeWithText("Delete campsite?").assertIsDisplayed()
+        composeRule.onNodeWithTag("confirmDelete").performClick()
+        composeRule.onNodeWithText("Tunnel Mountain").assertDoesNotExist()
+    }
+
+    @Test
+    fun manageCampsitesCancelDeleteKeepsCampsite() {
+        var deleted: Campsite? = null
+        composeRule.setContent {
+            AdminCampsitesContent(
+                campsites = listOf(tunnelMountain),
+                onCampsiteClick = {},
+                onDeleteCampsite = { deleted = it }
+            )
+        }
+        composeRule.onNodeWithContentDescription("Remove campsite").performClick()
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals(null, deleted)
+        composeRule.onNodeWithText("Tunnel Mountain").assertIsDisplayed()
     }
 
     /** US 03.09.01: remove an abusive rating. */
