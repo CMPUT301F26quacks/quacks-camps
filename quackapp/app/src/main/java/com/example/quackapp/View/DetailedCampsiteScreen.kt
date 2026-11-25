@@ -31,6 +31,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +48,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
-import com.example.quackapp.Model.ReservationRepository
 import com.google.android.gms.maps.model.LatLng
 
 /**
@@ -57,6 +60,7 @@ fun DetailedCampsiteScreen(
     navController: NavController,
     viewModel: DetailedCampsiteController = viewModel()
 ) {
+    var showMultiSelect by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {

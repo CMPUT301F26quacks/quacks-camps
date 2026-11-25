@@ -1,7 +1,10 @@
 package com.example.quackapp.View
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -28,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,15 +41,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -66,6 +75,8 @@ fun OwnerHome(
     val camps by viewModel.camps.collectAsState()
     var campToDelete by remember { mutableStateOf<Campsite?>(null) }
     var campToShowQR by remember { mutableStateOf<Campsite?>(null) }    //track which campsite's QR code to display
+    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+    val selectionMode = selectedIds.isNotEmpty()
 
     OwnerScaffold (
         navController = navController,
@@ -106,63 +117,85 @@ fun OwnerHome(
             }
         }
         else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(camps) { campsite ->
-                    CampRow(campsite, navController, onDeleteClick = { campToDelete = campsite }, onQRClick = {campToShowQR = campsite})
+            BackHandler(enabled = selectionMode) { viewModel.clearSelection() }
+            Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                AnimatedVisibility(visible = selectionMode) {
+                    Text(
+                        text = "${selectedIds.size} selected",
+                        textAlign = TextAlign.Right,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 2.dp)
+                    )
                 }
-            }
-            // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
-            campToDelete?.let { camp ->
-                AlertDialog(
-                    onDismissRequest = { campToDelete = null },
-                    title = { Text("Delete campsite?") },
-                    text = { Text("\"${camp.name}\" will be permanently deleted. This can't be undone.") },
-                    confirmButton = {
-                        TextButton(
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    items(camps, key = { it.campId }) { campsite ->
+                        CampRow(
+                            campsite,
+                            navController,
+                            onDeleteClick = { campToDelete = campsite },
+                            onQRClick = { campToShowQR = campsite },
+                            isSelected = campsite.campId in selectedIds,
+                            selectionMode = selectionMode,
                             onClick = {
-                                viewModel.deleteCampsite(camp)
-                                campToDelete = null
+                                if (selectionMode) viewModel.toggleSelection(campsite.campId)
+                                else navController.navigate("CampsiteDetails/${campsite.campId}")
                             },
-                            modifier = Modifier.testTag("confirmDelete")
-                        ) { Text("Delete", color = Color.Red) }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { campToDelete = null }) { Text("Cancel") }
+                            onLongClick = { viewModel.toggleSelection(campsite.campId) }
+                        )
                     }
-                )
-            }
-
-            campToShowQR?.let {camp ->
-                val qrImageUrl = CampsiteOwner.generateQRCode(camp)
-
-                AlertDialog(
-                    onDismissRequest = {campToShowQR = null},
-                    title = {Text("QR Code for ${camp.name}", fontWeight = FontWeight.Bold)},
-                    text = {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            AsyncImage(
-                                model = qrImageUrl,
-                                contentDescription = "Campsite QR Code",
-                            )
+                }
+                // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
+                campToDelete?.let { camp ->
+                    AlertDialog(
+                        onDismissRequest = { campToDelete = null },
+                        title = { Text("Delete campsite?") },
+                        text = { Text("\"${camp.name}\" will be permanently deleted. This can't be undone.") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    viewModel.deleteCampsite(camp)
+                                    campToDelete = null
+                                },
+                                modifier = Modifier.testTag("confirmDelete")
+                            ) { Text("Delete", color = Color.Red) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { campToDelete = null }) { Text("Cancel") }
                         }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { campToShowQR = null }) {
-                            Text("Close")
-                        }
-                    }
-                )
+                    )
+                }
 
+                campToShowQR?.let { camp ->
+                    val qrImageUrl = CampsiteOwner.generateQRCode(camp)
+
+                    AlertDialog(
+                        onDismissRequest = { campToShowQR = null },
+                        title = { Text("QR Code for ${camp.name}", fontWeight = FontWeight.Bold) },
+                        text = {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                AsyncImage(
+                                    model = qrImageUrl,
+                                    contentDescription = "Campsite QR Code",
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { campToShowQR = null }) {
+                                Text("Close")
+                            }
+                        }
+                    )
+
+                }
             }
         }
     }
@@ -177,16 +210,32 @@ fun CampRow(
     campsite: Campsite,
     navController: NavController,
     onDeleteClick: () -> Unit,
-    onQRClick: () -> Unit
+    onQRClick: () -> Unit,
+    isSelected: Boolean,
+    selectionMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ){
+    val haptics = LocalHapticFeedback.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .padding(4.dp)
-            .background(Color(0xFF2196F3), shape = RoundedCornerShape(16.dp))
             .fillMaxWidth()
             .height(100.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (isSelected) Color(0xFFFF9800) else Color(0xFF2196F3)
+            )
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                }
+            )
             .padding(8.dp)
+
     ) {
         if (campsite.optionalPromoImage != ""){
             AsyncImage(
@@ -227,7 +276,7 @@ fun CampRow(
                     color = Color.White,
                     modifier = Modifier
                         .testTag("edit${campsite.name}")
-                        .clickable(onClick = {navController.navigate("EditCampsite/${campsite.campId}")})
+                        .clickable(onClick = { navController.navigate("EditCampsite/${campsite.campId}") })
                 )
                 Text(
                     text = "Details",
@@ -235,7 +284,7 @@ fun CampRow(
                     color = Color.White,
                     modifier = Modifier
                         .testTag("details${campsite.name}")
-                        .clickable(onClick = {navController.navigate("CampsiteDetails/${campsite.campId}")})
+                        .clickable(onClick = { navController.navigate("CampsiteDetails/${campsite.campId}") })
                 )
                 // TODO delete campId from related lotteries
                 //  and maybe the lottery itself if the campIds list is empty

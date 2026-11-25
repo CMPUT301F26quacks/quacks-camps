@@ -13,11 +13,15 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
@@ -134,5 +138,26 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                 deleteError = e.message ?: "Couldn't delete campsite"
             }
         }
+    }
+
+    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
+
+    val selectionMode: StateFlow<Boolean> = _selectedIds
+        .map { it.isNotEmpty() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun toggleSelection(id: String) {
+        _selectedIds.update { if (id in it) it - id else it + id }
+    }
+
+    fun clearSelection() { _selectedIds.value = emptySet() }
+
+    fun selectAll(allIds: List<String>) { _selectedIds.value = allIds.toSet() }
+
+    fun deleteSelected() {
+        val ids = _selectedIds.value
+        // repository.deleteCamps(ids)  <- your actual delete logic
+        clearSelection()
     }
 }
