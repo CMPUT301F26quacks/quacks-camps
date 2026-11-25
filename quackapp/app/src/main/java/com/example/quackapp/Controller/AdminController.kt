@@ -42,7 +42,6 @@ class AdminController : ViewModel() {
     var deleteError by mutableStateOf<String?>(null)
         private set
 
-    /** Every campsite in the app, live. */
     val campsites: StateFlow<List<Campsite>> = callbackFlow {
         val listener = db.collection("campsites")
             .addSnapshotListener { snapshot, error ->
@@ -50,7 +49,14 @@ class AdminController : ViewModel() {
                     close(error)
                     return@addSnapshotListener
                 }
-                trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+                val list = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(Campsite::class.java)
+                    } catch (_: Exception) {
+                        null
+                    }
+                } ?: emptyList()
+                trySend(list)
             }
         awaitClose { listener.remove() }
     }
@@ -115,6 +121,7 @@ class AdminController : ViewModel() {
             }
         }
     }
+<<<<<<< HEAD
     /**
      * Removes the `"OWNER"` role from a user profile in Firestore (`"users"` collection)
      * when they violate app policy, keeping their `"ENTRANT"` profile intact if present.
@@ -134,6 +141,19 @@ class AdminController : ViewModel() {
             } catch (e: Exception) {
                 Log.w("AdminController", "Couldn't remove owner role", e)
                 deleteError = e.message ?: "Couldn't remove owner"
+=======
+
+    fun deleteCampsite(campsite: Campsite) {
+        viewModelScope.launch {
+            try {
+                // Delete the document first; the list updates automatically
+                db.collection("campsites").document(campsite.campId).delete().await()
+
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                deleteError = e.message ?: "Couldn't delete campsite"
+>>>>>>> origin/dev
             }
         }
     }

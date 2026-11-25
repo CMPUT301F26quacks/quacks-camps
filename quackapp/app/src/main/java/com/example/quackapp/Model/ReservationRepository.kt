@@ -337,12 +337,52 @@ class ReservationRepository private constructor() {
     }
 
     /**
+<<<<<<< HEAD
      * Fetches confirmed reservations for a campsite from Firestore ("reservations"),
      * Local state (_reservations) is updated with any newly fetched records.
      *
      * @param campsiteId The unique identifier of the campsite.
      * @param onResult Callback invoked with the matching list of confirmed [Reservation]s.
      */
+=======
+     * Synchronizes all reservations from Cloud Firestore for a specific campsite.
+     * Merges fetched Firestore documents into the local StateFlow regardless of reservation status.
+     *
+     * @param campsiteId The campsite identifier.
+     * @param onResult Callback invoked with all reservations for this campsite.
+     */
+    fun syncReservationsForCampsite(
+        campsiteId: String,
+        onResult: ((List<Reservation>) -> Unit)? = null
+    ) {
+        val localMatches = _reservations.value.filter { it.campsiteId == campsiteId }
+
+        val db = firestore ?: run {
+            onResult?.invoke(localMatches)
+            return
+        }
+
+        db.collection("reservations")
+            .whereEqualTo("campsiteId", campsiteId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
+                if (fetched.isNotEmpty()) {
+                    val fetchedIds = fetched.map { it.id }.toSet()
+                    val remaining = _reservations.value.filter { it.id !in fetchedIds }
+                    _reservations.value = fetched + remaining
+                    onResult?.invoke(_reservations.value.filter { it.campsiteId == campsiteId })
+                } else {
+                    onResult?.invoke(localMatches)
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.w("ReservationRepo", "Error fetching campsite reservations", e)
+                onResult?.invoke(localMatches)
+            }
+    }
+
+>>>>>>> origin/dev
     fun getConfirmedReservations(
         campsiteId: String,
         onResult: (List<Reservation>) -> Unit
