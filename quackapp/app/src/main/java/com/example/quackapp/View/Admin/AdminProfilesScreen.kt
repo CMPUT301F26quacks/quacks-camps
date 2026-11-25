@@ -45,6 +45,7 @@ fun AdminProfilesScreen(
     val profiles by viewModel.profiles.collectAsState()
     var search by remember { mutableStateOf("") }
     var selectedUser by remember { mutableStateOf<User?>(null) }
+    var userToRemove by remember { mutableStateOf<User?>(null) }
 
     val filtered = profiles.filter {
         search.isBlank() || it.name.contains(search.trim(), ignoreCase = true)
@@ -116,6 +117,33 @@ fun AdminProfilesScreen(
                     ) {
                         Text("Remove Owner", color = MaterialTheme.colorScheme.error)
                     }
+                }
+            }
+        )
+    }
+    // Confirmation dialog before removing owner
+    userToRemove?.let { user ->
+        AlertDialog(
+            onDismissRequest = { userToRemove = null },
+            title = { Text("Remove Campsite Owner?") },
+            text = {
+                Text(
+                    "Are you sure you want to remove ${user.name.ifBlank { "this user" }} as a campsite owner? This action cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.removeOwner(user.deviceId)
+                        userToRemove = null
+                    }
+                ) {
+                    Text("Yes, Remove", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { userToRemove = null }) {
+                    Text("Cancel")
                 }
             }
         )
