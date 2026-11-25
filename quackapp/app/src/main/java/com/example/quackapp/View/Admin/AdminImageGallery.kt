@@ -1,5 +1,6 @@
 package com.example.quackapp.View.Admin
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -65,6 +68,12 @@ fun AdminImageGallery(
     viewModel: AdminController = viewModel()
 ) {
     val campsites by viewModel.campsites.collectAsState()
+    val context = LocalContext.current
+
+    // Let the admin know if the delete didn't go through
+    LaunchedEffect(viewModel.deleteError) {
+        viewModel.deleteError?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    }
 
     AdminScaffold(navController) { innerPadding ->
         AdminImageGalleryContent(
