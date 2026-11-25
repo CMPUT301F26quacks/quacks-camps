@@ -180,7 +180,7 @@ fun AdminImageGalleryContent(
             AlertDialog(
                 onDismissRequest = { confirmDelete = false },
                 title = { Text("Delete image?") },
-                text = { Text("The image for \"${current.name}\" will be permanently deleted. This can't be undone.") },
+                text = { Text("The image for \"${current.name}\" will be deleted. These actions can't be undone!") },
                 confirmButton = {
                     TextButton(
                         onClick = {
