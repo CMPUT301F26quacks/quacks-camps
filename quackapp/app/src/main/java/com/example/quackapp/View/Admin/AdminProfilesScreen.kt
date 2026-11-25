@@ -138,7 +138,7 @@ fun AdminProfilesScreen(
                         userToRemove = null
                     }
                 ) {
-                    Text("Yes, Remove", color = MaterialTheme.colorScheme.error)
+                    Text("Remove", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
