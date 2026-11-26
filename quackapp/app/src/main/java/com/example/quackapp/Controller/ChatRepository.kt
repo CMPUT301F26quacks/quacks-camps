@@ -350,4 +350,52 @@ object ChatRepository {
             exception -> onFail(exception)
         }
     }
+
+    /**
+     * Allows an admin to listen to all chats.
+     *
+     * Supports US 03.12.01, "As an admin, I want to review logs of all messages
+     * from campsite owners to entrants who reserved their campsite"
+     */
+    fun listenForAllChats(
+        deviceId: String,
+        onResult:(List<Chat>) -> Unit,
+        onListening: (ListenerRegistration) -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        checkAdmin(
+            deviceId = deviceId,
+
+            onSuccess = {
+
+                val database = FirebaseFirestore.getInstance()
+
+                val listener = database.collection("chats")
+                    .addSnapshotListener { snapshot, error ->
+
+                        if (error != null) {
+                            onFail(error)
+                            return@addSnapshotListener
+                    }
+
+                        val chats = snapshot
+                            ?.toObjects(Chat::class.java)
+                            ?: emptyList()
+
+                        onResult(
+                            chats.sortedByDescending {
+                                it.lastMessageTimestamp ?: it.created
+                            }
+                        )
+                    }
+
+                onListening(listener)
+
+            },
+
+            onFail = onFail
+            
+        )
+    }
 }
