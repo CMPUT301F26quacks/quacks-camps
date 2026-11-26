@@ -34,6 +34,7 @@ import com.example.quackapp.Controller.EditLotteryDetailsController
 import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.RegisterCampsiteController
+import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.View.DetailedCampsiteScreen
 import com.example.quackapp.View.EditCampsiteScreen
 import com.example.quackapp.View.EditLotteryDetailsScreen
@@ -91,13 +92,8 @@ class CreateLotteryTests {
                     }
                     DetailedCampsiteScreen(navController, detailVM)
                 }
-                composable("ListCampInLotteryScreen/{id}") { entry ->
-                    val id = entry.arguments?.getString("id").orEmpty()
-                    val vm = remember(id) {
-                        ListCampInLotteryController(SavedStateHandle(mapOf("campsiteId" to id)))
-                    }
-                    lotteryVM = vm
-                    ListCampInLotteryScreen(navController, vm)
+                composable<ListCampInLotteryRoute> { entry ->
+                    ListCampInLotteryScreen(navController)
                 }
                 composable("editLottery/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()

@@ -143,11 +143,8 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                 }
 
                 // Create database references, any image and campsite object will be linked by their ids (document name)
-                val docRef = if (finalOwnerId == "testOwner"){
-                    campsitesRef.document("testCamp")
-                } else {
-                    campsitesRef.document()
-                }
+                val docRef = campsitesRef.document()
+
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
                 // Upload the image if one was selected

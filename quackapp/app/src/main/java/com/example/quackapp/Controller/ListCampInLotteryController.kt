@@ -8,7 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.Model.Lottery
 import com.example.quackapp.Model.LotteryStatus
 import com.google.firebase.Firebase
@@ -31,8 +33,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
 class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
-    val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
-    private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
+    private val route = savedStateHandle.toRoute<ListCampInLotteryRoute>()
+    val campsiteIds: List<String> = route.campsiteIds
+    val multiCampLottery = campsiteIds.size > 1
+    private val campsiteRef = Firebase.firestore.collection("campsites")
     private val db = Firebase.firestore
     private val lotteryRef = db.collection("lotteries")
 
@@ -44,12 +48,10 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
     var availability by mutableStateOf(listOf<Long>())
     var availabilityStart by mutableStateOf<Long?>(null)
     var availabilityEnd by mutableStateOf<Long?>(null)
-    var lottery by mutableStateOf<String?>(null)
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
     val status: StateFlow<SaveStatus> = _status
-
     /**
      * Initialization
      *
@@ -58,20 +60,24 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
      */
     init {
         viewModelScope.launch {
-            try {
-                val campsite = campsiteRef.get().await().toObject(Campsite::class.java)
-                if (campsite != null) {
-                    name = campsite.name
-                    lottery = campsite.lotteryId
-                } else {
-                    _status.value = SaveStatus.Error("Campsite not found")
+            if (multiCampLottery){
+                name = "Multi-Camp"
+            }
+            else {
+                try {
+                    val campsite = campsiteRef.document(campsiteIds[0]).get().await().toObject(Campsite::class.java)
+                    if (campsite != null) {
+                        name = campsite.name
+                    } else {
+                        _status.value = SaveStatus.Error("Campsite not found")
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _status.value = SaveStatus.Error(e.message ?: "Couldn't load campsite")
+                } finally {
+                    isLoading = false
                 }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _status.value = SaveStatus.Error(e.message ?: "Couldn't load campsite")
-            } finally {
-                isLoading = false
             }
         }
     }
@@ -137,16 +143,18 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                     bookingPeriodEnd = bookingEnd,
                     numLotteryWinners = numWinners.toInt(),
                     optionalWaitlistCapacity = cap,
-                    campIds = listOf(campsiteId),
+                    campIds = campsiteIds,
                     status = LotteryStatus.OPEN
                 )
 
                 // upload to firestore
                 docRef.set(newLottery).await()
                 // update the campsite to have an active lottery
-                campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
-                availability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
-                campsiteRef.update(mapOf("availability" to availability))
+                for (campId in campsiteIds) {
+                    campsiteRef.document(campId).update(mapOf("lotteryId" to newLottery.lotteryID)).await()
+                    availability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
+                    campsiteRef.document(campId).update(mapOf("availability" to availability))
+                }
                 _status.value = SaveStatus.Success
             } catch (e: Exception) {
                 _status.value = SaveStatus.Error(e.message ?: "Something went wrong")
