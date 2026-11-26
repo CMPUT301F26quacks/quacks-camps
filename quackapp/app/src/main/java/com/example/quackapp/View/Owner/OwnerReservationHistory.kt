@@ -61,7 +61,7 @@ fun OwnerReservationHistory(
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     val reservations by repository.reservations.collectAsState()
-    val camps by ownerViewModel.camps.collectAsState()
+    val camps by ownerViewModel.ownedCamps.collectAsState()
     //ids of campsites belonging to the campsite owner
     val ownerCampsiteIds = remember(camps) { camps.map { it.campId } }
     //filter reservations for this campsite owner

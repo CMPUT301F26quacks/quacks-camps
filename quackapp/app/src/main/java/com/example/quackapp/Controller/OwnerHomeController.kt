@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -58,7 +57,7 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
 
     // define camps by going into the database in the campsites collection
     // and finding all documents that match the logged in userId
-    val camps: StateFlow<List<Campsite>> = callbackFlow {
+    val ownedCamps: StateFlow<List<Campsite>> = callbackFlow {
         if(ownerId.isNotBlank()){
             //if ownerId passed in route URL, use directly
             val listener = db.collection("campsites")
@@ -111,6 +110,63 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     }
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val otherCamps: StateFlow<List<Campsite>> = callbackFlow {
+        if(ownerId.isNotBlank()){
+            //if ownerId passed in route URL, use directly
+            val listener = db.collection("campsites")
+                .whereNotEqualTo("ownerId", ownerId)
+                .addSnapshotListener { snapshot, error ->
+                    if(error!=null){
+                        close(error)
+                        return@addSnapshotListener
+                    }
+                    val list = snapshot?.documents?.mapNotNull { doc ->
+                        try {
+                            doc.toObject(Campsite::class.java)
+
+                        } catch (_: Exception) {
+                            null
+                        }
+                    }   ?.filter { it.lotteryId.isNullOrEmpty() }
+                        ?: emptyList()
+
+                    trySend(list)
+                }
+            awaitClose { listener.remove() }
+        }
+        else{   //but if tapping on home button again, js use logged in device id
+            var listener: ListenerRegistration? = null
+            DeviceIdGetter.getDeviceId(
+                onSuccess = {deviceId ->
+                    listener = db.collection("campsites")
+                        .whereNotEqualTo("ownerId", deviceId)
+                        .addSnapshotListener {snapshot, error ->
+                            if(error != null){
+                                close(error)
+                                return@addSnapshotListener
+                            }
+                            val list = snapshot?.documents?.mapNotNull { doc ->
+                                try {
+                                    doc.toObject(Campsite::class.java)
+                                } catch (_: Exception) {
+                                    null
+                                }
+                            }   ?.filter { it.lotteryId.isNullOrEmpty() }
+                                ?: emptyList()
+                            trySend(list)
+                        }
+                },
+                onFail = {
+                    trySend(emptyList())
+                }
+            )
+            awaitClose { listener?.remove() }
+        }
+
+    }   .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     /**
      *  Deletes a [Campsite] object from the database
      *

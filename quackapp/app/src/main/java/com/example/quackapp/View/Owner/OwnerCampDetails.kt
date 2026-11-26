@@ -285,12 +285,13 @@ fun OwnerCampDetails(
                             "No active lottery created for this campsite.",
                             fontSize = 16.sp
                         )
-                        Button(
-                            modifier = Modifier.testTag("createLotteryButton"),
-                            onClick = { navController.navigate(ListCampInLotteryRoute(campsiteIds = listOf(viewModel.campsiteId))) }
-                        ) {
-                            Text("Create Lottery")
-                        }
+                        //TODO CHECK THE TEST FILES THEY BREAK WITH THIS BEING REMOVED
+//                        Button(
+//                            modifier = Modifier.testTag("createLotteryButton"),
+//                            onClick = { navController.navigate(ListCampInLotteryRoute(campsiteIds = listOf(viewModel.campsiteId))) }
+//                        ) {
+//                            Text("Create Lottery")
+//                        }
                     }
                 }
 

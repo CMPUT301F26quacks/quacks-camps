@@ -67,11 +67,13 @@ fun OwnerHome(
     navController: NavController,
     viewModel: OwnerHomeController = viewModel()
 ) {
-    val camps by viewModel.camps.collectAsState()
+    val camps by viewModel.ownedCamps.collectAsState()
+    val otherCamps by viewModel.otherCamps.collectAsState()
     var campToDelete by remember { mutableStateOf<Campsite?>(null) }
     var campToShowQR by remember { mutableStateOf<Campsite?>(null) }    //track which campsite's QR code to display
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val selectionMode = selectedIds.isNotEmpty()
+    var showOtherCamps by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.clearSelection()
@@ -124,7 +126,8 @@ fun OwnerHome(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(innerPadding),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AnimatedVisibility(visible = selectionMode) {
                     Row(
@@ -161,7 +164,7 @@ fun OwnerHome(
                     }
                 }
                 LazyColumn(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(if (showOtherCamps) 0.5f else 1f),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -170,6 +173,7 @@ fun OwnerHome(
                         CampRow(
                             campsite,
                             navController,
+                            owned = true,
                             onDeleteClick = { campToDelete = campsite },
                             onQRClick = { campToShowQR = campsite },
                             isSelected = campsite.campId in selectedIds,
@@ -180,6 +184,41 @@ fun OwnerHome(
                             },
                             onLongClick = { viewModel.toggleSelection(campsite.campId) }
                         )
+                    }
+                }
+                Button(
+                    onClick = {showOtherCamps = !showOtherCamps},
+                    colors = if (!showOtherCamps) ButtonDefaults.buttonColors(Color(0xFF2196F3))
+                             else ButtonDefaults.buttonColors(Color(0xFFF3AE00))
+                ) {
+                    Text("View other Owners' camps")
+                }
+
+                AnimatedVisibility(
+                    visible = showOtherCamps,
+                    modifier = Modifier.weight(0.5f),
+                ) {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        items(otherCamps, key = { it.campId }) { campsite ->
+                            CampRow(
+                                campsite,
+                                navController,
+                                owned = false,
+                                onDeleteClick = { campToDelete = campsite },
+                                onQRClick = { campToShowQR = campsite },
+                                isSelected = campsite.campId in selectedIds,
+                                selectionMode = selectionMode,
+                                onClick = {
+                                    if (selectionMode) viewModel.toggleSelection(campsite.campId)
+                                    else navController.navigate("CampsiteDetails/${campsite.campId}")
+                                },
+                                onLongClick = { viewModel.toggleSelection(campsite.campId) }
+                            )
+                        }
                     }
                 }
                 // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
@@ -241,6 +280,7 @@ fun OwnerHome(
 fun CampRow(
     campsite: Campsite,
     navController: NavController,
+    owned: Boolean,
     onDeleteClick: () -> Unit,
     onQRClick: () -> Unit,
     isSelected: Boolean,
@@ -305,44 +345,48 @@ fun CampRow(
                 color = Color.White
             )
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Edit",
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    modifier = Modifier
-                        .testTag("edit${campsite.name}")
-                        .clickable(onClick = { navController.navigate("EditCampsite/${campsite.campId}") })
-                )
-                Text(
-                    text = "Details",
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    modifier = Modifier
-                        .testTag("details${campsite.name}")
-                        .clickable(onClick = { navController.navigate("CampsiteDetails/${campsite.campId}") })
-                )
-                // TODO delete campId from related lotteries
-                //  and maybe the lottery itself if the campIds list is empty
-                Text(
-                    text = "Delete",
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    modifier = Modifier
-                        .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable(onClick = onDeleteClick)
-                        .testTag("delete${campsite.name}")
-                )
-                Text(
-                    text = "QR Code",
-                    fontSize = 16.sp,
-                    color=Color.White,
-                    modifier = Modifier
-                        .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable(onClick = onQRClick)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+            if (owned) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Edit",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .testTag("edit${campsite.name}")
+                            .clickable(onClick = { navController.navigate("EditCampsite/${campsite.campId}") })
+                    )
+                    Text(
+                        text = "Details",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .testTag("details${campsite.name}")
+                            .clickable(onClick = { navController.navigate("CampsiteDetails/${campsite.campId}") })
+                    )
+                    // TODO delete campId from related lotteries
+                    //  and maybe the lottery itself if the campIds list is empty
+                    Text(
+                        text = "Delete",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .pointerHoverIcon(PointerIcon.Hand)
+                            .clickable(onClick = onDeleteClick)
+                            .testTag("delete${campsite.name}")
+                    )
+                    Text(
+                        text = "QR Code",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .pointerHoverIcon(PointerIcon.Hand)
+                            .clickable(onClick = onQRClick)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
             }
         }
 
