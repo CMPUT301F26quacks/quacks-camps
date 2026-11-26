@@ -340,6 +340,7 @@ fun EntrantDetailedCampsite(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 12.dp)
+                        .testTag("inLotteryStatus")
 
                 ) {
                     Text(
@@ -352,7 +353,6 @@ fun EntrantDetailedCampsite(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 16.dp)
-                            .testTag("inLotteryStatus")
                     )
 
                 }
