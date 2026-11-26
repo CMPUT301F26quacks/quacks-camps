@@ -24,6 +24,10 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.printToLog
 import androidx.lifecycle.SavedStateHandle
+<<<<<<< HEAD
+=======
+import androidx.lifecycle.viewmodel.compose.viewModel
+>>>>>>> dev
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,6 +38,10 @@ import com.example.quackapp.Controller.EditLotteryDetailsController
 import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.RegisterCampsiteController
+<<<<<<< HEAD
+=======
+import com.example.quackapp.Model.ListCampInLotteryRoute
+>>>>>>> dev
 import com.example.quackapp.View.DetailedCampsiteScreen
 import com.example.quackapp.View.EditCampsiteScreen
 import com.example.quackapp.View.EditLotteryDetailsScreen
@@ -91,11 +99,16 @@ class CreateLotteryTests {
                     }
                     DetailedCampsiteScreen(navController, detailVM)
                 }
+<<<<<<< HEAD
                 composable("ListCampInLotteryScreen/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()
                     val vm = remember(id) {
                         ListCampInLotteryController(SavedStateHandle(mapOf("campsiteId" to id)))
                     }
+=======
+                composable<ListCampInLotteryRoute> { entry ->
+                    val vm: ListCampInLotteryController = viewModel()
+>>>>>>> dev
                     lotteryVM = vm
                     ListCampInLotteryScreen(navController, vm)
                 }
@@ -288,6 +301,11 @@ class CreateLotteryTests {
             .onNodeWithTag("editLotteryButton")
             .performClick()
 
+<<<<<<< HEAD
+=======
+        waitFor("Editing Lottery")
+
+>>>>>>> dev
         composeRule.runOnIdle {
             editLotteryVM.bookingStart = millis(2026, 12, 16)
             editLotteryVM.bookingEnd = millis(2026, 12, 18)
@@ -303,7 +321,22 @@ class CreateLotteryTests {
             .onNodeWithTag("lotteryInfo")
             .performScrollTo()
 
+<<<<<<< HEAD
         waitFor("Booking Period: Dec 16, 2026 to Dec 18, 2026")
+=======
+        waitFor("Registration: Dec 10, 2026 to Dec 14, 2026")
+
+        composeRule
+            .onNodeWithText("Registration: Dec 10, 2026 to Dec 14, 2026")
+            .performScrollTo()
+            .assertExists()
+
+        waitFor("Booking Period: Dec 16, 2026 to Dec 18, 2026")
+        composeRule
+            .onNodeWithText("Booking Period: Dec 16, 2026 to Dec 18, 2026")
+            .performScrollTo()
+            .assertExists()
+>>>>>>> dev
 
         composeRule
             .onNodeWithTag("backButton")

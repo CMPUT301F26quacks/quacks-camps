@@ -1,5 +1,6 @@
 package com.example.quackapp.View.Admin
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +37,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,6 +48,7 @@ import coil.compose.AsyncImage
 import com.example.quackapp.Controller.AdminController
 import com.example.quackapp.Controller.imageGalleryItems
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.R
 
 /**
  * Admin "Image Gallery" screen (Manage Uploaded Media in the mockup).
@@ -63,6 +68,12 @@ fun AdminImageGallery(
     viewModel: AdminController = viewModel()
 ) {
     val campsites by viewModel.campsites.collectAsState()
+    val context = LocalContext.current
+
+    // Let the admin know if the delete didn't go through
+    LaunchedEffect(viewModel.deleteError) {
+        viewModel.deleteError?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    }
 
     AdminScaffold(navController) { innerPadding ->
         AdminImageGalleryContent(
@@ -112,7 +123,7 @@ fun AdminImageGalleryContent(
             )
             if (items.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No uploaded images")
+                    Text(if (query.isBlank()) "No uploaded images yet" else "No images match \"$query\"")
                 }
             } else {
                 LazyVerticalGrid(
@@ -128,6 +139,7 @@ fun AdminImageGalleryContent(
                         ) {
                             AsyncImage(
                                 model = camp.optionalPromoImage,
+                                error = painterResource(R.drawable.duck),
                                 contentDescription = "Image of ${camp.name}",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -155,6 +167,7 @@ fun AdminImageGalleryContent(
             }
             AsyncImage(
                 model = current.optionalPromoImage,
+                error = painterResource(R.drawable.duck),
                 contentDescription = "Full image of ${current.name}",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -176,7 +189,7 @@ fun AdminImageGalleryContent(
             AlertDialog(
                 onDismissRequest = { confirmDelete = false },
                 title = { Text("Delete image?") },
-                text = { Text("The image for \"${current.name}\" will be permanently deleted. This can't be undone.") },
+                text = { Text("The image for \"${current.name}\" will be deleted. These actions can't be undone!") },
                 confirmButton = {
                     TextButton(
                         onClick = {
