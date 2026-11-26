@@ -93,7 +93,7 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
         actionSuccess = null
         viewModelScope.launch {
             try {
-                removeField(review, field = "rating", otherPartEmpty = review.feedback.isBlank())
+                removeField(review, field = "rating")
                 CampsiteRatingUpdater.recompute(campId)
                 actionSuccess = "Rating removed"
             } catch (e: CancellationException) {
@@ -115,7 +115,7 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
         actionSuccess = null
         viewModelScope.launch {
             try {
-                removeField(review, field = "feedback", otherPartEmpty = review.rating == 0F)
+                removeField(review, field = "feedback")
                 actionSuccess = "Review removed"
             } catch (e: CancellationException) {
                 throw e
@@ -126,12 +126,28 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
     }
 
     /** Deletes [field] from the review document, or the whole document if nothing else is left in it. */
-    private suspend fun removeField(review: Review, field: String, otherPartEmpty: Boolean) {
+    private suspend fun removeField(review: Review, field: String) {
         val doc = db.collection("reviews").document(review.reviewID)
-        if (otherPartEmpty) {
+        if (reviewWillBeEmpty(review, field)) {
             doc.delete().await()
         } else {
             doc.update(field, FieldValue.delete()).await()
         }
     }
+}
+
+
+/**
+ * Checks if removing one part of a review leaves nothing in it, so the whole doc should get deleted.
+ *
+ * @param review the review the admin is changing.
+ * @param field "rating" or "feedback", whichever part is being removed.
+ * @return true if the other part is already empty.
+ */
+fun reviewWillBeEmpty(review: Review, field: String): Boolean {
+    if (field == "rating") {
+        return review.feedback.isBlank()
+    }
+    // removing the feedback, so check if theres a rating left
+    return review.rating == 0F
 }
