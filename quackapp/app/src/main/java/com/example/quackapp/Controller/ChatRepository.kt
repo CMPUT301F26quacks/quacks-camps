@@ -333,8 +333,21 @@ object ChatRepository {
                 )
             )
 
+            // updates the chat preview shown, based on the most recent message
+            transaction.update(
+                chatRef,
+                mapOf(
+                    "lastMessage" to messageText,
+                    "lastMessageTimestamp" to FieldValue.serverTimestamp()
+                )
+            )
+
+            Unit
+
+        }.addOnSuccessListener {
+            onSuccess()
+        }.addOnFailureListener {
+            exception -> onFail(exception)
         }
-
     }
-
 }
