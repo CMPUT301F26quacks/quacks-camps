@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -233,6 +234,20 @@ class AdminIntentTest {
         composeRule.onNodeWithText("Cancel").performClick()
         assertEquals(null, deleted)
         composeRule.onNodeWithText("Tunnel Mountain").assertIsDisplayed()
+    }
+
+
+    /** US 03.04.01: searching manage campsites for a name that doesnt exist shows the empty message */
+    @Test
+    fun manageCampsitesSearchNoMatch() {
+        composeRule.setContent {
+            AdminCampsitesContent(campsites = listOf(tunnelMountain, whistlers), onCampsiteClick = {})
+        }
+        // search bar doesnt have a tag so just find the text field
+        composeRule.onNode(hasSetTextAction()).performTextInput("zzz")
+        composeRule.onNodeWithText("No campsites found").assertIsDisplayed()
+        composeRule.onNodeWithText("Tunnel Mountain").assertDoesNotExist()
+        composeRule.onNodeWithText("Whistlers").assertDoesNotExist()
     }
 
     /** US 03.09.01: remove an abusive rating. */
