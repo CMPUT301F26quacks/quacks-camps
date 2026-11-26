@@ -111,7 +111,7 @@ fun AdminProfilesScreen(
                 if (isOwner) {
                     TextButton(
                         onClick = {
-                            viewModel.removeOwner(user.deviceId)
+                            userToRemove = user
                             selectedUser = null
                         }
                     ) {
