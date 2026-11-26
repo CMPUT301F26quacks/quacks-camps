@@ -48,6 +48,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.google.android.gms.maps.model.LatLng
 
 /**
@@ -290,7 +291,7 @@ fun DetailedCampsiteScreen(
                         )
                         Button(
                             modifier = Modifier.testTag("createLotteryButton"),
-                            onClick = { navController.navigate("ListCampInLotteryScreen/${viewModel.campsiteId}") }
+                            onClick = { navController.navigate(ListCampInLotteryRoute(campsiteIds = listOf(viewModel.campsiteId))) }
                         ) {
                             Text("Create Lottery")
                         }
