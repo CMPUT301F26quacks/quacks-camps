@@ -169,6 +169,27 @@ class AdminIntentTest {
         composeRule.onNodeWithText("Whistlers").assertIsDisplayed()
     }
 
+    /** searching for something that isnt there says no images match instead of no images at all */
+    @Test
+    fun gallerySearchNoMatchMessage() {
+        composeRule.setContent {
+            AdminImageGalleryContent(campsites = listOf(tunnelMountain, whistlers), onDeleteImage = {})
+        }
+        composeRule.onNodeWithTag("gallerySearch").performTextInput("zzz")
+        composeRule.onNodeWithText("No images match \"zzz\"").assertIsDisplayed()
+        composeRule.onNodeWithText("No uploaded images yet").assertDoesNotExist()
+        composeRule.onNodeWithText("Tunnel Mountain").assertDoesNotExist()
+    }
+
+
+    @Test
+    fun galleryEmptyWhenNoImagesUploaded() {
+        composeRule.setContent {
+            AdminImageGalleryContent(campsites = listOf(noImageCamp), onDeleteImage = {})
+        }
+        composeRule.onNodeWithText("No uploaded images yet").assertIsDisplayed()
+    }
+
     @Test
     fun manageCampsitesOpensCampsite() {
         var clicked: Campsite? = null
