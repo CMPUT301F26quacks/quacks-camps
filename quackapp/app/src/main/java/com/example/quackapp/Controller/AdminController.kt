@@ -85,6 +85,7 @@ class AdminController : ViewModel() {
      * @param campsite the [Campsite] whose image should be removed.
      */
     fun deleteImage(campsite: Campsite) {
+        deleteError = null
         viewModelScope.launch {
             try {
                 db.collection("campsites").document(campsite.campId)

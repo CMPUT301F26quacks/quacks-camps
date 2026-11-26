@@ -284,8 +284,12 @@ fun CampRow(
         }
         Spacer(modifier = Modifier.width(18.dp))
         Column(modifier = Modifier.fillMaxWidth()) {
+            var displayName: String = campsite.name
+            if (displayName.length > 12){
+                displayName = displayName.take(12) + "..."
+            }
             Text(
-                campsite.name,
+                text = displayName,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White

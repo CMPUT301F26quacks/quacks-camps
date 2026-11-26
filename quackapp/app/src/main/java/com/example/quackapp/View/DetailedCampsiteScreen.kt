@@ -71,7 +71,8 @@ fun DetailedCampsiteScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = viewModel.name, fontSize = 36.sp)
+
+                    Text(text = "Campsite Details", fontSize = 36.sp)
                     IconButton(
                         modifier = Modifier.testTag("backButton"),
                         colors = iconButtonColors(
@@ -88,6 +89,7 @@ fun DetailedCampsiteScreen(
                         )
                     }
                 }
+
             }
         }
     ) { innerPadding ->
@@ -99,6 +101,7 @@ fun DetailedCampsiteScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
+            Text(viewModel.name, fontSize = 32.sp, modifier = Modifier.padding(16.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -87,6 +87,7 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
      * @param review the review whose rating violates app policy.
      */
     fun removeRating(review: Review) {
+        actionError = null
         viewModelScope.launch {
             try {
                 removeField(review, field = "rating", otherPartEmpty = review.feedback.isBlank())
@@ -106,6 +107,7 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
      * @param review the review whose text violates app policy.
      */
     fun removeReview(review: Review) {
+        actionError = null
         viewModelScope.launch {
             try {
                 removeField(review, field = "feedback", otherPartEmpty = review.rating == 0F)
