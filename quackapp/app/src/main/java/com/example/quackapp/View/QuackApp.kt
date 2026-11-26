@@ -7,11 +7,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.quackapp.View.Entrant.EntrantHome
 import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
 import com.example.quackapp.Model.Campsite
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
 import com.example.quackapp.View.Entrant.EntrantHome
@@ -66,10 +68,9 @@ fun QuackApp() {
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
         ) { EditCampsiteScreen(navController) }
 
-        composable(
-            route = "ListCampInLotteryScreen/{campsiteId}",
-            arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
-        ) { ListCampInLotteryScreen(navController) }
+        composable<ListCampInLotteryRoute> { entry ->
+            ListCampInLotteryScreen(navController)
+        }
 
         composable(
             route = "editLottery/{campsiteId}",

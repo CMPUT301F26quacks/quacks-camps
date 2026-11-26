@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.dokka") version "2.2.0"
     id("com.google.gms.google-services")
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    alias(libs.plugins.kotlin.serialization)
 }
 secrets {
     propertiesFileName = "secrets.properties"
@@ -94,4 +95,6 @@ dependencies {
     debugImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("io.mockk:mockk-android:1.14.12")
+    implementation(libs.kotlinx.serialization.json)
+
 }

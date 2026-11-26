@@ -42,6 +42,8 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val imgStorage = Firebase.storage
     var deleteError by mutableStateOf<String?>(null)
         private set
+    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
 
     init {  //prevent the ownerId from ever being blank -> get the deviceId if that ever happens
         if (ownerId.isBlank()) {
@@ -140,8 +142,7 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
         }
     }
 
-    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
-    val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
+
 
     val selectionMode: StateFlow<Boolean> = _selectedIds
         .map { it.isNotEmpty() }

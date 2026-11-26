@@ -56,9 +56,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.CampsiteOwner
+import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.Model.Lottery
 
 /**
@@ -86,11 +88,12 @@ fun OwnerHome(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "Campsites", fontSize = 40.sp)
-
+                    Column() {
+                        Text(text = "Campsites", fontSize = 40.sp)
+                        Text(text = "Tap and hold to select", fontSize = 10.sp, modifier = Modifier.padding(start = 4.dp))
+                    }
                     FloatingActionButton(
                         containerColor = Color(0xFFFF9800),
                         contentColor = Color.White,
@@ -120,13 +123,33 @@ fun OwnerHome(
             BackHandler(enabled = selectionMode) { viewModel.clearSelection() }
             Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                 AnimatedVisibility(visible = selectionMode) {
-                    Text(
-                        text = "${selectedIds.size} selected",
-                        textAlign = TextAlign.Right,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 2.dp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Button(
+                            onClick = {navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))},
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            colors = ButtonDefaults.buttonColors(Color(0xFFF3AE00))
+                        ) {
+                            Text("Create Lottery")
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically,) {
+                            Text(
+                                text = "${selectedIds.size} selected",
+                                textAlign = TextAlign.Right,
+                                fontSize = 14.sp
+                            )
+                            TextButton(
+                                onClick = { viewModel.clearSelection() },
+                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp)
+                            ) {
+                                Text("X")
+                            }
+                        }
+                    }
                 }
                 LazyColumn(
                     modifier = Modifier.weight(1f),
