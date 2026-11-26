@@ -2,10 +2,7 @@ package com.example.quackapp.Controller
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-<<<<<<< HEAD
-=======
 import androidx.compose.runtime.mutableStateListOf
->>>>>>> dev
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -36,11 +33,7 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
 
     private val db = Firebase.firestore
-<<<<<<< HEAD
-    private val campsiteRef = db.collection("campsites").document(campsiteId)
-=======
     private val campsiteRef = db.collection("campsites")
->>>>>>> dev
     private val lotteryRef = db.collection("lotteries")
     var registrationStart by mutableStateOf<Long?>(null)
     var registrationEnd by mutableStateOf<Long?>(null)
@@ -51,14 +44,9 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
     var newAvailability by mutableStateOf(listOf<Long>())
     var availabilityStart by mutableStateOf<Long?>(null)
     var availabilityEnd by mutableStateOf<Long?>(null)
-<<<<<<< HEAD
-
-    var name by mutableStateOf("")
-=======
     var names by mutableStateOf(listOf<String>())
         private set
     var campsites = arrayListOf<Campsite>()
->>>>>>> dev
     var lotteryId by mutableStateOf<String>("")
     var isLoading by mutableStateOf(true)
         private set
@@ -74,14 +62,8 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
     init {
         viewModelScope.launch {
             try {
-<<<<<<< HEAD
-                val campsite = campsiteRef.get().await().toObject(Campsite::class.java)
-                if (campsite != null) {
-                    name = campsite.name
-=======
                 val campsite = campsiteRef.document(campsiteId).get().await().toObject(Campsite::class.java)
                 if (campsite != null) {
->>>>>>> dev
                     // If this file is active, a lottery must exist
                     lotteryId = campsite.lotteryId!!
                     availabilityStart = campsite.availability[0]
@@ -98,14 +80,11 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
                     waitlistCap = lottery.optionalWaitlistCapacity.toString()
                 }
                 numWinners = lottery.numLotteryWinners.toString()
-<<<<<<< HEAD
-=======
                 for (campId in lottery.campIds){
                     val campsite: Campsite? = campsiteRef.document(campId).get().await().toObject(Campsite::class.java)
                     campsites.add(campsite!!)
                     names = names + campsite.name
                 }
->>>>>>> dev
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -161,15 +140,10 @@ class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewMode
                     )
                 ).await()
                 newAvailability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
-<<<<<<< HEAD
-                // update the campsite's availability'
-                campsiteRef.update(mapOf("availability" to newAvailability)).await()
-=======
                 for (camp in campsites) {
                     // update the campsites availability
                     campsiteRef.document(camp.campId).update(mapOf("availability" to newAvailability)).await()
                 }
->>>>>>> dev
                 _status.value = SaveStatus.Success
             } catch (e: Exception) {
                 _status.value = SaveStatus.Error(e.message ?: "Something went wrong")
