@@ -23,6 +23,7 @@ import com.example.quackapp.View.Admin.AdminImageGallery
 import com.example.quackapp.View.Admin.AdminCampsites
 import com.example.quackapp.View.Admin.AdminCampsiteReviews
 
+
 /**
  * Sets up navigation between screens for whole app
  *
@@ -38,6 +39,8 @@ fun QuackApp() {
 
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
+
+        composable("UserChats") { UserChats(navController) }
 
         composable(
             route = "EntrantDetailedCampsite/{campId}",
