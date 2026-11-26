@@ -1,10 +1,11 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import com.example.quackapp.Model.NavBarLists
+import com.example.quackapp.View.NavBar
 
 /**
  * Provides Navigation Bar to all Owner Screens that use it

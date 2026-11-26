@@ -6,11 +6,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasScrollAction
-import androidx.compose.ui.test.isRoot
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -18,30 +13,24 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToIndex
-import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.printToLog
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.testing.TestNavHostController
-import com.example.quackapp.Controller.DetailedCampsiteController
-import com.example.quackapp.Controller.EditCampsiteController
-import com.example.quackapp.Controller.EditLotteryDetailsController
-import com.example.quackapp.Controller.ListCampInLotteryController
+import com.example.quackapp.Controller.OwnerCampDetailsController
+import com.example.quackapp.Controller.OwnerEditLotteryController
+import com.example.quackapp.Controller.OwnerCreateLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.RegisterCampsiteController
 import com.example.quackapp.Model.ListCampInLotteryRoute
-import com.example.quackapp.View.DetailedCampsiteScreen
-import com.example.quackapp.View.EditCampsiteScreen
-import com.example.quackapp.View.EditLotteryDetailsScreen
-import com.example.quackapp.View.ListCampInLotteryScreen
-import com.example.quackapp.View.OwnerHome
-import com.example.quackapp.View.RegisterCampsiteScreen
+import com.example.quackapp.View.Owner.OwnerCampDetails
+import com.example.quackapp.View.Owner.OwnerEditLottery
+import com.example.quackapp.View.Owner.OwnerCreateLottery
+import com.example.quackapp.View.Owner.OwnerHome
+import com.example.quackapp.View.Owner.OwnerCreateCamp
 import org.junit.Rule
 import org.junit.Test
 
@@ -69,8 +58,8 @@ class CreateLotteryTests {
         }
     }
 
-    private lateinit var lotteryVM: ListCampInLotteryController
-    private lateinit var editLotteryVM: EditLotteryDetailsController
+    private lateinit var lotteryVM: OwnerCreateLotteryController
+    private lateinit var editLotteryVM: OwnerEditLotteryController
 
     private fun millis(y: Int, m: Int, d: Int) =
         java.time.LocalDate.of(y, m, d)
@@ -85,26 +74,26 @@ class CreateLotteryTests {
             }
             NavHost(navController, startDestination = "OwnerHome") {
                 composable("OwnerHome") { OwnerHome(navController, homeVM) }
-                composable("RegisterCampsite/{id}") { RegisterCampsiteScreen(navController, registerVM) }
+                composable("RegisterCampsite/{id}") { OwnerCreateCamp(navController, registerVM) }
                 composable("CampsiteDetails/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()
                     val detailVM = remember(id) {
-                        DetailedCampsiteController(SavedStateHandle(mapOf("campsiteId" to id)))
+                        OwnerCampDetailsController(SavedStateHandle(mapOf("campsiteId" to id)))
                     }
-                    DetailedCampsiteScreen(navController, detailVM)
+                    OwnerCampDetails(navController, detailVM)
                 }
                 composable<ListCampInLotteryRoute> { entry ->
-                    val vm: ListCampInLotteryController = viewModel()
+                    val vm: OwnerCreateLotteryController = viewModel()
                     lotteryVM = vm
-                    ListCampInLotteryScreen(navController, vm)
+                    OwnerCreateLottery(navController, vm)
                 }
                 composable("editLottery/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()
                     val editVM = remember(id) {
-                        EditLotteryDetailsController(SavedStateHandle(mapOf("campsiteId" to id)))
+                        OwnerEditLotteryController(SavedStateHandle(mapOf("campsiteId" to id)))
                     }
                     editLotteryVM = editVM
-                    EditLotteryDetailsScreen(navController, editLotteryVM)
+                    OwnerEditLottery(navController, editLotteryVM)
                 }
             }
         }

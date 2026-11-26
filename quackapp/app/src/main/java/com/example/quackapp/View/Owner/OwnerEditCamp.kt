@@ -1,13 +1,10 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
-import android.R.id.input
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import com.example.quackapp.View.RegisterCampsiteScreen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -31,23 +25,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,48 +48,38 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.quackapp.Controller.RegisterCampsiteController
+import com.example.quackapp.Controller.OwnerEditCampController
 import com.example.quackapp.Controller.SaveStatus
-import com.google.firebase.firestore.GeoPoint
+import com.example.quackapp.View.LocationPicker
+import com.google.android.gms.maps.model.LatLng
+
 /**
- * UI for the page that campsite owners use to register new campsites
+ * UI for campsite owners to edit [com.example.quackapp.Model.Campsite] details
  *
- * @param navController the number of winners allowed for the lottery
- * @param viewModel the number of people allowed in the waitlist, or null if no limit
+ * @param navController navController object used to navigate to this screen
+ * @param viewModel the controller used with this screen. Default [OwnerEditCampController]
  */
 @Composable
-fun RegisterCampsiteScreen(
+fun OwnerEditCamp(
     navController: NavController,
-    viewModel: RegisterCampsiteController = viewModel()
+    viewModel: OwnerEditCampController = viewModel()
 ) {
-    // String version of these two fields since
-    // displaying ints can crash the app when no number is there
-    var priceAsString: String by remember { mutableStateOf("") }
-    var capacityAsString: String by remember { mutableStateOf("") }
-
     var newTag: String by remember { mutableStateOf("") }
     val status by viewModel.status.collectAsState()
-
     // launcher for the photo selector
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri -> if (uri != null) viewModel.imageUri = uri }
-    // when the screen is rebuilt, if there was a successful upload
-    // reset the form
+    // when the screen is rebuilt, if there was a successful save, go back to previous screen
     LaunchedEffect(status) {
         if (status is SaveStatus.Success){
-            viewModel.resetForm()
-            priceAsString = ""
-            capacityAsString = ""
             navController.popBackStack()
         }
     }
@@ -114,7 +91,7 @@ fun RegisterCampsiteScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
 
-    ) {
+        ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
@@ -122,7 +99,7 @@ fun RegisterCampsiteScreen(
                 .padding(top = 8.dp)
         ){
             Text(
-                text = "Register Campsite",
+                text = "Edit Campsite",
                 fontSize = 32.sp
             )
 
@@ -142,7 +119,7 @@ fun RegisterCampsiteScreen(
             withStyle(style = SpanStyle(color = Color.Red)) {
                 append("*")
             }
-            }
+        }
         )
         OutlinedTextField(
             value = viewModel.name,
@@ -175,13 +152,10 @@ fun RegisterCampsiteScreen(
         }
         )
         OutlinedTextField(
-            value = priceAsString,
+            value = viewModel.price,
             onValueChange = { input ->
-                if (input.isDigitsOnly()) {
-                    priceAsString = input
-                    if (input.isNotEmpty()){
-                        viewModel.price = input.toInt()
-                    }
+                if (input.isDigitsOnly() && input.isNotEmpty()) {
+                    viewModel.price = input
                 }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -198,13 +172,10 @@ fun RegisterCampsiteScreen(
         }
         )
         OutlinedTextField(
-            value = capacityAsString,
+            value = viewModel.capacity,
             onValueChange = { input ->
-                if (input.isDigitsOnly()) {
-                    capacityAsString = input
-                    if (input.isNotEmpty()){
-                        viewModel.capacity = input.toInt()
-                    }
+                if (input.isDigitsOnly() && input.isNotEmpty()) {
+                    viewModel.capacity = input
                 }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -220,7 +191,6 @@ fun RegisterCampsiteScreen(
             label = { Text("Policy") },
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("cancelPolicyField")
         )
         Text("Amenities/Features")
         Column() {
@@ -238,7 +208,7 @@ fun RegisterCampsiteScreen(
                         enabled = viewModel.features.size > 1,
                         colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
                         modifier = Modifier.testTag("deleteAmenity${index + 1}")
-                        )
+                    )
                     { Text("X") }
                 }
             }
@@ -250,7 +220,7 @@ fun RegisterCampsiteScreen(
                     .fillMaxWidth()
                     .testTag("addAmenity"),
                 colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-                ) {
+            ) {
                 Text("Add Amenity")
             }
         }
@@ -269,8 +239,8 @@ fun RegisterCampsiteScreen(
                         onClick = { viewModel.removeRule(index) },
                         enabled = viewModel.rules.size > 1,
                         colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
-                        modifier = Modifier.testTag("deleteRule${index+1}")
-                        ) { Text("X") }
+                        modifier = Modifier.testTag("removeRule${index+1}")
+                    ) { Text("X") }
                 }
             }
             Button(
@@ -281,25 +251,24 @@ fun RegisterCampsiteScreen(
                     .fillMaxWidth()
                     .testTag("addRule"),
                 colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-                ) {
+            ) {
                 Text("Add Rule")
             }
         }
-        Text(text = buildAnnotatedString {
-            append("Map Location ")
-            withStyle(style = SpanStyle(color = Color.Red)) {
-                append("*")
-            }
-        })
-        LocationPicker(
-            onConfirm = { viewModel.setMapLoc(it) },
-            startLoc = null
-        )
-
+        Text("Map Location")
+        // If statement here because the Map loads before location data is ready
+        // meaning it would default to (0.00, 0.00) instead of the real location
+        if (viewModel.latitude != 0.00 && viewModel.longitude != 0.00) {
+            LocationPicker(
+                onConfirm = { viewModel.setMapLoc(it) },
+                startLoc = LatLng(viewModel.latitude, viewModel.longitude)
+            )
+        }
         Text("Promotional Image (Optional)")
+        // Show the newly picked image if there is one, otherwise the saved one
+        val preview: Any? = viewModel.imageUri ?: viewModel.existingImageUrl.ifBlank { null }
         Box(
             modifier = Modifier
-                .padding(4.dp)
                 .fillMaxWidth()
                 .height(200.dp)
                 .clip(RoundedCornerShape(12.dp))
@@ -308,14 +277,13 @@ fun RegisterCampsiteScreen(
                     picker.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
-                }
-                .testTag("imgUploadArea"),
+                },
             contentAlignment = Alignment.Center
         ) {
-            if (viewModel.imageUri != null) {
+            if (preview != null) {
                 AsyncImage(
-                    model = viewModel.imageUri,
-                    contentDescription = "Selected image",
+                    model = preview,
+                    contentDescription = "Promo image",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -354,19 +322,6 @@ fun RegisterCampsiteScreen(
                 .fillMaxWidth()
                 .testTag("newTagField")
         )
-        Spacer(Modifier.width(8.dp))
-        Button(
-            onClick = {
-                viewModel.addCustomTag(newTag)
-                newTag = ""
-            },
-            colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-            enabled = newTag.isNotBlank(),
-            modifier = Modifier.testTag("addTagButton")
-        ) {
-            Text("Add")
-        }
-
         (status as? SaveStatus.Error)?.let {
             Text(
                 it.message,
@@ -375,40 +330,18 @@ fun RegisterCampsiteScreen(
             )
         }
         Button(
-            onClick = { viewModel.addCampsite() },
+            onClick = { viewModel.saveChanges() },
             enabled = status !is SaveStatus.Saving,
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("submitButton"),
+                .testTag("saveButton"),
             colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-            ) {
+        ) {
             if (status is SaveStatus.Saving) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
-                Text("Submit")
+                Text("Save")
             }
         }
-
-
-    }
-}
-@Composable
-fun Tag(
-    modifier: Modifier,
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(50),
-        color = if (selected) Color(0xFFFFC107) else Color.Gray,
-    ) {
-        Text(
-            text = text,
-            color = if (selected) Color.Black else Color.White,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp)
-        )
     }
 }

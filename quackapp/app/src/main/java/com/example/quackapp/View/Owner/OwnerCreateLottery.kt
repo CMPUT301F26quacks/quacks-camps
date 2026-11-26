@@ -1,4 +1,4 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,20 +41,21 @@ import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.quackapp.Controller.ListCampInLotteryController
-import com.example.quackapp.Controller.OwnerHomeController
+import com.example.quackapp.Controller.OwnerCreateLotteryController
 import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.View.DateRangePickerField
+import com.example.quackapp.View.todayUtcMillis
 
 /**
  * Screen for listing [Campsite] into a [Lottery]
  * @param navController navController object used to navigate to this screen
- * @param viewModel the controller used with this screen. Default [ListCampInLotteryController]
+ * @param viewModel the controller used with this screen. Default [OwnerCreateLotteryController]
 */
 @Composable
-fun ListCampInLotteryScreen(
+fun OwnerCreateLottery(
     navController: NavController,
-    viewModel: ListCampInLotteryController = viewModel()
+    viewModel: OwnerCreateLotteryController = viewModel()
     ) {
 
     var numWinners by remember { mutableStateOf("") }
@@ -121,7 +122,9 @@ fun ListCampInLotteryScreen(
                 label = "Registration Period",
                 startMillis = viewModel.registrationStart,
                 endMillis = viewModel.registrationEnd,
-                onRangeSelected = { s, e -> viewModel.registrationStart = s; viewModel.registrationEnd = e },
+                onRangeSelected = { s, e ->
+                    viewModel.registrationStart = s; viewModel.registrationEnd = e
+                },
                 minDateMillis = todayUtcMillis(),
                 modifier = Modifier.testTag("registrationDates")
             )
@@ -139,7 +142,8 @@ fun ListCampInLotteryScreen(
                 startMillis = viewModel.bookingStart,
                 endMillis = viewModel.bookingEnd,
                 onRangeSelected = { s, e -> viewModel.bookingStart = s; viewModel.bookingEnd = e },
-                minDateMillis = (viewModel.registrationEnd?.plus(86400000))?: todayUtcMillis(), // 86400000 is one day in milliseconds
+                minDateMillis = (viewModel.registrationEnd?.plus(86400000))
+                    ?: todayUtcMillis(), // 86400000 is one day in milliseconds
                 modifier = Modifier.testTag("bookingDates")
             )
 
@@ -190,8 +194,11 @@ fun ListCampInLotteryScreen(
                 label = "Available Dates",
                 startMillis = viewModel.availabilityStart,
                 endMillis = viewModel.availabilityEnd,
-                onRangeSelected = { s, e -> viewModel.availabilityStart = s; viewModel.availabilityEnd = e },
-                minDateMillis = (viewModel.bookingEnd?.plus(86400000))?: todayUtcMillis(), // 86400000 is one day in milliseconds
+                onRangeSelected = { s, e ->
+                    viewModel.availabilityStart = s; viewModel.availabilityEnd = e
+                },
+                minDateMillis = (viewModel.bookingEnd?.plus(86400000))
+                    ?: todayUtcMillis(), // 86400000 is one day in milliseconds
                 modifier = Modifier.testTag("availabilityDates")
             )
             (status as? SaveStatus.Error)?.let {

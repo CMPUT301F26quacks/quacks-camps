@@ -1,4 +1,4 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -18,15 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,7 +41,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -57,12 +51,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.CampsiteOwner
 import com.example.quackapp.Model.ListCampInLotteryRoute
-import com.example.quackapp.Model.Lottery
 
 /**
  * UI for the home page that Campsite owners are directed to
@@ -85,7 +77,7 @@ fun OwnerHome(
         viewModel.clearSelection()
     }
 
-    OwnerScaffold (
+    OwnerScaffold(
         navController = navController,
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
@@ -97,7 +89,11 @@ fun OwnerHome(
                 ) {
                     Column() {
                         Text(text = "Campsites", fontSize = 40.sp)
-                        Text(text = "Tap and hold to select", fontSize = 10.sp, modifier = Modifier.padding(start = 4.dp))
+                        Text(
+                            text = "Tap and hold to select",
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
                     }
                     FloatingActionButton(
                         containerColor = Color(0xFFFF9800),
@@ -123,12 +119,13 @@ fun OwnerHome(
             ) {
                 Text("No campsites registered")
             }
-        }
-        else {
+        } else {
             BackHandler(enabled = selectionMode) { viewModel.clearSelection() }
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
                 AnimatedVisibility(visible = selectionMode) {
                     Row(
                         modifier = Modifier
@@ -139,7 +136,7 @@ fun OwnerHome(
                     ) {
                         Button(
                             modifier = Modifier.testTag("createLotteryButton"),
-                            onClick = {navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))},
+                            onClick = { navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList())) },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color(0xFFF3AE00))
                         ) {

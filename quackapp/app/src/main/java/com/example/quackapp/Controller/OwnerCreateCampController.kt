@@ -15,7 +15,6 @@ import com.google.firebase.installations.FirebaseInstallations
 import com.google.firebase.storage.storage
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.lifecycle.SavedStateHandle
-import com.google.firebase.firestore.DocumentReference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

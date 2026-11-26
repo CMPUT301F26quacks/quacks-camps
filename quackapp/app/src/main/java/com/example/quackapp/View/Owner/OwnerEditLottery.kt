@@ -1,4 +1,4 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,10 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,9 +38,11 @@ import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.quackapp.Controller.EditLotteryDetailsController
+import com.example.quackapp.Controller.OwnerEditLotteryController
 import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.View.DateRangePickerField
+import com.example.quackapp.View.todayUtcMillis
 
 /**
  * Screen for editing a [Lottery]'s details
@@ -53,9 +51,9 @@ import com.example.quackapp.Model.Lottery
  * @param viewModel the number of people allowed in the waitlist, or null if no limit
  */
 @Composable
-fun EditLotteryDetailsScreen(
+fun OwnerEditLottery(
     navController: NavController,
-    viewModel: EditLotteryDetailsController = viewModel()
+    viewModel: OwnerEditLotteryController = viewModel()
 ) {
 
 
@@ -112,7 +110,9 @@ fun EditLotteryDetailsScreen(
                 label = "Registration Period",
                 startMillis = viewModel.registrationStart,
                 endMillis = viewModel.registrationEnd,
-                onRangeSelected = { s, e -> viewModel.registrationStart = s; viewModel.registrationEnd = e },
+                onRangeSelected = { s, e ->
+                    viewModel.registrationStart = s; viewModel.registrationEnd = e
+                },
                 minDateMillis = todayUtcMillis(),
                 modifier = Modifier.testTag("registrationDates")
             )
@@ -130,9 +130,10 @@ fun EditLotteryDetailsScreen(
                 startMillis = viewModel.bookingStart,
                 endMillis = viewModel.bookingEnd,
                 onRangeSelected = { s, e -> viewModel.bookingStart = s; viewModel.bookingEnd = e },
-                minDateMillis = (viewModel.registrationEnd?.plus(86400000))?: todayUtcMillis(), // 86400000 is one day in milliseconds
+                minDateMillis = (viewModel.registrationEnd?.plus(86400000))
+                    ?: todayUtcMillis(), // 86400000 is one day in milliseconds
                 modifier = Modifier.testTag("bookingDates")
-                )
+            )
 
             Spacer(modifier = Modifier.height(10.dp))
             Text(
@@ -182,10 +183,13 @@ fun EditLotteryDetailsScreen(
                 label = "Available Dates",
                 startMillis = viewModel.availabilityStart,
                 endMillis = viewModel.availabilityEnd,
-                onRangeSelected = { s, e -> viewModel.availabilityStart = s; viewModel.availabilityEnd = e },
-                minDateMillis = (viewModel.bookingEnd?.plus(86400000))?: todayUtcMillis(), // 86400000 is one day in milliseconds
+                onRangeSelected = { s, e ->
+                    viewModel.availabilityStart = s; viewModel.availabilityEnd = e
+                },
+                minDateMillis = (viewModel.bookingEnd?.plus(86400000))
+                    ?: todayUtcMillis(), // 86400000 is one day in milliseconds
                 modifier = Modifier.testTag("availabilityDates")
-                )
+            )
             (status as? SaveStatus.Error)?.let {
                 Text(
                     it.message,

@@ -1,8 +1,6 @@
 package com.example.quackapp.Controller
 
-import android.util.Log
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -14,14 +12,11 @@ import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.Model.Lottery
 import com.example.quackapp.Model.LotteryStatus
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.firestore
-import com.google.firebase.installations.FirebaseInstallations
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.Date
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -32,7 +27,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
-class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
+class OwnerCreateLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
     private val route = savedStateHandle.toRoute<ListCampInLotteryRoute>()
     val campsiteIds: List<String> = route.campsiteIds
     val multiCampLottery = campsiteIds.size > 1
