@@ -143,22 +143,17 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     }
 
 
-
-    val selectionMode: StateFlow<Boolean> = _selectedIds
-        .map { it.isNotEmpty() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
+    /**
+     * Toggles the selection of the campsite with the given id
+     * @param id firebase document id/campsite id
+     */
     fun toggleSelection(id: String) {
         _selectedIds.update { if (id in it) it - id else it + id }
     }
 
+    /**
+     * Clears all the selected campsites
+     */
     fun clearSelection() { _selectedIds.value = emptySet() }
 
-    fun selectAll(allIds: List<String>) { _selectedIds.value = allIds.toSet() }
-
-    fun deleteSelected() {
-        val ids = _selectedIds.value
-        // repository.deleteCamps(ids)  <- your actual delete logic
-        clearSelection()
-    }
 }
