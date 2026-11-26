@@ -31,6 +31,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +48,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.DetailedCampsiteController
-import com.example.quackapp.Model.ReservationRepository
+import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.google.android.gms.maps.model.LatLng
 
 /**
@@ -57,6 +61,7 @@ fun DetailedCampsiteScreen(
     navController: NavController,
     viewModel: DetailedCampsiteController = viewModel()
 ) {
+    var showMultiSelect by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
@@ -67,7 +72,8 @@ fun DetailedCampsiteScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = viewModel.name, fontSize = 36.sp)
+
+                    Text(text = "Campsite Details", fontSize = 36.sp)
                     IconButton(
                         modifier = Modifier.testTag("backButton"),
                         colors = iconButtonColors(
@@ -84,6 +90,7 @@ fun DetailedCampsiteScreen(
                         )
                     }
                 }
+
             }
         }
     ) { innerPadding ->
@@ -95,6 +102,7 @@ fun DetailedCampsiteScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
+            Text(viewModel.name, fontSize = 32.sp, modifier = Modifier.padding(16.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -236,8 +244,9 @@ fun DetailedCampsiteScreen(
                     )
                 }
             }
+            val currentLottery = viewModel.lottery
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("lotteryInfo"),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
@@ -247,19 +256,25 @@ fun DetailedCampsiteScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Lottery Details", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
 
-                    val currentLottery = viewModel.lottery
                     if (currentLottery != null) {
+                        Button(
+                            modifier = Modifier.testTag("editLotteryButton"),
+                            onClick = {navController.navigate("editLottery/${viewModel.campsiteId}")}
+                        ) {
+                            Text("Edit details")
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+
                         Text(
                             "Status: ${currentLottery.status.name}"
                         )
                         Text(
-                            "Registration: ${currentLottery.registrationPeriodStart?.toDate()} to ${currentLottery.registrationPeriodEnd?.toDate()}",
+                            "Registration: ${currentLottery.registrationPeriodStart?.toDisplayDate()} to ${currentLottery.registrationPeriodEnd?.toDisplayDate()}",
                             fontSize = 16.sp
                         )
                         Text(
-                            "Booking Period: ${currentLottery.bookingPeriodStart?.toDate()} to ${currentLottery.bookingPeriodEnd?.toDate()}",
+                            "Booking Period: ${currentLottery.bookingPeriodStart?.toDisplayDate()} to ${currentLottery.bookingPeriodEnd?.toDisplayDate()}",
                             fontSize = 16.sp
                         )
                         Text(
@@ -274,111 +289,120 @@ fun DetailedCampsiteScreen(
                             "No active lottery created for this campsite.",
                             fontSize = 16.sp
                         )
-                        // TEMPORARY
-                        Button(onClick = { navController.navigate("ListCampInLotteryScreen/${viewModel.campsiteId}") }) {
+                        Button(
+                            modifier = Modifier.testTag("createLotteryButton"),
+                            onClick = { navController.navigate(ListCampInLotteryRoute(campsiteIds = listOf(viewModel.campsiteId))) }
+                        ) {
                             Text("Create Lottery")
                         }
                     }
                 }
 
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            if (currentLottery != null) {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            //Currently Booked dates for the campsite
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-                        alpha = 0.5f
+                //Currently Booked dates for the campsite
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                            alpha = 0.5f
+                        )
                     )
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Currently Booked Dates", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-
-
-                    if (viewModel.bookedReservations.isEmpty()) {
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "No dates are currently booked for this campsite.",
+                            "Currently Booked Dates",
+                            fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
-                    } else {
-                        viewModel.bookedReservations.forEachIndexed { index, reservation ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ){
-                                Text(
-                                    text = "${reservation.dateRange} (${reservation.entrantName})",
-                                    fontSize = 16.sp,
+                        Spacer(modifier = Modifier.height(4.dp))
+
+
+                        if (viewModel.bookedReservations.isEmpty()) {
+                            Text(
+                                text = "No dates are currently booked for this campsite.",
+                                fontSize = 16.sp
+                            )
+                        } else {
+                            viewModel.bookedReservations.forEachIndexed { index, reservation ->
+                                Row(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .testTag("bookedDate${index + 1}")
-                                )
-                                Button(
-                                    onClick = {
-                                        val success = ReservationRepository.getInstance().rejectReservation(reservation.id)
-                                        if (success) {
-                                            ReservationRepository.getInstance()
-                                                .getConfirmedReservations(viewModel.campsiteId) { updated ->
-                                                    viewModel.bookedReservations = updated
-                                                }
-                                        }
-                                    },colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ),
-                                modifier = Modifier.testTag("rejectReservation${index + 1}")
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                Text("Reject", color = Color.White)
-                              }
+                                    Text(
+                                        text = "${reservation.dateRange} (${reservation.entrantName})",
+                                        fontSize = 16.sp,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag("bookedDate${index + 1}")
+                                    )
+                                    Button(
+                                        onClick = {
+                                            val success = ReservationRepository.getInstance()
+                                                .rejectReservation(reservation.id)
+                                            if (success) {
+                                                ReservationRepository.getInstance()
+                                                    .getConfirmedReservations(viewModel.campsiteId) { updated ->
+                                                        viewModel.bookedReservations = updated
+                                                    }
+                                            }
+                                        }, colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.error
+                                        ),
+                                        modifier = Modifier.testTag("rejectReservation${index + 1}")
+                                    ) {
+                                        Text("Reject", color = Color.White)
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            //Lottery waitlist for the campsite
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-                        alpha = 0.5f
+                //Lottery waitlist for the campsite
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                            alpha = 0.5f
+                        )
                     )
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Lottery Waitlist (${viewModel.waitlistEntrants.size})",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    if (viewModel.lottery == null) {
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "No active lottery for this campsite.",
+                            text = "Lottery Waitlist (${viewModel.waitlistEntrants.size})",
+                            fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
-                    } else if (viewModel.waitlistEntrants.isEmpty()) {
-                        Text(
-                            text = "No entrants have joined the waitlist yet.",
-                            fontSize = 16.sp
-                        )
-                    } else {
-                        viewModel.waitlistEntrants.forEachIndexed { index, entrant ->
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        if (viewModel.lottery == null) {
                             Text(
-                                text = "${index + 1}. $entrant",
-                                fontSize = 16.sp,
-                                modifier = Modifier.testTag("waitlistEntrant${index + 1}")
+                                text = "No active lottery for this campsite.",
+                                fontSize = 16.sp
                             )
+                        } else if (viewModel.waitlistEntrants.isEmpty()) {
+                            Text(
+                                text = "No entrants have joined the waitlist yet.",
+                                fontSize = 16.sp
+                            )
+                        } else {
+                            viewModel.waitlistEntrants.forEachIndexed { index, entrant ->
+                                Text(
+                                    text = "${index + 1}. $entrant",
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.testTag("waitlistEntrant${index + 1}")
+                                )
+                            }
                         }
                     }
                 }
