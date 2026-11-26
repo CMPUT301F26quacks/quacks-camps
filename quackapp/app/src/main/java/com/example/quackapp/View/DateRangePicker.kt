@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
 /**
@@ -92,6 +93,7 @@ fun DateRangePickerField(
             onDismissRequest = { showPicker = false },
             confirmButton = {
                 TextButton(
+                    modifier = Modifier.testTag("confirmDates"),
                     enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null,
                     onClick = {
                         onRangeSelected(state.selectedStartDateMillis, state.selectedEndDateMillis)

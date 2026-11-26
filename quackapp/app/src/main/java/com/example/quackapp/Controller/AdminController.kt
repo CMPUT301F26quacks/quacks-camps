@@ -40,7 +40,6 @@ class AdminController : ViewModel() {
     var deleteError by mutableStateOf<String?>(null)
         private set
 
-    /** Every campsite in the app, live. */
     val campsites: StateFlow<List<Campsite>> = callbackFlow {
         val listener = db.collection("campsites")
             .addSnapshotListener { snapshot, error ->
@@ -48,7 +47,14 @@ class AdminController : ViewModel() {
                     close(error)
                     return@addSnapshotListener
                 }
-                trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+                val list = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(Campsite::class.java)
+                    } catch (_: Exception) {
+                        null
+                    }
+                } ?: emptyList()
+                trySend(list)
             }
         awaitClose { listener.remove() }
     }
@@ -79,6 +85,7 @@ class AdminController : ViewModel() {
      * @param campsite the [Campsite] whose image should be removed.
      */
     fun deleteImage(campsite: Campsite) {
+        deleteError = null
         viewModelScope.launch {
             try {
                 db.collection("campsites").document(campsite.campId)
@@ -93,6 +100,20 @@ class AdminController : ViewModel() {
                 throw e
             } catch (e: Exception) {
                 deleteError = e.message ?: "Couldn't delete image"
+            }
+        }
+    }
+
+    fun deleteCampsite(campsite: Campsite) {
+        viewModelScope.launch {
+            try {
+                // Delete the document first; the list updates automatically
+                db.collection("campsites").document(campsite.campId).delete().await()
+
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                deleteError = e.message ?: "Couldn't delete campsite"
             }
         }
     }

@@ -9,14 +9,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
@@ -32,10 +37,25 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val db = Firebase.firestore
-    val ownerId: String = savedStateHandle["ownerId"] ?: ""
+    var ownerId: String = savedStateHandle["ownerId"] ?: ""
+        private set
     private val imgStorage = Firebase.storage
     var deleteError by mutableStateOf<String?>(null)
         private set
+    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
+
+    init {  //prevent the ownerId from ever being blank -> get the deviceId if that ever happens
+        if (ownerId.isBlank()) {
+            DeviceIdGetter.getDeviceId(
+                onSuccess = { deviceId ->
+                    ownerId = deviceId
+                },
+                onFail = { }
+            )
+        }
+    }
+
     // define camps by going into the database in the campsites collection
     // and finding all documents that match the logged in userId
     val camps: StateFlow<List<Campsite>> = callbackFlow {
@@ -48,28 +68,43 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                         close(error)
                         return@addSnapshotListener
                     }
-                    trySend(snapshot?.toObjects(Campsite::class.java) ?: emptyList())
+                    val list = snapshot?.documents?.mapNotNull { doc ->
+                        try {
+                            doc.toObject(Campsite::class.java)
+                        } catch (_: Exception) {
+                            null
+                        }
+                    } ?: emptyList()
+                    trySend(list)
                 }
             awaitClose { listener.remove() }
         }
         else{   //but if tapping on home button again, js use logged in device id
+            var listener: ListenerRegistration? = null
             DeviceIdGetter.getDeviceId(
                 onSuccess = {deviceId ->
-                    val listener = db.collection("campsites")
+                    listener = db.collection("campsites")
                         .whereEqualTo("ownerId", deviceId)
                         .addSnapshotListener {snapshot, error ->
                             if(error != null){
                                 close(error)
                                 return@addSnapshotListener
                             }
-                            trySend(snapshot?.toObjects(Campsite::class.java)?: emptyList())
+                            val list = snapshot?.documents?.mapNotNull { doc ->
+                                try {
+                                    doc.toObject(Campsite::class.java)
+                                } catch (_: Exception) {
+                                    null
+                                }
+                            } ?: emptyList()
+                            trySend(list)
                         }
                 },
                 onFail = {
                     trySend(emptyList())
                 }
             )
-            awaitClose {}
+            awaitClose { listener?.remove() }
         }
 
 
@@ -106,4 +141,19 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
             }
         }
     }
+
+
+    /**
+     * Toggles the selection of the campsite with the given id
+     * @param id firebase document id/campsite id
+     */
+    fun toggleSelection(id: String) {
+        _selectedIds.update { if (id in it) it - id else it + id }
+    }
+
+    /**
+     * Clears all the selected campsites
+     */
+    fun clearSelection() { _selectedIds.value = emptySet() }
+
 }

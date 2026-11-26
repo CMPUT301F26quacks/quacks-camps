@@ -23,19 +23,18 @@ enum class WaitlistStatus {WAITING, SELECTED, NOT_SELECTED}
 
 class Lottery(
     var lotteryID: String = "",
-    var registrationPeriodStart: Long = 0L,
-    var registrationPeriodEnd: Long = 0L,
-    var bookingPeriodStart: Long = 0L,
-    var bookingPeriodEnd: Long = 0L,
+    var registrationPeriodStart: Long? = null,
+    var registrationPeriodEnd: Long? = null,
+    var bookingPeriodStart: Long? = null,
+    var bookingPeriodEnd: Long? = null,
     var numLotteryWinners: Int = 1,
     var optionalWaitlistCapacity: Int? = null, //since optional we use null - idk if this is the best practice tho
-    var waitlist: List<String> = listOf(""), //list of entrants
+    var waitlist: List<String> = listOf(), //list of entrants
     var status: LotteryStatus = LotteryStatus.CLOSED,
     var campIds: List<String> = listOf("")
 )
 
 //entrants in da waitlist for optimal holding capacity+firebase db considerations
-//not currently implemented
 class WaitlistEntry(
     var status: WaitlistStatus = WaitlistStatus.WAITING,
     var entryID: String = "",   //for the firebase db (id)

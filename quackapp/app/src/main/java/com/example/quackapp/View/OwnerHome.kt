@@ -1,7 +1,10 @@
 package com.example.quackapp.View
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -26,8 +31,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,21 +42,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.CampsiteOwner
+import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.Model.Lottery
 
 /**
@@ -66,6 +78,12 @@ fun OwnerHome(
     val camps by viewModel.camps.collectAsState()
     var campToDelete by remember { mutableStateOf<Campsite?>(null) }
     var campToShowQR by remember { mutableStateOf<Campsite?>(null) }    //track which campsite's QR code to display
+    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+    val selectionMode = selectedIds.isNotEmpty()
+
+    LaunchedEffect(Unit) {
+        viewModel.clearSelection()
+    }
 
     OwnerScaffold (
         navController = navController,
@@ -75,11 +93,12 @@ fun OwnerHome(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "Campsites", fontSize = 40.sp)
-
+                    Column() {
+                        Text(text = "Campsites", fontSize = 40.sp)
+                        Text(text = "Tap and hold to select", fontSize = 10.sp, modifier = Modifier.padding(start = 4.dp))
+                    }
                     FloatingActionButton(
                         containerColor = Color(0xFFFF9800),
                         contentColor = Color.White,
@@ -106,63 +125,112 @@ fun OwnerHome(
             }
         }
         else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(camps) { campsite ->
-                    CampRow(campsite, navController, onDeleteClick = { campToDelete = campsite }, onQRClick = {campToShowQR = campsite})
-                }
-            }
-            // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
-            campToDelete?.let { camp ->
-                AlertDialog(
-                    onDismissRequest = { campToDelete = null },
-                    title = { Text("Delete campsite?") },
-                    text = { Text("\"${camp.name}\" will be permanently deleted. This can't be undone.") },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                viewModel.deleteCampsite(camp)
-                                campToDelete = null
-                            },
-                            modifier = Modifier.testTag("confirmDelete")
-                        ) { Text("Delete", color = Color.Red) }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { campToDelete = null }) { Text("Cancel") }
-                    }
-                )
-            }
-
-            campToShowQR?.let {camp ->
-                val qrImageUrl = CampsiteOwner.generateQRCode(camp)
-
-                AlertDialog(
-                    onDismissRequest = {campToShowQR = null},
-                    title = {Text("QR Code for ${camp.name}", fontWeight = FontWeight.Bold)},
-                    text = {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
+            BackHandler(enabled = selectionMode) { viewModel.clearSelection() }
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)) {
+                AnimatedVisibility(visible = selectionMode) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Button(
+                            modifier = Modifier.testTag("createLotteryButton"),
+                            onClick = {navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))},
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            colors = ButtonDefaults.buttonColors(Color(0xFFF3AE00))
                         ) {
-                            AsyncImage(
-                                model = qrImageUrl,
-                                contentDescription = "Campsite QR Code",
-                            )
+                            Text("Create Lottery")
                         }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { campToShowQR = null }) {
-                            Text("Close")
+
+                        Row(verticalAlignment = Alignment.CenterVertically,) {
+                            Text(
+                                text = "${selectedIds.size} selected",
+                                textAlign = TextAlign.Right,
+                                fontSize = 14.sp,
+                                modifier = Modifier.testTag("selectedCount")
+                            )
+                            TextButton(
+                                modifier = Modifier.testTag("clearSelected"),
+                                onClick = { viewModel.clearSelection() },
+                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp)
+                            ) {
+                                Text("X")
+                            }
                         }
                     }
-                )
+                }
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    items(camps, key = { it.campId }) { campsite ->
+                        CampRow(
+                            campsite,
+                            navController,
+                            onDeleteClick = { campToDelete = campsite },
+                            onQRClick = { campToShowQR = campsite },
+                            isSelected = campsite.campId in selectedIds,
+                            selectionMode = selectionMode,
+                            onClick = {
+                                if (selectionMode) viewModel.toggleSelection(campsite.campId)
+                                else navController.navigate("CampsiteDetails/${campsite.campId}")
+                            },
+                            onLongClick = { viewModel.toggleSelection(campsite.campId) }
+                        )
+                    }
+                }
+                // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
+                campToDelete?.let { camp ->
+                    AlertDialog(
+                        onDismissRequest = { campToDelete = null },
+                        title = { Text("Delete campsite?") },
+                        text = { Text("\"${camp.name}\" will be permanently deleted. This can't be undone.") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    viewModel.deleteCampsite(camp)
+                                    campToDelete = null
+                                },
+                                modifier = Modifier.testTag("confirmDelete")
+                            ) { Text("Delete", color = Color.Red) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { campToDelete = null }) { Text("Cancel") }
+                        }
+                    )
+                }
 
+                campToShowQR?.let { camp ->
+                    val qrImageUrl = CampsiteOwner.generateQRCode(camp)
+
+                    AlertDialog(
+                        onDismissRequest = { campToShowQR = null },
+                        title = { Text("QR Code for ${camp.name}", fontWeight = FontWeight.Bold) },
+                        text = {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                AsyncImage(
+                                    model = qrImageUrl,
+                                    contentDescription = "Campsite QR Code",
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { campToShowQR = null }) {
+                                Text("Close")
+                            }
+                        }
+                    )
+
+                }
             }
         }
     }
@@ -177,16 +245,33 @@ fun CampRow(
     campsite: Campsite,
     navController: NavController,
     onDeleteClick: () -> Unit,
-    onQRClick: () -> Unit
+    onQRClick: () -> Unit,
+    isSelected: Boolean,
+    selectionMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ){
+    val haptics = LocalHapticFeedback.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .padding(4.dp)
-            .background(Color(0xFF2196F3), shape = RoundedCornerShape(16.dp))
             .fillMaxWidth()
             .height(100.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (isSelected) Color(0xFFFF9800) else Color(0xFF2196F3)
+            )
+            .testTag("${campsite.name} row")
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                }
+            )
             .padding(8.dp)
+
     ) {
         if (campsite.optionalPromoImage != ""){
             AsyncImage(
@@ -212,8 +297,12 @@ fun CampRow(
         }
         Spacer(modifier = Modifier.width(18.dp))
         Column(modifier = Modifier.fillMaxWidth()) {
+            var displayName: String = campsite.name
+            if (displayName.length > 12){
+                displayName = displayName.take(12) + "..."
+            }
             Text(
-                campsite.name,
+                text = displayName,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -227,7 +316,7 @@ fun CampRow(
                     color = Color.White,
                     modifier = Modifier
                         .testTag("edit${campsite.name}")
-                        .clickable(onClick = {navController.navigate("EditCampsite/${campsite.campId}")})
+                        .clickable(onClick = { navController.navigate("EditCampsite/${campsite.campId}") })
                 )
                 Text(
                     text = "Details",
@@ -235,8 +324,10 @@ fun CampRow(
                     color = Color.White,
                     modifier = Modifier
                         .testTag("details${campsite.name}")
-                        .clickable(onClick = {navController.navigate("CampsiteDetails/${campsite.campId}")})
+                        .clickable(onClick = { navController.navigate("CampsiteDetails/${campsite.campId}") })
                 )
+                // TODO delete campId from related lotteries
+                //  and maybe the lottery itself if the campIds list is empty
                 Text(
                     text = "Delete",
                     fontSize = 16.sp,

@@ -1,8 +1,5 @@
 package com.example.quackapp.Model
 
-import com.google.android.gms.maps.model.LatLng
-import com.google.firebase.firestore.GeoPoint
-
 
 class Campsite (
     /**-name, owner, location, price, capacity,

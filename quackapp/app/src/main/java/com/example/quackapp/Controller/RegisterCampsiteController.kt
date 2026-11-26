@@ -48,7 +48,7 @@ sealed interface SaveStatus {
 class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(){
     // Firestore database instance
     private val db = Firebase.firestore
-    private val ownerId: String = checkNotNull(savedStateHandle["ownerId"])
+    private var ownerId: String = savedStateHandle.get<String>("ownerId") ?: ""
 
     // Reference to the campsites collection in Firestore
     private val campsitesRef = db.collection("campsites")
@@ -131,13 +131,20 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
         viewModelScope.launch {
             // Change status to saving
             _status.value = SaveStatus.Saving
-            try {
-                // Create database references, any image and campsite object will be linked by their ids (document name)
-                val docRef = if (ownerId == "testOwner"){
-                    campsitesRef.document("testCamp")
+            try {   //in case ownerId ever ends up empty in the stack, get the device's id again
+                val finalOwnerId = if (ownerId.isNotBlank()) {
+                    ownerId
                 } else {
-                    campsitesRef.document()
+                    try {
+                        FirebaseInstallations.getInstance().id.await()
+                    } catch (_: Exception) {
+                        ""
+                    }
                 }
+
+                // Create database references, any image and campsite object will be linked by their ids (document name)
+                val docRef = campsitesRef.document()
+
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
                 // Upload the image if one was selected
@@ -159,7 +166,7 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                     features = features,
                     rules = rules,
                     tags = selectedTags.toList(),
-                    ownerId = ownerId,
+                    ownerId = finalOwnerId,
                     latitude = latitude,
                     longitude = longitude
                 )
