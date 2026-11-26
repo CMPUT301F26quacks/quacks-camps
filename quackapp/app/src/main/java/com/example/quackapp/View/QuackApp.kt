@@ -13,6 +13,7 @@ import com.example.quackapp.Model.Campsite
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.Model.User
 import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
