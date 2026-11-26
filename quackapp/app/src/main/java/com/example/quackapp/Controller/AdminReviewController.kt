@@ -41,6 +41,8 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
         private set
     var actionError by mutableStateOf<String?>(null)
         private set
+    var actionSuccess by mutableStateOf<String?>(null)
+        private set
 
     /** Every rating/review left on this campsite, live. A [Review.rating] of 0 means "no rating". */
     val reviews: StateFlow<List<Review>> = callbackFlow {
@@ -88,10 +90,12 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
      */
     fun removeRating(review: Review) {
         actionError = null
+        actionSuccess = null
         viewModelScope.launch {
             try {
                 removeField(review, field = "rating", otherPartEmpty = review.feedback.isBlank())
                 CampsiteRatingUpdater.recompute(campId)
+                actionSuccess = "Rating removed"
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -108,9 +112,11 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
      */
     fun removeReview(review: Review) {
         actionError = null
+        actionSuccess = null
         viewModelScope.launch {
             try {
                 removeField(review, field = "feedback", otherPartEmpty = review.rating == 0F)
+                actionSuccess = "Review removed"
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
