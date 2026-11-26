@@ -27,11 +27,11 @@ enum class OfferStatus {
  * @property description Overview of amenities and site features.
  */
 data class CampsiteSummary(
-    val campsiteId: String,
-    val name: String,
-    val location: String,
-    val pricePerNight: Double,
-    val maxOccupancy: Int,
+    val campsiteId: String = "",
+    val name: String = "",
+    val location: String = "",
+    val pricePerNight: Double = 0.0,
+    val maxOccupancy: Int = 1,
     val description: String = ""
 )
 
@@ -52,10 +52,10 @@ data class CampsiteSummary(
  */
 data class LotteryOffer(
     val id: String = UUID.randomUUID().toString(),
-    val lotteryTitle: String,
-    val entrantDeviceId: String,
-    val campsites: List<CampsiteSummary>,
-    val availableDateRanges: List<String>,
+    val lotteryTitle: String = "",
+    val entrantDeviceId: String = "",
+    val campsites: List<CampsiteSummary> = emptyList(),
+    val availableDateRanges: List<String> = emptyList(),
     val status: OfferStatus = OfferStatus.PENDING_RESPONSE,
     val expiresAt: Long = System.currentTimeMillis() + (86400000L * 3) // 3 days
 )

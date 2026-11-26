@@ -8,21 +8,27 @@ class Campsite (
     cancellation policy, availability,
     tags,
     class holds all attributes mentioned in entrant and campsite user stories*/
-    val id: String = "",
-    val name: String ="",
+    val campId: String = "",
+    val name: String = "",
     val location: String = "",
-    val price: Int,
-    val capacity: Int,
-    val optionalPromoImage: String = "", //https://developer.android.com/reference/android/net/Uri - referenced to the uploaded image and its null since its optional so it can be empty
-
-    var features: List<String>,
-    var rules: List<String>,
-    var cancellationPolicy: String, //only mentioned in the entrant's user story - never set on the campsite owner's side
-    var tags: List<String>
-//    val owner: String = "",
-){
+    val price: Int = -1,
+    val capacity: Int = -1,
+    val optionalPromoImage: String = "",
+    var features: List<String> = listOf(""),
+    var rules: List<String> = listOf(""),
+    var cancellationPolicy: String = "",
+    var tags: List<String> = listOf(""),
+    val ownerId: String = "",
+    val longitude: Double = 0.00,
+    val latitude: Double = 0.00
+    ){
     var rating: Double = 0.00
     var qrCode: String = ""
-    var lottery: Lottery? = null //holds lottery property - none if by default campsite not in lottery
-//    var availability: List<String> = [] //I'm assuming it's a list of all da dates
+    var lotteryId: String? = null //holds lottery property - none if by default campsite not in lottery
+
+    //Uses milliseconds
+    //For testing: Dec 25th - Dec 26th = 1798156800000, 1798156800000+86399999
+    var availability: List<Long> = listOf()
+
+
 }

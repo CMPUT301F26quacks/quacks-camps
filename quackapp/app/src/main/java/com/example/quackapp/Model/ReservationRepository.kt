@@ -1,13 +1,19 @@
 package com.example.quackapp.Model
 
+import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Repository and Controller for managing Entrant reservations and lottery win offers.
- * Implements in-memory state with realistic default data for local execution and testing,
- * architected for future Firestore collection synchronization.
+ * Synchronizes live with Firebase Cloud Firestore ("reservations" and "lottery_offers" collections).
+ * Holds no data until [syncFromFirestore] runs; unit tests load data with [setLocalData].
+ *
+ * Outstanding: lottery offers are created by the lottery draw (US 02.05.01, not on dev yet).
+ * Date ranges are stored as display strings, so overlap checks are not possible yet.
  */
 class ReservationRepository private constructor() {
 
@@ -17,89 +23,38 @@ class ReservationRepository private constructor() {
     private val _offers = MutableStateFlow<List<LotteryOffer>>(emptyList())
     val offers: StateFlow<List<LotteryOffer>> = _offers.asStateFlow()
 
-    init {
-        loadInitialMockData()
+    /**
+     * Lazily obtains FirebaseFirestore instance, safely falling back to null in JVM unit tests
+     * or environments where FirebaseApp is not initialized.
+     */
+    private val firestore: FirebaseFirestore?
+        get() = try {
+            FirebaseFirestore.getInstance()
+        } catch (e: Throwable) {
+            null
+        }
+
+    // Live Firestore listeners for the signed-in entrant; replaced on each sync
+    private var reservationListener: ListenerRegistration? = null
+    private var offerListener: ListenerRegistration? = null
+
+    /**
+     * Replaces the locally held reservations and offers.
+     * Used by unit tests to load test data without Firestore.
+     *
+     * @param reservations reservations to hold.
+     * @param offers lottery offers to hold.
+     */
+    fun setLocalData(reservations: List<Reservation>, offers: List<LotteryOffer>) {
+        _reservations.value = reservations
+        _offers.value = offers
     }
 
     /**
-     * Resets repository state to the initial mock data set.
+     * Removes all locally held reservations and offers.
      */
-    fun resetToMockData() {
-        loadInitialMockData()
-    }
-
-    private fun loadInitialMockData() {
-        val initialReservations = listOf(
-            Reservation(
-                id = "res-101",
-                campsiteId = "site-hinton",
-                campsiteName = "Hinton-Grande Cache Cookhouse",
-                campsiteLocation = "Hinton / Grande Cache, AB",
-                entrantDeviceId = "default_device",
-                entrantName = "Default Entrant",
-                dateRange = "May 7 - May 9, 2027",
-                numGuests = 4,
-                totalPrice = 130.0,
-                status = ReservationStatus.CONFIRMED
-            )
-        )
-
-        val banffSite = CampsiteSummary(
-            campsiteId = "site-banff-two-jack",
-            name = "Two Jack Lakeside Campground",
-            location = "Banff National Park, AB",
-            pricePerNight = 65.0,
-            maxOccupancy = 6,
-            description = "Lakeside camping with scenic views, fire pits, and hiking trails."
-        )
-
-        val jasperWapitiSite = CampsiteSummary(
-            campsiteId = "site-jasper-wapiti",
-            name = "Wapiti Campground",
-            location = "Jasper National Park, AB",
-            pricePerNight = 58.0,
-            maxOccupancy = 6,
-            description = "Year-round forested campground along the Athabasca River."
-        )
-
-        val jasperWhistlersSite = CampsiteSummary(
-            campsiteId = "site-jasper-whistlers",
-            name = "Whistlers Campground",
-            location = "Jasper National Park, AB",
-            pricePerNight = 62.0,
-            maxOccupancy = 8,
-            description = "Recently updated campsites with modern bike trails and campfire pits."
-        )
-
-        val initialOffers = listOf(
-            LotteryOffer(
-                id = "offer-banff-01",
-                lotteryTitle = "Banff Victoria Day Long Weekend Draw",
-                entrantDeviceId = "default_device",
-                campsites = listOf(banffSite),
-                availableDateRanges = listOf(
-                    "May 14 - May 16, 2027",
-                    "May 21 - May 24, 2027 (Long Weekend)",
-                    "May 28 - May 30, 2027"
-                ),
-                status = OfferStatus.PENDING_RESPONSE
-            ),
-            LotteryOffer(
-                id = "offer-jasper-02",
-                lotteryTitle = "Jasper Summer Solstice Multi-Site Draw",
-                entrantDeviceId = "default_device",
-                campsites = listOf(jasperWapitiSite, jasperWhistlersSite),
-                availableDateRanges = listOf(
-                    "June 4 - June 6, 2027",
-                    "June 11 - June 13, 2027",
-                    "June 18 - June 20, 2027"
-                ),
-                status = OfferStatus.PENDING_RESPONSE
-            )
-        )
-
-        _reservations.value = initialReservations
-        _offers.value = initialOffers
+    fun clear() {
+        setLocalData(emptyList(), emptyList())
     }
 
     /**
@@ -111,7 +66,7 @@ class ReservationRepository private constructor() {
     fun getActiveReservations(deviceId: String = ""): List<Reservation> {
         return _reservations.value.filter { res ->
             res.status == ReservationStatus.CONFIRMED &&
-                    (deviceId.isBlank() || res.entrantDeviceId == deviceId || res.entrantDeviceId == "default_device")
+                    (deviceId.isBlank() || res.entrantDeviceId == deviceId)
         }
     }
 
@@ -124,7 +79,36 @@ class ReservationRepository private constructor() {
     fun getPendingOffers(deviceId: String = ""): List<LotteryOffer> {
         return _offers.value.filter { offer ->
             offer.status == OfferStatus.PENDING_RESPONSE &&
-                    (deviceId.isBlank() || offer.entrantDeviceId == deviceId || offer.entrantDeviceId == "default_device")
+                    (deviceId.isBlank() || offer.entrantDeviceId == deviceId)
+        }
+    }
+
+    /**
+     * Retrieves past (completed, cancelled, or declined) reservations.
+     * US 01.06.02: As an entrant, I want to view a list of past reservations.
+     */
+    fun getPastReservations(deviceId: String = ""): List<Reservation> {
+        return _reservations.value.filter { res ->
+            (res.status == ReservationStatus.CANCELLED || res.status == ReservationStatus.DECLINED || res.status == ReservationStatus.COMPLETED) &&
+                    (deviceId.isBlank() || res.entrantDeviceId == deviceId)
+        }
+    }
+
+    /**
+     * Dynamically registers an available date range for a lottery offer (e.g., when selected via calendar).
+     * US 01.04.01: Entrant date selection on lottery win.
+     */
+    fun addAvailableDateRange(offerId: String, dateRange: String) {
+        val currentOffers = _offers.value
+        val index = currentOffers.indexOfFirst { it.id == offerId }
+        if (index != -1) {
+            val offer = currentOffers[index]
+            if (!offer.availableDateRanges.contains(dateRange)) {
+                val updated = offer.copy(availableDateRanges = offer.availableDateRanges + dateRange)
+                val list = currentOffers.toMutableList()
+                list[index] = updated
+                _offers.value = list
+            }
         }
     }
 
@@ -167,7 +151,7 @@ class ReservationRepository private constructor() {
             campsiteId = campsite.campsiteId,
             campsiteName = campsite.name,
             campsiteLocation = campsite.location,
-            entrantDeviceId = if (deviceId.isBlank()) "default_device" else deviceId,
+            entrantDeviceId = deviceId,
             entrantName = entrantName.ifBlank { "Entrant (${deviceId.take(6)})" },
             dateRange = chosenDate,
             numGuests = numGuests.coerceIn(1, campsite.maxOccupancy),
@@ -176,6 +160,25 @@ class ReservationRepository private constructor() {
         )
 
         _reservations.value = listOf(reservation) + _reservations.value
+
+        // Sync confirmed reservation to Firestore
+        firestore?.let { db ->
+            try {
+                db.collection("reservations")
+                    .document(reservation.id)
+                    .set(reservation)
+                    .addOnFailureListener { e ->
+                        Log.w("ReservationRepo", "Failed to sync reservation to Firestore", e)
+                    }
+
+                db.collection("lottery_offers")
+                    .document(offerId)
+                    .update("status", OfferStatus.ACCEPTED.name)
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore confirmReservation failed", e)
+            }
+        }
+
         return reservation
     }
 
@@ -196,6 +199,18 @@ class ReservationRepository private constructor() {
         val updatedOffers = currentOffers.toMutableList()
         updatedOffers[offerIndex] = updatedOffer
         _offers.value = updatedOffers
+
+        // Sync decline to Firestore
+        firestore?.let { db ->
+            try {
+                db.collection("lottery_offers")
+                    .document(offerId)
+                    .update("status", OfferStatus.DECLINED.name)
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore declineOffer failed", e)
+            }
+        }
+
         return true
     }
 
@@ -215,8 +230,189 @@ class ReservationRepository private constructor() {
         val updatedList = currentReservations.toMutableList()
         updatedList[resIndex] = updatedRes
         _reservations.value = updatedList
+
+        // Sync cancellation to Firestore
+        firestore?.let { db ->
+            try {
+                db.collection("reservations")
+                    .document(reservationId)
+                    .update("status", ReservationStatus.CANCELLED.name)
+                    .addOnFailureListener { e ->
+                        Log.w("ReservationRepo", "Failed to update cancellation in Firestore", e)
+                    }
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore cancelReservation failed", e)
+            }
+        }
+
         return true
     }
+
+
+/**
+ * Rejects an existing reservation as a campsite owner.
+ * Starts live Firestore listeners for this entrant's reservations ("reservations")
+ * and lottery win offers ("lottery_offers"), replacing any previous listeners.
+ * Local state updates automatically whenever Firestore changes (real-time status updates).
+ *
+ * @param reservationId Identifier of reservation to reject.
+ * @return True if found and rejected; false otherwise.
+ **/
+    fun rejectReservation(reservationId: String): Boolean {
+        val currentReservations = _reservations.value
+        val resIndex = currentReservations.indexOfFirst { it.id == reservationId && it.status == ReservationStatus.CONFIRMED }
+        if (resIndex != -1) {
+            val res = currentReservations[resIndex]
+            val updatedRes = res.copy(status = ReservationStatus.DECLINED)
+            val updatedList = currentReservations.toMutableList()
+            updatedList[resIndex] = updatedRes
+            _reservations.value = updatedList
+        } else if (firestore == null) {
+            return false
+        }
+
+        firestore?.let { db ->
+            try {
+                db.collection("reservations")
+                    .document(reservationId)
+                    .update("status", ReservationStatus.DECLINED.name)
+                    .addOnFailureListener { e ->
+                        Log.w("ReservationRepo", "Failed to update rejection in Firestore", e)
+                    }
+            } catch (e: Throwable) {
+                Log.w("ReservationRepo", "Firestore rejectReservation failed", e)
+            }
+        }
+
+        return true
+    }
+
+
+
+    /**
+     * Starts live Firestore listeners for this entrant's reservations ("reservations")
+     * and lottery win offers ("lottery_offers"), replacing any previous listeners.
+     * Local state updates automatically whenever Firestore changes (real-time status updates).
+     *
+     * @param deviceId The signed-in entrant's device identifier.
+     * @param onComplete Optional callback invoked with active reservations after the first load.
+     */
+    fun syncFromFirestore(deviceId: String, onComplete: ((List<Reservation>) -> Unit)? = null) {
+        val db = firestore
+        if (db == null || deviceId.isBlank()) {
+            onComplete?.invoke(getActiveReservations(deviceId))
+            return
+        }
+
+        reservationListener?.remove()
+        offerListener?.remove()
+
+        var completed = false
+        reservationListener = db.collection("reservations")
+            .whereEqualTo("entrantDeviceId", deviceId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.w("ReservationRepo", "Error syncing reservations from Firestore", error)
+                } else if (snapshot != null) {
+                    val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
+                    // keep reservations of other users (e.g. loaded for an owner's campsite)
+                    _reservations.value = fetched + _reservations.value.filter { it.entrantDeviceId != deviceId }
+                }
+                if (!completed) {
+                    completed = true
+                    onComplete?.invoke(getActiveReservations(deviceId))
+                }
+            }
+
+        offerListener = db.collection("lottery_offers")
+            .whereEqualTo("entrantDeviceId", deviceId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.w("ReservationRepo", "Error syncing lottery offers from Firestore", error)
+                    return@addSnapshotListener
+                }
+                val fetched = snapshot?.documents?.mapNotNull { it.toObject(LotteryOffer::class.java) } ?: return@addSnapshotListener
+                _offers.value = fetched + _offers.value.filter { it.entrantDeviceId != deviceId }
+            }
+    }
+
+    /**
+     * Synchronizes all reservations from Cloud Firestore for a specific campsite.
+     * Merges fetched Firestore documents into the local StateFlow regardless of reservation status.
+     *
+     * @param campsiteId The campsite identifier.
+     * @param onResult Callback invoked with all reservations for this campsite.
+     */
+    fun syncReservationsForCampsite(
+        campsiteId: String,
+        onResult: ((List<Reservation>) -> Unit)? = null
+    ) {
+        val localMatches = _reservations.value.filter { it.campsiteId == campsiteId }
+
+        val db = firestore ?: run {
+            onResult?.invoke(localMatches)
+            return
+        }
+
+        db.collection("reservations")
+            .whereEqualTo("campsiteId", campsiteId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
+                if (fetched.isNotEmpty()) {
+                    val fetchedIds = fetched.map { it.id }.toSet()
+                    val remaining = _reservations.value.filter { it.id !in fetchedIds }
+                    _reservations.value = fetched + remaining
+                    onResult?.invoke(_reservations.value.filter { it.campsiteId == campsiteId })
+                } else {
+                    onResult?.invoke(localMatches)
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.w("ReservationRepo", "Error fetching campsite reservations", e)
+                onResult?.invoke(localMatches)
+            }
+    }
+
+    fun getConfirmedReservations(
+        campsiteId: String,
+        onResult: (List<Reservation>) -> Unit
+    ){
+        val localMatches = _reservations.value.filter {
+            it.campsiteId == campsiteId && it.status == ReservationStatus.CONFIRMED
+        }
+
+
+        val db = firestore ?: run {
+            onResult(localMatches)
+            return
+        }
+
+
+        db.collection("reservations")
+            .whereEqualTo("campsiteId", campsiteId)
+            .whereEqualTo("status", ReservationStatus.CONFIRMED.name)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val fetched = snapshot.documents.mapNotNull { it.toObject(Reservation::class.java) }
+                if (fetched.isNotEmpty()) {
+                    // Merge into local StateFlow so cache stays up to date
+                    val fetchedIds = fetched.map { it.id }.toSet()
+                    val remaining = _reservations.value.filter { it.id !in fetchedIds }
+                    _reservations.value = fetched + remaining
+                    onResult(fetched)
+                } else {
+                    onResult(localMatches)
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.w("ReservationRepo", "Error fetching campsite reservations", e)
+                onResult(localMatches)
+            }
+    }
+
+
+
 
     companion object {
         @Volatile

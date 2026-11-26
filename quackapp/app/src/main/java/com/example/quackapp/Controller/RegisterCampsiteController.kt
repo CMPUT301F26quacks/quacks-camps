@@ -1,17 +1,21 @@
 package com.example.quackapp.Controller
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import com.google.firebase.installations.FirebaseInstallations
 import com.google.firebase.storage.storage
-import android.net.Uri
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.lifecycle.SavedStateHandle
+import com.google.firebase.firestore.DocumentReference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -38,10 +42,13 @@ sealed interface SaveStatus {
  * If the user picked a promo image, it is uploaded to Firebase Storage first and
  * its download URL is stored on the [Campsite] document.
  *
+ * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ *
  */
-class RegisterCampsiteController: ViewModel(){
+class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(){
     // Firestore database instance
     private val db = Firebase.firestore
+    private var ownerId: String = savedStateHandle.get<String>("ownerId") ?: ""
 
     // Reference to the campsites collection in Firestore
     private val campsitesRef = db.collection("campsites")
@@ -58,23 +65,65 @@ class RegisterCampsiteController: ViewModel(){
         private set
     var rules by mutableStateOf(listOf(""))
     var cancellationPolicy by mutableStateOf("")
-    val tags by mutableStateOf(listOf(""))
+    var tags by mutableStateOf(listOf("Pet Friendly", "Smoke Free", "Luxurious", "Back Camping"))
+    var selectedTags by mutableStateOf(setOf<String>())
+        private set
 
+    var latitude by mutableDoubleStateOf(0.00)
+    var longitude by mutableDoubleStateOf(0.00)
+    /**
+     * Toggles the selection of a tag
+     * @param tag Identifies the element to toggle
+     */
+    fun toggleTag(tag: String) {
+        selectedTags = if (tag in selectedTags) selectedTags - tag else selectedTags + tag
+    }
+    /**
+     * Adds a custom Tag to the tags list
+     * @param raw Name of the new tag
+     */
+    fun addCustomTag(raw: String) {
+        val tag = raw.trim()
+        if (tag.isEmpty()) return
+        // Case-insensitive duplicate check
+        val existing = tags.firstOrNull { it.equals(tag, ignoreCase = true) }
+        if (existing == null) {
+            tags = tags + tag
+            selectedTags = selectedTags + tag   // auto-select new tags
+        } else {
+            selectedTags = selectedTags + existing
+        }
+    }
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
-
     val status: StateFlow<SaveStatus> = _status
 
     /**
-     * Validates and adds a new Campsite object to the Firestore.
-     *
-     * Campsite objects may have images which are stored into Storage and can be linked to their campsite object via unique ID
+     * Validates and adds a new [Campsite] object to the Firestore.
+     * [Campsite] objects may have images which are stored into Storage
+     * and can be linked to their [Campsite] object via unique ID
      */
     fun addCampsite(){
         // get the uploaded image's uri
         val uri = imageUri
-        // Validate fields
-        if (name.isBlank() || location.isBlank() || capacity <= 0 || price <= 0) {
-            _status.value = SaveStatus.Error("Fill in all fields and capacity and price must be non-zero")
+        // Validate necessary fields
+        if (name.isBlank()) {
+            _status.value = SaveStatus.Error("Campsite must have a name")
+            return
+        }
+        else if (location.isBlank()) {
+            _status.value = SaveStatus.Error("Campsite must have a location")
+            return
+        }
+        else if (price <= 0) {
+            _status.value = SaveStatus.Error("Price must be non-zero")
+            return
+        }
+        else if (capacity <= 0) {
+            _status.value = SaveStatus.Error("Capacity must be non-zero")
+            return
+        }
+        else if (longitude == 0.00 && latitude == 0.00){
+            _status.value = SaveStatus.Error("Please set a map location")
             return
         }
 
@@ -82,9 +131,20 @@ class RegisterCampsiteController: ViewModel(){
         viewModelScope.launch {
             // Change status to saving
             _status.value = SaveStatus.Saving
-            try {
+            try {   //in case ownerId ever ends up empty in the stack, get the device's id again
+                val finalOwnerId = if (ownerId.isNotBlank()) {
+                    ownerId
+                } else {
+                    try {
+                        FirebaseInstallations.getInstance().id.await()
+                    } catch (_: Exception) {
+                        ""
+                    }
+                }
+
                 // Create database references, any image and campsite object will be linked by their ids (document name)
                 val docRef = campsitesRef.document()
+
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
                 // Upload the image if one was selected
@@ -96,7 +156,7 @@ class RegisterCampsiteController: ViewModel(){
                 }
                 // Make a new campsite object to store
                 val campsite = Campsite(
-                    id = docRef.id,
+                    campId = docRef.id,
                     name = name.trim(),
                     location = location.trim(),
                     optionalPromoImage = url,
@@ -104,7 +164,11 @@ class RegisterCampsiteController: ViewModel(){
                     capacity = capacity,
                     cancellationPolicy = cancellationPolicy,
                     features = features,
-                    rules = rules
+                    rules = rules,
+                    tags = selectedTags.toList(),
+                    ownerId = finalOwnerId,
+                    latitude = latitude,
+                    longitude = longitude
                 )
                 // upload to firestore
                 docRef.set(campsite).await()
@@ -120,7 +184,6 @@ class RegisterCampsiteController: ViewModel(){
 
     /**
      * Clears all form fields back to their defaults.
-     *
      * Typically called after a successful save so the form is ready for a new entry.
      */
     fun resetForm() {
@@ -129,21 +192,58 @@ class RegisterCampsiteController: ViewModel(){
         imageUri = null
         price = 0
         capacity = 0
+        cancellationPolicy = ""
+        features = listOf("")
+        rules = listOf("")
+        selectedTags = setOf<String>()
         _status.value = SaveStatus.Idle
     }
 
+    /**
+     * Adds another element to the amentities/features list
+     */
     fun addFeature() { features = features + "" }
+    /**
+     * Updates an element of the amentities/features list at the index
+     * @param index Used to find the element to update
+     * @param value The string that will replace the element in the list
+     */
     fun updateFeature(index: Int, value: String) {
         features = features.toMutableList().also { it[index] = value }
     }
+    /**
+     * Deletes an element of the amentities/features list at the index
+     * @param index Used to find the element to delete
+     */
     fun removeFeature(index: Int) {
         features = features.toMutableList().also { it.removeAt(index) }
     }
+    /**
+     * Adds another element to the rules list
+     */
     fun addRule() { rules = rules + "" }
+    /**
+     * Updates an element of the rules list at the index
+     * @param index Used to find the element to update
+     * @param value The string that will replace the element in the list
+     */
     fun updateRule(index: Int, value: String) {
         rules = rules.toMutableList().also { it[index] = value }
     }
+    /**
+     * Deletes an element of the rules list at the index
+     * @param index Used to find the element to delete
+     */
     fun removeRule(index: Int) {
         rules = rules.toMutableList().also { it.removeAt(index) }
+    }
+
+    /**
+     * Sets the latitude and longitude location based on a LatLng
+     * @param loc the LatLng that gets separated into its parts
+     */
+    fun setMapLoc(loc: LatLng) {
+        latitude = loc.latitude
+        longitude = loc.longitude
     }
 }

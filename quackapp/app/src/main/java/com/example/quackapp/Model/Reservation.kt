@@ -13,7 +13,9 @@ enum class ReservationStatus {
     /** Entrant declined the reservation opportunity. */
     DECLINED,
     /** Entrant or campsite owner cancelled the reservation. */
-    CANCELLED
+    CANCELLED,
+    /** Reservation was completed */
+    COMPLETED
 }
 
 /**
@@ -34,12 +36,12 @@ enum class ReservationStatus {
  */
 data class Reservation(
     val id: String = UUID.randomUUID().toString(),
-    val campsiteId: String,
-    val campsiteName: String,
+    val campsiteId: String = "",
+    val campsiteName: String = "",
     val campsiteLocation: String = "",
-    val entrantDeviceId: String,
+    val entrantDeviceId: String = "",
     val entrantName: String = "",
-    val dateRange: String,
+    val dateRange: String = "",
     val numGuests: Int = 1,
     val totalPrice: Double = 0.0,
     val status: ReservationStatus = ReservationStatus.CONFIRMED,

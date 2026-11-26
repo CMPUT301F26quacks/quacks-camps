@@ -27,11 +27,11 @@ class ReservationRepositoryTest {
     @Before
     fun setUp() {
         repository = ReservationRepository.getInstance()
-        repository.resetToMockData()
+        repository.setLocalData(ReservationTestData.reservations, ReservationTestData.offers)
     }
 
     @Test
-    fun testInitialMockDataLoadsActiveReservationsAndOffers() {
+    fun testTestDataLoadsActiveReservationsAndOffers() {
         val activeReservations = repository.getActiveReservations()
         val pendingOffers = repository.getPendingOffers()
 
@@ -136,7 +136,7 @@ class ReservationRepositoryTest {
     @Test
     fun testEntrantModelIntegration() {
         val entrant = Entrant(
-            deviceId = "default_device",
+            deviceId = ReservationTestData.DEVICE,
             name = "Test Entrant",
             email = "entrant@ualberta.ca",
             phoneNumber = "780-555-0100"
@@ -160,5 +160,48 @@ class ReservationRepositoryTest {
         val updatedActive = repository.getActiveReservations()
         assertEquals(initialActiveCount - 1, updatedActive.size)
         assertFalse(updatedActive.any { it.id == activeReservation.id })
+    }
+
+    /**
+     * US 01.04.01: Entrant can add custom calendar date range and confirm reservation.
+     */
+    @Test
+    fun testAddAvailableDateRangeAndConfirm() {
+        val offer = repository.getPendingOffers().first { it.id == "offer-banff-01" }
+        val customRange = "Jul 10, 2027 - Jul 14, 2027"
+
+        repository.addAvailableDateRange(offer.id, customRange)
+        val updatedOffer = repository.getPendingOffers().first { it.id == offer.id }
+        assertTrue("Updated offer should contain custom date range", updatedOffer.availableDateRanges.contains(customRange))
+
+        val reservation = repository.confirmReservation(
+            offerId = offer.id,
+            campsiteId = offer.campsites.first().campsiteId,
+            chosenDate = customRange,
+            numGuests = 2,
+            deviceId = "test-custom-date-device"
+        )
+
+        assertNotNull("Reservation with custom calendar dates should succeed", reservation)
+        assertEquals(customRange, reservation?.dateRange)
+    }
+
+    /**
+     * US 01.06.01: An entrant only sees their own reservations and offers, never another user's.
+     */
+    @Test
+    fun testOtherEntrantSeesNoReservationsOrOffers() {
+        assertTrue(repository.getActiveReservations("another_device").isEmpty())
+        assertTrue(repository.getPendingOffers("another_device").isEmpty())
+    }
+
+    @Test
+    fun testSyncFromFirestoreSafeFallback() {
+        var callbackInvoked = false
+        repository.syncFromFirestore("test-device") { resList ->
+            callbackInvoked = true
+            assertNotNull(resList)
+        }
+        assertTrue("Firestore sync callback should complete gracefully in test mode", callbackInvoked)
     }
 }

@@ -1,6 +1,6 @@
 package com.example.quackapp.View
 
-import com.example.quackapp.R
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialogDefaults.containerColor
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,63 +22,154 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import com.example.quackapp.Controller.DeviceIdGetter
+import com.example.quackapp.Controller.UserRepository
+import com.example.quackapp.Model.Admin
+import com.example.quackapp.Model.User
+import com.example.quackapp.R
 
 /**
- * Starting screen for all unregistered users.
+ * Starting screen responsible for identifying the current user.
  *
- * Gives user the option to register their device as either an Entrant or Campsite Owner.
+ * Gives user the option to register their device as either an Entrant or Campsite Owner,
+ * or signs them in automatically if their Firebase Installation ID already exists in the database, Supporting US 01.09.01.
  *
  * @param navController Allows user to navigate to Entrant or Campsite Home.
  */
 @Composable
 fun UserStart(navController: NavController) {
 
+    // Checks for deviceID to determine if new user at app start
+    //var currentUser by remember {
+    //    mutableStateOf<Boolean?>(null) // null means Firebase is still checking
+    //}
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.duck),
-            contentDescription = "Logo",
-            modifier = Modifier.size(150.dp),
-            contentScale = ContentScale.Crop
-        )
+    // Stores error message if Firebase cannot complete the search
+    var userSearchErrorMessage by remember { mutableStateOf<String?>(null) }
 
-        Spacer(modifier = Modifier.height(16.dp))
+    var currentDeviceId by remember { mutableStateOf<String?>(null) }
+    var currentUser by remember { mutableStateOf<User?>(null) }
 
-        Text(
-            text = "quackSites",
-            fontSize = 24.sp,
-            color = Color(0xFFF2BA00)
-        )
+    var userSearchFinished by remember { mutableStateOf<Boolean>(false) }
 
-        Spacer(modifier = Modifier.height(16.dp))
+    //
+    LaunchedEffect(Unit) {
 
-        Button(
-            onClick = {
-                navController.navigate("EntrantHome")
+        DeviceIdGetter.getDeviceId(
+
+            onSuccess = {
+                deviceId ->
+
+                currentDeviceId = deviceId // saves FID to use for directing to registration
+
+                UserRepository.getUser(
+                    deviceId = deviceId,
+                    onResult = { user ->
+                        currentUser = user
+                        userSearchFinished = true
+                    },
+
+                    onFail = { exception ->
+                        userSearchErrorMessage = "${exception.javaClass.simpleName}: ${exception.message}"
+                    }
+                )
             },
-            colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF2BA00),
-                    contentColor = Color(0xFFFFFFFF)
-            )
 
-        ) {
-            Text("I want to register this \n" +
-                    "device as an Entrant ")
+            onFail = {
+                exception -> userSearchErrorMessage = exception.message ?: "Unable to identify this device"
+            }
+        )
+
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+    when {
+        userSearchErrorMessage != null -> {
+            Text("Error: $userSearchErrorMessage")
+        }
 
-        Button(
-            onClick = {
-                navController.navigate("CampsiteOwnerHome")
-            },
+        !userSearchFinished -> {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Checking device ID...")
+                CircularProgressIndicator(
+                    modifier = Modifier.width(16.dp),
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+        }
+
+        currentUser != null -> {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Signing in...")
+                CircularProgressIndicator(
+                    modifier = Modifier.width(16.dp),
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+        }
+
+
+        else -> {
+
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                currentUser?.let { Text("Welcome back ${it.deviceId}") }
+
+                Image(
+                    painter = painterResource(id = R.drawable.duck),
+                    contentDescription = "Logo",
+                    modifier = Modifier.size(150.dp),
+                    contentScale = ContentScale.Crop
+                )
+                Text(
+                    text = "quackSites",
+                    fontSize = 24.sp,
+                    color = Color(0xFFF2BA00)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        navController.navigate("CreateEntrantProfile")
+
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF2BA00),
+                        contentColor = Color(0xFFFFFFFF)
+
+                    )
+
+                ) {
+                    Text("I want to register this \n" +
+                            "device as an Entrant ")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        navController.navigate("CreateOwnerProfile")
+                    },
+
 
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFF16B00),
@@ -84,10 +177,41 @@ fun UserStart(navController: NavController) {
 
             )
 
-        ) {
-            Text("I want to register \n" +
-                    "this device as a \n" +
-                    "Campsite Owner")
+                ) {
+                    Text("I want to register \n" +
+                            "this device as a \n" +
+                            "Campsite Owner")
+                }
+            }
         }
     }
+
+    LaunchedEffect(currentUser) {
+
+        val user = currentUser ?: return@LaunchedEffect
+        val route = startRouteFor(user.roles, user.deviceId) ?: return@LaunchedEffect
+
+        navController.navigate(route) {
+            popUpTo("UserStart") {
+                inclusive = true
+            }
+        }
+    }
+}
+
+/**
+ * Decides which home screen a signed-in user starts on, based on their roles.
+ *
+ * Admins always start on the Admin home, even if they also hold other roles,
+ * because they can switch to entrant/owner from there (US 03.11.01).
+ *
+ * @param roles roles stored on the user's profile.
+ * @param deviceId the user's FID, needed for the owner home route.
+ * @return the route to navigate to, or null if the roles don't match a single home.
+ */
+fun startRouteFor(roles: List<String>, deviceId: String): String? = when {
+    Admin.isAdmin(roles) -> "AdminHome"
+    "ENTRANT" in roles && "OWNER" !in roles -> "EntrantHome"
+    "OWNER" in roles && "ENTRANT" !in roles -> "CampsiteOwnerHome/$deviceId"
+    else -> null
 }

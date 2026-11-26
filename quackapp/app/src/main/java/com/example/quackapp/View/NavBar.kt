@@ -11,6 +11,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.quackapp.Model.NavBarItem
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 /**
  * Creates Navigation bar for bottom of a screen
@@ -25,7 +26,7 @@ fun NavBar(navController: NavController, items: List<NavBarItem>) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    NavigationBar {
+    NavigationBar{
         items.forEach { item ->
             AddItem(item, currentRoute, navController)
         }
@@ -48,6 +49,10 @@ private fun RowScope.AddItem(
     currentRoute: String?,
     navController: NavController
 ) {
+    //
+    val isSelected = currentRoute == screen.sendsTo ||
+            (screen == NavBarItem.OwnerHome && currentRoute?.startsWith("CampsiteOwnerHome") == true)
+
     NavigationBarItem(
         label = { Text(screen.name) },
         icon = { Icon(
@@ -55,10 +60,14 @@ private fun RowScope.AddItem(
             contentDescription = screen.name,
             tint = Color(0xFFF16B00)
         ) },
-        selected = currentRoute == screen.sendsTo,
+        selected = isSelected,
         alwaysShowLabel = true,
         onClick = {
-            if (currentRoute != screen.sendsTo) {
+            var returned = navController.popBackStack(screen.sendsTo, inclusive = false)
+            if (!returned && screen == NavBarItem.OwnerHome) {
+                returned = navController.popBackStack("CampsiteOwnerHome/{ownerId}", inclusive = false) //make sure that the backstack includes the owner's Id so it doesn't reroute to a page with no campsiteowner
+            }
+            if (!returned) {
                 navController.navigate(screen.sendsTo) {
                     popUpTo("UserStart") { saveState = true }
                     launchSingleTop = true

@@ -16,8 +16,9 @@ class Entrant(
     name: String = "",
     email: String = "",
     phoneNumber: String = "",
-    notificationsEnabled: Boolean = true
-) : User(deviceId, name, email, phoneNumber, notificationsEnabled) {
+    notificationsEnabled: Boolean = true,
+    roles: List<String> = listOf("ENTRANT")
+) : User(deviceId, name, email, phoneNumber, notificationsEnabled, roles) {
 
     /**
      * Retrieves all active, confirmed reservations for this entrant.
@@ -42,12 +43,42 @@ class Entrant(
     }
 
     /**
+     * Retrieves past reservations for this entrant.
+     * US 01.06.02: As an entrant, I want to view a list of past reservations.
+     */
+    fun getPastReservations(repository: ReservationRepository = ReservationRepository.getInstance()): List<Reservation> {
+        return repository.getPastReservations(this.deviceId)
+    }
+
+    /**
      * Allows users to opt in or out of receiving notifications (on by default).
      * US 01.10.01: As an entrant, I want to opt out of receiving notifications.
      */
-
     fun toggleNotificationPreference() {
         notificationsEnabled = !notificationsEnabled
     }
-    
+
+    /**
+     * Retrieves in-app notifications delivered to this entrant.
+     * US 01.03.01: Receive notification when winning lottery.
+     * US 01.03.02: Receive notification when losing lottery.
+     * US 01.05.02: Receive reservation by notification.
+     *
+     * @param repository [NotificationRepository] instance.
+     * @return List of [AppNotification] objects.
+     */
+    fun getNotifications(repository: NotificationRepository = NotificationRepository.getInstance()): List<AppNotification> {
+        return repository.getNotificationsForUser(this.deviceId)
+    }
+
+    /**
+     * Generates a downloadable CSV text representation of a confirmed campsite reservation.
+     * US 01.05.02: As an entrant, I want to receive reservation by downloadable CSV.
+     *
+     * @param reservation The reservation record to export.
+     * @return Formatted CSV text string.
+     */
+    fun exportReservationCsv(reservation: Reservation): String {
+        return ReservationCsvExporter.generateCsv(reservation)
+    }
 }

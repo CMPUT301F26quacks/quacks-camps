@@ -9,9 +9,10 @@ class CampsiteOwner(
     email: String = "",
     phoneNumber: String = "",
     notificationsEnabled: Boolean = true,
+    roles: List<String>,
     var ownedCampsites: MutableList<Campsite> = mutableListOf(),
     var ownedLotteries: MutableList<Lottery> = mutableListOf()
-): User(deviceId, name, email, phoneNumber, notificationsEnabled){
+): User(deviceId, name, email, phoneNumber, notificationsEnabled, roles){
     //notification preference
     fun toggleNotificationPreference() {
         notificationsEnabled = !notificationsEnabled
@@ -19,7 +20,7 @@ class CampsiteOwner(
     //register campsite
     fun registerCampsite(campsite: Campsite): Campsite {
 //        campsite.owner = this.name
-        campsite.qrCode = generateQRCodeID(campsite)
+        campsite.qrCode = generateQRCode(campsite)
         ownedCampsites.add(campsite)
         return campsite
     }
@@ -42,7 +43,7 @@ class CampsiteOwner(
     //register/set lottery
     fun registerLottery(campsite: Campsite, lottery: Lottery): Lottery {
         lottery.status = LotteryStatus.OPEN
-        campsite.lottery = lottery
+//        campsite.lotteryId = lottery TODO: refactor this to accomodate cohen's changes to the campsite class
         ownedLotteries.add(lottery)
         return lottery
     }
@@ -50,7 +51,7 @@ class CampsiteOwner(
     //update lottery
     fun updateLottery(campsite: Campsite,updatedLottery: Lottery): Lottery {
         //update status to active
-        campsite.lottery = updatedLottery
+//        campsite.lotteryId = updatedLottery TODO: refactor this to accomodate cohen's changes to the campsite class
         //update
         val index = ownedLotteries.indexOfFirst { it.lotteryID == updatedLottery.lotteryID }
         if(index != -1){
@@ -61,21 +62,20 @@ class CampsiteOwner(
 
     //remove lottery status (closing it)
     fun removeLotteryStatus(campsite: Campsite, lottery: Lottery) {
-        campsite.lottery = null
+//        campsite.lottery = null TODO: refactor this to accomodate cohen's changes to the campsite class
         ownedLotteries.remove(lottery)
         lottery.status = LotteryStatus.CLOSED
     }
-    //function to generate the unique qr code id for a campsite
-    fun generateQRCodeID(campsite: Campsite): String {
-        val campsiteName = campsite.name
-        val uniqueID = getRandomList(Random)
-        return "campsite/${campsiteName}_${uniqueID.joinToString("")}"
+
+    companion object{
+        fun generateQRCode(campsite: Campsite): String {
+            //function to actually visually generate the qr code (api)
+            val campsiteID = campsite.campId
+            val stringID = "campsite/${campsiteID}"
+            return "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${Uri.encode(stringID)}"    //uri.encode used so the string can be safely passed onto the url or something
+        }
     }
 
-    fun generateQRCode(campsite: Campsite): String {
-        //function to actually visually generate the qr code (api)
-        return "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${Uri.encode(generateQRCodeID(campsite))}"    //uri.encode used so the string can be safely passed onto the url or something
-    }
 
     //helper function to generate a random sequence of 5 nums for the qr code generator
     fun getRandomList(random: Random): List<Int> = List(5) {
