@@ -47,7 +47,7 @@ fun SearchBar(
         modifier = modifier,
         singleLine = true,
         shape = RoundedCornerShape(28.dp),
-        label = { Text(searchBarText) },
+        placeholder = { Text(searchBarText) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
             //When someone types something in the search bar, show the x icon

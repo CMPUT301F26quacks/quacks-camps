@@ -113,7 +113,9 @@ fun EntrantHomeList(
         contentPadding = PaddingValues(18.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
+        item{
+            Spacer(modifier = Modifier.height(10.dp))
+        }
         item {
             Row(verticalAlignment = Alignment.CenterVertically){
                 //Allows users to Search
