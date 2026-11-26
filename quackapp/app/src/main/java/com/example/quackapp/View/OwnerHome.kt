@@ -31,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -80,6 +81,10 @@ fun OwnerHome(
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val selectionMode = selectedIds.isNotEmpty()
 
+    LaunchedEffect(Unit) {
+        viewModel.clearSelection()
+    }
+
     OwnerScaffold (
         navController = navController,
         topBar = {
@@ -121,14 +126,19 @@ fun OwnerHome(
         }
         else {
             BackHandler(enabled = selectionMode) { viewModel.clearSelection() }
-            Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)) {
                 AnimatedVisibility(visible = selectionMode) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Button(
+                            modifier = Modifier.testTag("createLotteryButton"),
                             onClick = {navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))},
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color(0xFFF3AE00))
@@ -140,9 +150,11 @@ fun OwnerHome(
                             Text(
                                 text = "${selectedIds.size} selected",
                                 textAlign = TextAlign.Right,
-                                fontSize = 14.sp
+                                fontSize = 14.sp,
+                                modifier = Modifier.testTag("selectedCount")
                             )
                             TextButton(
+                                modifier = Modifier.testTag("clearSelected"),
                                 onClick = { viewModel.clearSelection() },
                                 contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp)
                             ) {
@@ -250,6 +262,7 @@ fun CampRow(
             .background(
                 if (isSelected) Color(0xFFFF9800) else Color(0xFF2196F3)
             )
+            .testTag("${campsite.name} row")
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = {
