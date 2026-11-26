@@ -60,7 +60,6 @@ fun EditLotteryDetailsScreen(
 
 
     val status by viewModel.status.collectAsState()
-
     LaunchedEffect(status) {
         if (status is SaveStatus.Success){
             navController.navigate(route = "CampsiteDetails/${viewModel.campsiteId}")
@@ -79,7 +78,7 @@ fun EditLotteryDetailsScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = "${viewModel.name} Lottery", fontSize = 36.sp)
+            Text(text = "Editing Lottery", fontSize = 36.sp)
             IconButton(
                 colors = iconButtonColors(
                     containerColor = Color(0xFFFF9800),
@@ -97,6 +96,10 @@ fun EditLotteryDetailsScreen(
         }
 
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.Center) {
+            Text("Any changes will affect these campsites: ")
+            viewModel.names.forEach { name ->
+                Text("- $name")
+            }
             Text("* signifies required field", color = Color.Red)
             Text(text = buildAnnotatedString {
                 append("Registration Period ")
