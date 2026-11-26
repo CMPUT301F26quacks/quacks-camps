@@ -307,7 +307,8 @@ fun EntrantDetailedCampsite(
                                 Text(
                                     text = "\u2022 $rule",
                                     style = MaterialTheme.typography.headlineSmall,
-                                    color = Color(0xFFF2BA00)
+                                    color = Color(0xFFF2BA00),
+                                    modifier = Modifier.testTag("ruleItem")
                                 )
                             }
                         }
@@ -351,6 +352,7 @@ fun EntrantDetailedCampsite(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 16.dp)
+                            .testTag("inLotteryStatus")
                     )
 
                 }

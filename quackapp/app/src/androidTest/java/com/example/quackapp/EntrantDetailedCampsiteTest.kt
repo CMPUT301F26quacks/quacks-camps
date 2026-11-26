@@ -5,10 +5,11 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.compose.rememberNavController
 import com.example.quackapp.Controller.EntrantDetailedCampsiteController
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.Lottery
+import com.example.quackapp.Model.LotteryStatus
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
 import io.mockk.every
 import io.mockk.mockk
@@ -39,16 +40,29 @@ class EntrantDetailedCampsiteTest {
     ).apply {
         rating = 0.00
         qrCode = ""
-        lotteryId = null
+        lotteryId = "1234"
 
     }
+
+    val lot = Lottery(
+        lotteryID = "1234",
+        registrationPeriodStart = 0L,
+        registrationPeriodEnd = 0L,
+        bookingPeriodStart = 0L,
+        bookingPeriodEnd = 0L,
+        numLotteryWinners = 1,
+        optionalWaitlistCapacity = null,
+        waitlist = listOf(""),
+        status  = LotteryStatus.OPEN,
+        campIds  = listOf("")
+    )
 
     private val controller = mockk<EntrantDetailedCampsiteController>(relaxed = true)
 
     @Before
     fun setUp() {
         every { controller.campsite } returns MutableStateFlow(camp)
-        every { controller.lotteries } returns MutableStateFlow(emptyList())
+        every { controller.lotteries } returns MutableStateFlow(listOf(lot))
 
         composeRule.setContent {
             EntrantDetailedCampsite(
@@ -95,6 +109,17 @@ class EntrantDetailedCampsiteTest {
     fun checkFeaturesShowing() {
         composeRule.onAllNodesWithTag("featureItem")
             .assertCountEquals(camp.features.count { it.isNotBlank() })
+    }
+    @Test
+    fun checkRulesShowing() {
+        composeRule.onAllNodesWithTag("ruleItem")
+            .assertCountEquals(camp.rules.count { it.isNotBlank() })
+    }
+    @Test
+    fun checkEnteredLotteryStatusShowing() {
+        composeRule.onNodeWithTag("inLotteryStatus")
+            .assertIsDisplayed()
+
     }
 
 
