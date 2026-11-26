@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Review
@@ -151,6 +152,21 @@ class AdminIntentTest {
         composeRule.onNodeWithTag("gallerySearch").performTextInput("whist")
         composeRule.onNodeWithText("Whistlers").assertIsDisplayed()
         composeRule.onNodeWithText("Tunnel Mountain").assertDoesNotExist()
+    }
+
+    /** US 03.06.01: search also works with the location, and clearing it shows everything again */
+    @Test
+    fun gallerySearchByLocationThenClear() {
+        composeRule.setContent {
+            AdminImageGalleryContent(campsites = listOf(tunnelMountain, whistlers), onDeleteImage = {})
+        }
+        composeRule.onNodeWithTag("gallerySearch").performTextInput("banff")
+        composeRule.onNodeWithText("Tunnel Mountain").assertIsDisplayed()
+        composeRule.onNodeWithText("Whistlers").assertDoesNotExist()
+
+        composeRule.onNodeWithTag("gallerySearch").performTextClearance()
+        composeRule.onNodeWithText("Tunnel Mountain").assertIsDisplayed()
+        composeRule.onNodeWithText("Whistlers").assertIsDisplayed()
     }
 
     @Test
