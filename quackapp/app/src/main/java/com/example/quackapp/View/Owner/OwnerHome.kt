@@ -67,16 +67,22 @@ fun OwnerHome(
     navController: NavController,
     viewModel: OwnerHomeController = viewModel()
 ) {
-    val camps by viewModel.ownedCamps.collectAsState()
+    val ownedCamps by viewModel.ownedCamps.collectAsState()
     val otherCamps by viewModel.otherCamps.collectAsState()
     var campToDelete by remember { mutableStateOf<Campsite?>(null) }
     var campToShowQR by remember { mutableStateOf<Campsite?>(null) }    //track which campsite's QR code to display
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val selectionMode = selectedIds.isNotEmpty()
     var showOtherCamps by remember { mutableStateOf(false) }
+    val requests by viewModel.incomingRequests.collectAsStateWithLifecycle()
+    var showRequests by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.clearSelection()
+
+    }
+    LaunchedEffect(requests.isEmpty()) {
+        if (requests.isEmpty()) showRequests = false
     }
 
     OwnerScaffold(
@@ -90,12 +96,17 @@ fun OwnerHome(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column() {
-                        Text(text = "Campsites", fontSize = 40.sp)
+                        Text(text = "Campsites", fontSize = 36.sp)
                         Text(
                             text = "Tap and hold to select",
                             fontSize = 10.sp,
                             modifier = Modifier.padding(start = 4.dp)
                         )
+                    }
+                    if (requests.isNotEmpty()) {
+                        Button(onClick = { showRequests = true }) {
+                            Text("Requests (${requests.size})")
+                        }
                     }
                     FloatingActionButton(
                         containerColor = Color(0xFFFF9800),
@@ -112,7 +123,7 @@ fun OwnerHome(
 
         }
     ) { innerPadding ->
-        if (camps.isEmpty()) {
+        if (ownedCamps.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -139,7 +150,9 @@ fun OwnerHome(
                     ) {
                         Button(
                             modifier = Modifier.testTag("createLotteryButton"),
-                            onClick = { navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList())) },
+                            onClick = {
+                                navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))
+                                      },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color(0xFFF3AE00))
                         ) {
@@ -169,7 +182,7 @@ fun OwnerHome(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    items(camps, key = { it.campId }) { campsite ->
+                    items(ownedCamps, key = { it.campId }) { campsite ->
                         CampRow(
                             campsite,
                             navController,
@@ -266,6 +279,26 @@ fun OwnerHome(
                         }
                     )
 
+                }
+                if (showRequests) {
+                    AlertDialog(
+                        onDismissRequest = { showRequests = false },
+                        title = { Text("Lottery requests") },
+                        text = {
+                            LazyColumn {
+                                items(requests, key = { it.requestId }) { req ->
+                                    Column(Modifier.padding(vertical = 8.dp)) {
+                                        Text("Add \"${req.campName}\" to a lottery?")
+                                        Row {
+                                            TextButton(onClick = { viewModel.approve(req) }) { Text("Approve") }
+                                            TextButton(onClick = { viewModel.decline(req) }) { Text("Decline") }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = { TextButton(onClick = { showRequests = false }) { Text("Close") } }
+                    )
                 }
             }
         }
