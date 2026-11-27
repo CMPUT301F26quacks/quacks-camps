@@ -36,7 +36,7 @@ sealed class NavBarItem(
         NavBarItem(
             "Profile",
             Icons.Filled.ManageAccounts,
-            "EditProfile")
+            "EditProfile/ENTRANT")
 
     object UserChats:
         NavBarItem(
@@ -58,7 +58,7 @@ sealed class NavBarItem(
     object OwnerProfile:
         NavBarItem("Profile",
                    Icons.Filled.ManageAccounts,
-                   "OwnerProfile")
+                   "EditProfile/OWNER")
 
     object AdminHome:
         NavBarItem("Home",
@@ -68,7 +68,7 @@ sealed class NavBarItem(
     object AdminProfile:
         NavBarItem("Profile",
                    Icons.Filled.ManageAccounts,
-                   "EditProfile")
+                   "EditProfile/ADMIN")
 }
 
 

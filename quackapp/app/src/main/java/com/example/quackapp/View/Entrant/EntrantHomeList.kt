@@ -126,7 +126,7 @@ fun EntrantHomeList(
                 Image(
                     painter = painterResource(id = R.drawable.duck),
                     contentDescription = "Logo",
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(40.dp),
                     contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.width(10.dp))

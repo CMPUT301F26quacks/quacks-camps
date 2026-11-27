@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 //TODO Tests
 
@@ -47,7 +48,10 @@ fun SearchBar(
         modifier = modifier,
         singleLine = true,
         shape = RoundedCornerShape(28.dp),
-        placeholder = { Text(searchBarText) },
+        placeholder = { Text(
+            searchBarText,
+            fontSize = 15.sp
+        ) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
             //When someone types something in the search bar, show the x icon

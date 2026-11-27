@@ -94,9 +94,10 @@ fun QuackApp() {
                 selectedRole = "OWNER"
             )
         }
-        composable("EditProfile") {
+        composable("EditProfile/{role}") { backStackEntry ->
             UserProfile(
                 navController = navController,
+                selectedRole = backStackEntry.arguments?.getString("role"),
                 isEditing = true
             )
         }

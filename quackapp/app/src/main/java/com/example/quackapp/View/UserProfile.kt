@@ -37,12 +37,15 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.PaddingValues
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Scaffold
 import androidx.compose.ui.draw.clip
 
 import coil.compose.AsyncImage
+import com.example.quackapp.View.Admin.AdminScaffold
 import com.example.quackapp.View.Entrant.EntrantScaffold
 
 /**
@@ -145,7 +148,8 @@ fun UserProfile(
 
     }
 
-    if(isEditing) EntrantScaffold(navController) { innerPadding ->
+
+    val content: @Composable (PaddingValues) -> Unit = { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -404,8 +408,8 @@ fun UserProfile(
 
             Spacer(Modifier.height(80.dp))
 
-            if (isEditing) {
 
+            if (isEditing) {
                 Button(
                     onClick = {
 
@@ -447,6 +451,16 @@ fun UserProfile(
             }
 
         }
+    }
+
+    if (isEditing && selectedRole == "ENTRANT") {
+        EntrantScaffold(navController) { content(it) }
+    } else if (isEditing && selectedRole == "OWNER") {
+        OwnerScaffold(navController) { content(it) }
+    } else if (isEditing && selectedRole == "ADMIN") {
+        AdminScaffold(navController) { content(it) }
+    } else {
+        Scaffold { content(it) }
     }
 
 }
