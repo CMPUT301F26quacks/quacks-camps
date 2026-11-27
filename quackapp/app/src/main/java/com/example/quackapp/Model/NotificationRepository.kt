@@ -2,6 +2,7 @@ package com.example.quackapp.Model
 
 import android.util.Log
 import coil.request.SuccessResult
+import com.example.quackapp.Controller.UserRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -414,18 +415,21 @@ class NotificationRepository private constructor() {
 
             val lottery = transaction.get(lotteryRef)
                 .toObject(Lottery::class.java)
+                ?: throw Exception("Lottery not found")
 
-            val entrants = lottery.waitlist
-                .filter { it.isNotBlank() }
-                .distinct()
+            val entrants = lottery?.waitlist
+                ?.filter { it.isNotBlank() }
+                ?.distinct()
 
             // sets max announcement size for the waitlist, configurable is list is too long
             val maxAnnouncementSize = 500
-            if (entrants.size > maxAnnouncementSize) {
-                throw Exception("Waitlist is too large for one announcement")
+            entrants?.size?.let {
+                if (it > maxAnnouncementSize) {
+                    throw Exception("Waitlist is too large for one announcement")
+                }
             }
 
-            val recipients = entrants.filter { entrantId ->
+            val recipients = entrants?.filter { entrantId ->
 
                 val userRef = db.collection("users")
                     .document(entrantId)
@@ -437,36 +441,155 @@ class NotificationRepository private constructor() {
 
             // database reads complete above, database transaction writes start below
 
-            for (recipientId in recipients) {
+            if (recipients != null) {
+                for (recipientId in recipients) {
 
-                val notification = AppNotification(
-                    recipientDeviceId = recipientId,
-                    senderDeviceId = ownerId,
-                    title = title.trim(),
-                    message = message.trim(),
-                    type = NotificationType.GENERAL,
-                    relatedLotteryId = lotteryId,
-                    relatedCampsiteId = campsiteId,
-                    announcementId = announcementId
-                )
+                    val notification = AppNotification(
+                        recipientDeviceId = recipientId,
+                        senderDeviceId = ownerId,
+                        title = title.trim(),
+                        message = message.trim(),
+                        type = NotificationType.GENERAL,
+                        relatedLotteryId = lotteryId,
+                        relatedCampsiteId = campsiteId,
+                        announcementId = announcementId
+                    )
 
-                val notificationRef = db.collection("notifications")
-                    .document(notification.id)
+                    val notificationRef = db.collection("notifications")
+                        .document(notification.id)
 
-                val logRef = db.collection("notification_logs")
-                    .document(notification.id)
+                    val logRef = db.collection("notification_logs")
+                        .document(notification.id)
 
-                transaction.set(notificationRef, notification)
-                transaction.set(logRef, notification)
+                    transaction.set(notificationRef, notification)
+                    transaction.set(logRef, notification)
+                }
             }
 
             // returns the number of recipients
-            recipients.size
+            recipients?.size
 
         }.addOnSuccessListener {
             count -> onSuccess(count) 
         }.addOnFailureListener {
             exception -> onFail(exception)
         }
+    }
+
+    /**
+     * Listens to previously sent notifications belonging
+     * to a campsite owner.
+     *
+     * Supports US 02.10.02.
+     *
+     * @param ownerId Device ID of campsite owner
+     * @param onResult Called with the owner's sent notifications
+     * @param onListening Provides the active listener registration
+     * @param onFail Called if notifications cannot be retrieved
+     */
+    fun listenForSentNotifications(
+        ownerId: String,
+        onResult: (List<AppNotification>) -> Unit,
+        onListening: (ListenerRegistration) -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        UserRepository.getUser(
+            deviceId = ownerId,
+
+            onResult = { user ->
+
+                if (user == null || "OWNER" !in user.roles) {
+                    onFail(Exception("Owner access required"))
+                } else {
+
+                    val db = FirebaseFirestore.getInstance()
+
+                    val listener = db.collection("notification_logs")
+                        .whereEqualTo("senderDeviceId", ownerId)
+                        .addSnapshotListener { snapshot, error ->
+
+                            if (error != null) {
+                                onFail(error)
+                                return@addSnapshotListener
+                            }
+
+                            val notifications = snapshot
+                                ?.toObjects(AppNotification::class.java)
+                                ?: emptyList()
+
+                            onResult(
+                                notifications.sortedByDescending {
+                                    it.timestamp
+                                }
+                            )
+                        }
+
+                    onListening(listener)
+
+                }
+            },
+
+            onFail = onFail
+
+        )
+    }
+
+    /**
+     * Allows an admin to review all notification logs.
+     *
+     * Supports US 03.08.01.
+     *
+     * @param deviceId Device ID of the admin
+     * @param onResult Called with all notification logs
+     * @param onListening Provides the active listener registration
+     * @param onFail Called if access is denied or retrieval fails
+     */
+    fun listenForAllNotificationLogs(
+        deviceId: String,
+        onResult: (List<AppNotification>) -> Unit,
+        onListening: (ListenerRegistration) -> Unit,
+        onFail: (Exception) -> Unit
+    ) {
+
+        UserRepository.getUser(
+            deviceId = deviceId,
+
+            onResult = {user ->
+
+                if (user == null || !Admin.isAdmin(user.roles)) {
+                    onFail(Exception("Admin access required"))
+                } else {
+
+                    val db = FirebaseFirestore.getInstance()
+
+                    val listener = db.collection("notification_logs")
+                        .addSnapshotListener { snapshot, error ->
+
+                            if (error != null) {
+                                onFail(error)
+                                return@addSnapshotListener
+                            }
+
+                            val notifications = snapshot
+                                ?.toObjects(AppNotification::class.java)
+                                ?: emptyList()
+
+                            onResult(
+                                notifications.sortedByDescending {
+                                    it.timestamp
+                                }
+                            )
+                        }
+
+                    onListening
+
+                }
+            },
+            
+            onFail = onFail
+
+        )
+
     }
 }

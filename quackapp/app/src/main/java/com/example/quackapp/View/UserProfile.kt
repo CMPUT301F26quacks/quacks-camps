@@ -476,8 +476,4 @@ fun UserProfile(
     } else {
         Scaffold { content(it) }
     }
-
 }
-
-// [US 01.10.01] As an entrant, I want to opt out of receiving notification
-// [US 01.11.01] As an entrant, I want to see the app policy and guidelines
