@@ -7,7 +7,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.User
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.channels.awaitClose
@@ -78,6 +80,23 @@ class AdminController : ViewModel() {
         .catch { emit(0) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+
+    /** Every user profile in the app */
+    val profiles: StateFlow<List<User>> = callbackFlow {
+        val listener = db.collection("users")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                trySend(snapshot?.toObjects(User::class.java) ?: emptyList())
+            }
+        awaitClose { listener.remove() }
+    }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
     /**
      * Removes a campsite's promotional image.
      *
@@ -108,6 +127,30 @@ class AdminController : ViewModel() {
         }
     }
 
+    /**
+     * Removes the `"OWNER"` role from a user profile in Firestore (`"users"` collection)
+     * when they violate app policy, keeping their `"ENTRANT"` profile intact if present.
+     *
+     * @param deviceId document ID (`User.deviceId`) of the target user in `"users"`.
+     */
+    fun removeOwner(deviceId: String) {
+        if (deviceId.isBlank()) return
+        viewModelScope.launch {
+            try {
+                db.collection("users")
+                    .document(deviceId)
+                    .update("roles", FieldValue.arrayRemove("OWNER"))
+                    .await()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("AdminController", "Couldn't remove owner role", e)
+                deleteError = e.message ?: "Couldn't remove owner"
+
+            }
+        }
+    }
+
     fun deleteCampsite(campsite: Campsite) {
         viewModelScope.launch {
             try {
@@ -133,6 +176,6 @@ class AdminController : ViewModel() {
 fun imageGalleryItems(campsites: List<Campsite>, query: String): List<Campsite> =
     campsites.filter { camp ->
         camp.optionalPromoImage.isNotBlank() &&
-            (camp.name.contains(query.trim(), ignoreCase = true) ||
-                camp.location.contains(query.trim(), ignoreCase = true))
+                (camp.name.contains(query.trim(), ignoreCase = true) ||
+                        camp.location.contains(query.trim(), ignoreCase = true))
     }

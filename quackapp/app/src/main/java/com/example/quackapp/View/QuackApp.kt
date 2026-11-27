@@ -22,6 +22,7 @@ import com.example.quackapp.View.Admin.AdminHome
 import com.example.quackapp.View.Admin.AdminImageGallery
 import com.example.quackapp.View.Admin.AdminCampsites
 import com.example.quackapp.View.Admin.AdminCampsiteReviews
+import com.example.quackapp.View.Admin.AdminProfilesScreen
 
 /**
  * Sets up navigation between screens for whole app
@@ -79,6 +80,7 @@ fun QuackApp() {
         ) { EditLotteryDetailsScreen(navController) }
 
 
+
         composable("CreateEntrantProfile") {
             UserProfile(
                 navController = navController,
@@ -110,6 +112,7 @@ fun QuackApp() {
         composable("AdminHome") { AdminHome(navController) }
         composable("AdminImageGallery") { AdminImageGallery(navController) }
         composable("AdminCampsites") { AdminCampsites(navController) }
+        composable("AdminProfiles") { AdminProfilesScreen(navController) }
         composable(
             route = "AdminCampsiteReviews/{campId}",
             arguments = listOf(navArgument("campId") { type = NavType.StringType })

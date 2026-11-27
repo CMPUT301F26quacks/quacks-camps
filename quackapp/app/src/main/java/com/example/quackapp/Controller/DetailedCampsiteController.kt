@@ -58,9 +58,7 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
     val status: StateFlow<SaveStatus> = _status
     var rating by mutableStateOf("0.0")
         private set
-
     var bookedReservations by mutableStateOf<List<Reservation>>(emptyList())
-
     var waitlistEntrants by mutableStateOf<List<String>>(emptyList())
         private set
 

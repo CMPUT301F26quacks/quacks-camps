@@ -69,6 +69,7 @@ fun ListCampInLotteryScreen(
             viewModel.bookingEnd = null
             numWinners = ""
             waitlistCap = ""
+
             if (viewModel.multiCampLottery){
                 navController.popBackStack()
             }
