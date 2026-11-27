@@ -51,6 +51,7 @@ import com.example.quackapp.View.Entrant.EntrantScaffold
 import com.example.quackapp.Controller.UserProfileValidator
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.quackapp.View.Owner.OwnerScaffold
 
@@ -221,26 +222,44 @@ fun UserProfile(
 
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
-                label = {
-                    Text("Name")
-                }
+                onValueChange = {
+                    name = it
+                    nameError = null
+                },
+                label = { Text("Name") },
+                isError = nameError != null,
+                supportingText = { nameError?.let { Text(it) }},
+                modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
-                label = {
-                    Text("Email")
-                }
+                onValueChange = {
+                    email = it
+                    emailError = null
+                },
+                label = { Text("Email") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email
+                ),
+                isError = emailError != null,
+                supportingText = { emailError?.let {Text(it)}},
+                modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = phoneNumber,
-                onValueChange = { phoneNumber = it },
-                label = {
-                    Text("Phone Number")
-                }
+                onValueChange = {
+                    phoneNumber = it
+                    phoneError = null
+                },
+                label = { Text("Phone Number") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Phone
+                ),
+                isError = phoneError != null,
+                supportingText = { phoneError?.let { Text(it) }},
+                modifier = Modifier.fillMaxWidth()
             )
 
             Button(
@@ -264,6 +283,18 @@ fun UserProfile(
 
             Button(
                 onClick = {
+
+                    nameError = UserProfileValidator.validateName(name)
+                    emailError = UserProfileValidator.validateEmail(email)
+                    phoneError = UserProfileValidator.validatePhoneNumber(phoneNumber)
+
+                    if (
+                        nameError != null ||
+                        emailError != null ||
+                        phoneError != null
+                    ) {
+                        return@Button
+                    }
 
                     val id = deviceId
 
@@ -476,8 +507,4 @@ fun UserProfile(
     } else {
         Scaffold { content(it) }
     }
-
 }
-
-// [US 01.10.01] As an entrant, I want to opt out of receiving notification
-// [US 01.11.01] As an entrant, I want to see the app policy and guidelines
