@@ -101,7 +101,8 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
      * for a campsite lottery.
      *
      * @param lotteryId the id of the lottery being left
-     * @param deviceId the id of the device leaving that lottery's waitlist
+     * @param currentDeviceId the id of the device leaving that lottery's waitlist
+     * @param lotteries all the lotteries
      */
     fun checkIfIdInLottery(
         lotteryId: String?,
