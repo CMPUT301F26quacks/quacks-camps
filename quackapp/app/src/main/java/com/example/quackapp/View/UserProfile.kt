@@ -44,6 +44,11 @@ import androidx.compose.ui.draw.clip
 
 import coil.compose.AsyncImage
 
+import com.example.quackapp.Controller.UserProfileValidator
+
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+
 /**
  * Shared screen for creating and editing a user profile.
  *
@@ -89,6 +94,13 @@ fun UserProfile(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     var policyExpanded by remember { mutableStateOf<Boolean>(false) }
+
+    var nameError by remember { mutableStateOf<String?>(null) }
+
+    var emailError by remember { mutableStateOf<String?>(null) }
+
+    var phoneError by remember { mutableStateOf<String?>(null) }
+
 
     LaunchedEffect(Unit) {
 
@@ -202,26 +214,80 @@ fun UserProfile(
 
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+
+            onValueChange = {
+                name = it
+                // removes warning while user is correcting input
+                nameError = null
+            },
+
             label = {
                 Text("Name")
-            }
+            },
+
+            isError = nameError != null,
+
+            supportingText = {
+                nameError?.let {
+                    message -> Text(message)
+                }
+            },
+
+            modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+
+            onValueChange = {
+                email = it
+                emailError = null
+            },
+
             label = {
                 Text("Email")
-            }
+            },
+
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email
+            ),
+
+            isError = emailError != null,
+
+            supportingText = {
+                emailError?.let {
+                    message -> Text(message)
+                }
+            },
+
+            modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = phoneNumber,
-            onValueChange = { phoneNumber = it },
+
+            onValueChange = {
+                phoneNumber = it
+                phoneError = null
+            },
+
             label = {
                 Text("Phone Number")
-            }
+            },
+
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Phone
+            ),
+
+            isError = emailError != null,
+
+            supportingText = {
+                phoneError?.let {
+                        message -> Text(message)
+                }
+            },
+
+            modifier = Modifier.fillMaxWidth()
         )
 
         Button(
@@ -245,6 +311,19 @@ fun UserProfile(
 
         Button(
             onClick = {
+
+                // validates profile name, number, and email before allowing to save
+                nameError = UserProfileValidator.validateName(name)
+                emailError = UserProfileValidator.validateEmail(email)
+                phoneError = UserProfileValidator.validatePhoneNumber(phoneNumber)
+
+                if (
+                    nameError != null || // || = OR
+                    emailError != null ||
+                    phoneError != null
+                ) {
+                    return@Button
+                }
 
                 val id = deviceId
 
@@ -439,10 +518,5 @@ fun UserProfile(
                 Text("Delete Profile")
             }
         }
-
     }
-
 }
-
-// [US 01.10.01] As an entrant, I want to opt out of receiving notification
-// [US 01.11.01] As an entrant, I want to see the app policy and guidelines
