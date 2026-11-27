@@ -22,6 +22,7 @@ import com.example.quackapp.View.Owner.OwnerHome
 import com.example.quackapp.View.Owner.OwnerReservationHistory
 import com.example.quackapp.View.Owner.OwnerCreateCamp
 import com.example.quackapp.View.Admin.AdminProfilesScreen
+import com.example.quackapp.View.Owner.OwnerNotificationHistory
 
 
 /**
@@ -114,6 +115,11 @@ fun QuackApp() {
         }
         composable("OwnerReservationHistory") {
             OwnerReservationHistory(
+                navController = navController
+            )
+        }
+        composable("OwnerNotificationHistory") {
+            OwnerNotificationHistory(
                 navController = navController
             )
         }
