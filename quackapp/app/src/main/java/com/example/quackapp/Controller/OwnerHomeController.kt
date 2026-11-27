@@ -34,7 +34,16 @@ import kotlin.coroutines.cancellation.CancellationException
  *  Contains functions related to editing existing [Campsite] and
  *  deleting campsites from the database
  *
- *  @param savedStateHandle a map which contains data passed from outside. Used here get ownerId
+ * @param savedStateHandle a map which contains data passed from outside. Used here get ownerId
+ * @property db Firebase Firestore reference
+ * @property ownerId Unique ID of the logged in owner
+ * @property deleteError Error message in case there's one when deleting a [Campsite]
+ * @property imgStorage Firebase Storage reference
+ * @property _selectedIds Private set of campsite IDs that the owner selected
+ * @property selectedIds Public set of campsite IDs that the owner selected
+ * @property ownedCamps List of campsites the logged in Owner owns
+ * @property otherCamps List of campsites the logged in Owner does not own
+ * @property incomingRequests List of [LotteryRequest] that are being sent to the logged in Owner
  */
 class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val db = Firebase.firestore

@@ -12,6 +12,7 @@ import com.example.quackapp.Model.CreateLotteryRoute
 import com.example.quackapp.Model.Lottery
 import com.example.quackapp.Model.LotteryRequest
 import com.example.quackapp.Model.LotteryStatus
+import com.example.quackapp.Model.SaveStatus
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.installations.FirebaseInstallations
@@ -28,6 +29,25 @@ import kotlin.coroutines.cancellation.CancellationException
  * Contains logic to create new lotteries for the selected [Campsite]
  *
  * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @property route [CreateLotteryRoute] containing the camps we want put into a lottery
+ * @property campsiteIds the camp IDs extracted from route
+ * @property multiCampLottery Boolean used to change logic depending on if multiple camps are passed in
+ * @property db Firestore reference
+ * @property ownerId unique ID of the owner who's creating the camp
+ * @property lotteryRef Firestore reference to the lottery collection
+ * @property registrationStart timestamp for the start of registration period
+ * @property registrationEnd timestamp for the end of registration period
+ * @property bookingStart timestamp for the start of booking period
+ * @property bookingEnd timestamp for the end of booking period
+ * @property name title to show at the top. Either the singular camp name or "Multi-camp"
+ * @property availability List of Long to show which days are currently available
+ * @property availabilityStart timestamp for the start of the camp's available dates
+ * @property availabilityEnd timestamp for the end of the camp's available dates
+ * @property isLoading status of loading the campsite from Firestore
+ * @property _status private status of loading info from Firestore. Holds error messages too
+ * @property status public status of loading info from Firestore. Holds error messages too
+ * @property selected List of [Campsite] made from the [campsiteIds]
+ * @property ownerId unique ID of the owner who's creating the lottery. Used in case they are requesting other owners' camps into the lottery
  */
 class OwnerCreateLotteryController(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val route = savedStateHandle.toRoute<CreateLotteryRoute>()

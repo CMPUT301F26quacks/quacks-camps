@@ -9,6 +9,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.SaveStatus
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -27,6 +28,24 @@ import kotlin.coroutines.cancellation.CancellationException
  * its download URL is stored on the [Campsite] document.
  *
  * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @property campsiteId unique ID of the camp being edited
+ * @property campsiteRef Firestore reference to the campsites collection
+ * @property imgStorage: Firebase Storage reference
+ * @property name camp's given name
+ * @property location camp's location
+ * @property price camp's price per night
+ * @property capacity camp's max capacity
+ * @property features camp's amenities/features
+ * @property rules camp's rules
+ * @property cancellationPolicy camp's cancellation policy
+ * @property tags all tags that can describe the camp
+ * @property selectedTags tags the owner selected
+ * @property imageUri Uri of the image the owner uploads
+ * @property existingImageUrl Firestore Url of the current image the camp has
+ * @property latitude camp's map latitude
+ * @property longitude camp's map longitude
+ * @property _status private status of loading info from Firestore. Holds error messages too
+ * @property status public status of loading info from Firestore. Holds error messages too
  */
 class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
