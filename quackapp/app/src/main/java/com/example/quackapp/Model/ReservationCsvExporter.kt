@@ -86,6 +86,31 @@ object ReservationCsvExporter {
     }
 
     /**
+     * Makes the CSV file name out of the campsite name and the first date of the stay,
+     * like "campsite_reservation_Two_Jack_Lakeside_Jan_1_2026.csv".
+     *
+     * @param reservation The reservation the file is for.
+     * @return the file name
+     */
+    fun makeFileName(reservation: Reservation): String {
+        val startDate = reservation.dateRange.split(" - ")[0]
+
+        // only keep letters and numbers so the file name is safe
+        val notSafe = Regex("[^A-Za-z0-9]+")
+        var safeName = reservation.campsiteName.replace(notSafe, "_").trim('_')
+        val safeDate = startDate.replace(notSafe, "_").trim('_')
+        if (safeName == "") {
+            safeName = "campsite"
+        }
+
+        if (safeDate == "") {
+            return "campsite_reservation_$safeName.csv"
+        }
+        return "campsite_reservation_${safeName}_$safeDate.csv"
+    }
+
+
+    /**
      * Saves a reservation CSV to the app's cache directory and returns the [File].
      *
      * @param context Android context.
@@ -98,8 +123,7 @@ object ReservationCsvExporter {
             exportDir.mkdirs()
         }
 
-        val safeId = reservation.id.take(8)
-        val file = File(exportDir, "campsite_reservation_$safeId.csv")
+        val file = File(exportDir, makeFileName(reservation))
         FileWriter(file).use { writer ->
             writer.write(generateCsv(reservation))
         }

@@ -123,12 +123,12 @@ class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel(
 
                     for (id in entryIds) {
                         val userDoc = usersRef.document(id).get().await()
-                        val userName = userDoc.getString("name")
+                        val userName = userDoc.getString("name")?.trim()
 
-                        if (userName != null && userName != "") {
-                            namesList.add("$userName ($id)")
+                        if (!userName.isNullOrEmpty()) {
+                            namesList.add(userName)
                         } else {
-                            namesList.add(id)
+                            namesList.add("Entrant")
                         }
                     }
                     waitlistEntrants = namesList

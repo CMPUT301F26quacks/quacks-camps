@@ -61,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,6 +76,7 @@ import com.example.quackapp.Model.NotificationType
 import com.example.quackapp.Model.Reservation
 import com.example.quackapp.Model.ReservationCsvExporter
 import com.example.quackapp.Model.ReservationRepository
+import com.example.quackapp.View.CampsitePolicyConfirmation
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
@@ -771,6 +773,7 @@ fun LotteryOfferCard(
     }
     val currentCampsite = offer.campsites.getOrElse(selectedCampsiteIndex) { offer.campsites.first() }
     var guestCount by remember { mutableIntStateOf(2) }
+    var policyAccepted by remember(offer.id) { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -979,6 +982,15 @@ fun LotteryOfferCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            CampsitePolicyConfirmation(
+                rules = emptyList(),
+                policyText = "Have fun",
+                checked = policyAccepted,
+                onCheckedChange = { policyAccepted = it }
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
             // Action Buttons (US 01.04.03 Decline & US 01.05.01 Accept)
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -998,8 +1010,10 @@ fun LotteryOfferCard(
                             onConfirm(currentCampsite, selectedDateRange, guestCount)
                         }
                     },
-                    modifier = Modifier.weight(1.5f),
-                    enabled = selectedDateRange.isNotBlank()
+                    modifier = Modifier
+                        .weight(1.5f)
+                        .testTag("confirmReservationButton"),
+                    enabled = selectedDateRange.isNotBlank() && policyAccepted
                 ) {
                     Text("Accept & Reserve")
                 }
