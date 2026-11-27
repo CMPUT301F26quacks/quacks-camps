@@ -43,6 +43,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 
 import coil.compose.AsyncImage
+import com.example.quackapp.View.Entrant.EntrantScaffold
 
 /**
  * Shared screen for creating and editing a user profile.
@@ -144,302 +145,308 @@ fun UserProfile(
 
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        AsyncImage(
-            model = selectedImageUri ?: profileImageUrl,
-            contentDescription = "User profile picture",
+    if(isEditing) EntrantScaffold(navController) { innerPadding ->
+        Column(
             modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-        )
-
-        Button(
-            onClick = {
-                imagePicker.launch(
-                    PickVisualMediaRequest(
-                        ActivityResultContracts.PickVisualMedia.ImageOnly
-                    )
-                )
-            }
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                if (profileImageUrl.isBlank()) {
-                    "Add Profile Picture"
-                } else {
-                    "Change Profile Picture"
-                }
+
+            AsyncImage(
+                model = selectedImageUri ?: profileImageUrl,
+                contentDescription = "User profile picture",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
             )
-        }
 
-        Text(
-            text = if (isEditing) {
-                "Edit User Profile"
-            } else {
-                "Create User Profile"
-            }
-        )
-
-        // US 03.11.01: an admin using the app as an entrant/owner can go back to admin tools
-        if (isEditing && Admin.isAdmin(userRoles)) {
-            TextButton(
+            Button(
                 onClick = {
-                    navController.navigate("AdminHome") {
-                        popUpTo(navController.graph.id) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                    imagePicker.launch(
+                        PickVisualMediaRequest(
+                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                        )
+                    )
                 }
             ) {
-                Text("Switch back to Admin", color = Color(0xFF2E7D32))
+                Text(
+                    if (profileImageUrl.isBlank()) {
+                        "Add Profile Picture"
+                    } else {
+                        "Change Profile Picture"
+                    }
+                )
             }
-        }
 
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = {
-                Text("Name")
+            Text(
+                text = if (isEditing) {
+                    "Edit User Profile"
+                } else {
+                    "Create User Profile"
+                }
+            )
+
+            // US 03.11.01: an admin using the app as an entrant/owner can go back to admin tools
+            if (isEditing && Admin.isAdmin(userRoles)) {
+                TextButton(
+                    onClick = {
+                        navController.navigate("AdminHome") {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                ) {
+                    Text("Switch back to Admin", color = Color(0xFF2E7D32))
+                }
             }
-        )
 
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = {
-                Text("Email")
-            }
-        )
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = {
+                    Text("Name")
+                }
+            )
 
-        OutlinedTextField(
-            value = phoneNumber,
-            onValueChange = { phoneNumber = it },
-            label = {
-                Text("Phone Number")
-            }
-        )
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = {
+                    Text("Email")
+                }
+            )
 
-        Button(
-            onClick = {
-                notificationsEnabled = !notificationsEnabled
-            },
+            OutlinedTextField(
+                value = phoneNumber,
+                onValueChange = { phoneNumber = it },
+                label = {
+                    Text("Phone Number")
+                }
+            )
+
+            Button(
+                onClick = {
+                    notificationsEnabled = !notificationsEnabled
+                },
                 colors = if (notificationsEnabled) {
                     ButtonDefaults.buttonColors(containerColor = Color.Green)
                 } else {
                     ButtonDefaults.buttonColors(containerColor = Color.Red)
-            }
-        ) {
-            Text(
-                if (notificationsEnabled) {
-                    "Notifications Enabled"
-                } else {
-                    "Notifications Disabled"
                 }
-            )
-        }
-
-        Button(
-            onClick = {
-
-                val id = deviceId
-
-                if (id == null) {
-                    errorMessage = "Unable to identify this device"
-                } else if (isEditing) {
-
-                    val imageUri = selectedImageUri
-
-                    if (imageUri != null) {
-                        // uploading a new image before saving the profile
-                        UserRepository.uploadProfilePic(
-                            deviceId = id,
-                            imageUri = imageUri,
-
-                            onSuccess = { downloadUrl ->
-
-                                UserRepository.updateUser(
-                                    deviceId = id,
-                                    name = name,
-                                    email = email,
-                                    phoneNumber = phoneNumber,
-                                    notificationsEnabled = notificationsEnabled,
-                                    profileImageUrl = downloadUrl,
-
-                                    onSuccess = {
-                                        navController.popBackStack()
-                                    },
-
-                                    onFail = {
-                                        exception -> errorMessage = exception.message ?: "Unable to update User Profile"
-                                    }
-                                )
-                            },
-
-                            onFail = {
-                                exception -> errorMessage = exception.message ?: "Unable to upload profile picture"
-                            }
-                        )
-
+            ) {
+                Text(
+                    if (notificationsEnabled) {
+                        "Notifications Enabled"
                     } else {
-                        UserRepository.updateUser(
+                        "Notifications Disabled"
+                    }
+                )
+            }
+
+            Button(
+                onClick = {
+
+                    val id = deviceId
+
+                    if (id == null) {
+                        errorMessage = "Unable to identify this device"
+                    } else if (isEditing) {
+
+                        val imageUri = selectedImageUri
+
+                        if (imageUri != null) {
+                            // uploading a new image before saving the profile
+                            UserRepository.uploadProfilePic(
+                                deviceId = id,
+                                imageUri = imageUri,
+
+                                onSuccess = { downloadUrl ->
+
+                                    UserRepository.updateUser(
+                                        deviceId = id,
+                                        name = name,
+                                        email = email,
+                                        phoneNumber = phoneNumber,
+                                        notificationsEnabled = notificationsEnabled,
+                                        profileImageUrl = downloadUrl,
+
+                                        onSuccess = {
+                                            navController.popBackStack()
+                                        },
+
+                                        onFail = { exception ->
+                                            errorMessage =
+                                                exception.message ?: "Unable to update User Profile"
+                                        }
+                                    )
+                                },
+
+                                onFail = { exception ->
+                                    errorMessage =
+                                        exception.message ?: "Unable to upload profile picture"
+                                }
+                            )
+
+                        } else {
+                            UserRepository.updateUser(
+                                deviceId = id,
+                                name = name,
+                                email = email,
+                                phoneNumber = phoneNumber,
+                                notificationsEnabled = notificationsEnabled,
+                                profileImageUrl = profileImageUrl,
+
+                                onSuccess = {
+                                    navController.popBackStack()
+                                },
+                                onFail = { exception ->
+                                    errorMessage =
+                                        exception.message ?: "Unable to update User Profile"
+                                }
+                            )
+                        }
+
+                    } else if (selectedRole != null) {
+
+                        val user = User(
                             deviceId = id,
                             name = name,
                             email = email,
                             phoneNumber = phoneNumber,
                             notificationsEnabled = notificationsEnabled,
-                            profileImageUrl = profileImageUrl,
+                            roles = listOf(selectedRole)
+                        )
+
+                        UserRepository.createUser(
+
+                            user = user,
 
                             onSuccess = {
-                                navController.popBackStack()
+
+                                if (selectedRole == "ENTRANT") {
+                                    navController.navigate("EntrantHome") {
+
+                                        popUpTo("EditProfile") {
+                                            inclusive = true
+                                        }
+
+                                        launchSingleTop = true
+                                    }
+                                }
+
+                                if (selectedRole == "OWNER") {
+                                    navController.navigate("CampsiteOwnerHome/${deviceId}") {
+
+                                        popUpTo("EditProfile") {
+                                            inclusive = true
+                                        }
+
+                                        launchSingleTop = true
+                                    }
+                                }
                             },
+
                             onFail = { exception ->
-                                errorMessage = exception.message ?: "Unable to update User Profile"
+                                errorMessage = exception.message ?: "Unable to create User Profile"
                             }
                         )
+
                     }
-
-                } else if (selectedRole != null) {
-
-                    val user = User(
-                        deviceId = id,
-                        name = name,
-                        email = email,
-                        phoneNumber = phoneNumber,
-                        notificationsEnabled = notificationsEnabled,
-                        roles = listOf(selectedRole)
-                    )
-
-                    UserRepository.createUser(
-
-                        user = user,
-
-                        onSuccess = {
-
-                            if (selectedRole == "ENTRANT") {
-                                navController.navigate("EntrantHome") {
-
-                                    popUpTo("EditProfile") {
-                                        inclusive = true
-                                    }
-
-                                    launchSingleTop = true
-                                }
-                            }
-
-                            if (selectedRole == "OWNER") {
-                                navController.navigate("CampsiteOwnerHome/${deviceId}") {
-
-                                    popUpTo("EditProfile") {
-                                        inclusive = true
-                                    }
-
-                                    launchSingleTop = true
-                                }
-                            }
-                        },
-
-                        onFail = { exception ->
-                            errorMessage = exception.message ?: "Unable to create User Profile"
-                        }
-                    )
-
                 }
-            }
-        ) {
-            Text(
-                if (isEditing) {
-                    "Save Changes"
-                } else {
-                    "Create Profile"
-                }
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        OutlinedButton(
-            onClick = {
-                policyExpanded = !policyExpanded
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                if (policyExpanded) {
-                    "Hide App Policy and Guidelines"
-                } else {
-                    "View App Policy and Guidelines"
-                }
-            )
-        }
-
-        if (policyExpanded) {
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
             ) {
                 Text(
-                    text = """
+                    if (isEditing) {
+                        "Save Changes"
+                    } else {
+                        "Create Profile"
+                    }
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            OutlinedButton(
+                onClick = {
+                    policyExpanded = !policyExpanded
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    if (policyExpanded) {
+                        "Hide App Policy and Guidelines"
+                    } else {
+                        "View App Policy and Guidelines"
+                    }
+                )
+            }
+
+            if (policyExpanded) {
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = """
                         
                         Thank you for using QuackCamps!
                         The only rule is to have fun!
                         
                     """.trimIndent(),
-                    modifier = Modifier.padding(12.dp)
-                )
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+
             }
 
-        }
+            Spacer(Modifier.height(80.dp))
 
-        Spacer(Modifier.height(80.dp))
+            if (isEditing) {
 
-        if (isEditing) {
+                Button(
+                    onClick = {
 
-            Button (
-                onClick = {
+                        val id = deviceId
 
-                    val id = deviceId
+                        if (id != null) {
 
-                    if (id != null) {
+                            UserRepository.deleteUser(
 
-                        UserRepository.deleteUser(
+                                deviceId = id,
 
-                            deviceId = id,
+                                onSuccess = {
+                                    navController.navigate("UserStart") {
+                                        popUpTo(navController.graph.startDestinationId) {
+                                            inclusive = true
+                                        }
 
-                            onSuccess = {
-                                navController.navigate("UserStart") {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        inclusive = true
+                                        launchSingleTop = true
+
                                     }
+                                },
 
-                                    launchSingleTop = true
-
+                                onFail = { exception ->
+                                    errorMessage =
+                                        exception.message ?: "Unable to delete User Profile"
                                 }
-                            },
 
-                            onFail = {
-                                exception -> errorMessage = exception.message ?: "Unable to delete User Profile"
-                            }
+                            )
 
-                        )
+                        }
 
-                    }
+                    },
 
-                },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
 
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-
-            ) {
-                Text("Delete Profile")
+                ) {
+                    Text("Delete Profile")
+                }
             }
-        }
 
+        }
     }
 
 }
