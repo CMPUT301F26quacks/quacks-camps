@@ -1,6 +1,5 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
-import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,17 +20,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults.iconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,39 +38,32 @@ import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import com.example.quackapp.Controller.ListCampInLotteryController
-import com.example.quackapp.Controller.OwnerHomeController
+import com.example.quackapp.Controller.OwnerEditLotteryController
 import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
-import okhttp3.internal.wait
-/**
- * Screen for listing [Campsite] into a [Lottery]
- * @param navController navController object used to navigate to this screen
- * @param viewModel the controller used with this screen. Default [ListCampInLotteryController]
-*/
-@Composable
-fun ListCampInLotteryScreen(
-    navController: NavController,
-    viewModel: ListCampInLotteryController = viewModel()
-    ) {
+import com.example.quackapp.View.DateRangePickerField
+import com.example.quackapp.View.todayUtcMillis
 
-    var numWinners by remember { mutableStateOf("") }
-    var waitlistCap by remember { mutableStateOf("") }
+/**
+ * Screen for editing a [Lottery]'s details
+ *
+ * @param navController the number of winners allowed for the lottery
+ * @param viewModel the number of people allowed in the waitlist, or null if no limit
+ */
+@Composable
+fun OwnerEditLottery(
+    navController: NavController,
+    viewModel: OwnerEditLotteryController = viewModel()
+) {
+
+
     val status by viewModel.status.collectAsState()
 
     LaunchedEffect(status) {
         if (status is SaveStatus.Success){
-            viewModel.registrationStart = null
-            viewModel.registrationEnd = null
-            viewModel.bookingStart = null
-            viewModel.bookingEnd = null
-            numWinners = ""
-            waitlistCap = ""
-            navController.navigate(route = "campsiteDetails/${viewModel.campsiteId}")
+            navController.navigate(route = "CampsiteDetails/${viewModel.campsiteId}")
             {
-                popUpTo("campsiteDetails/${viewModel.campsiteId}") { inclusive = true }
+                popUpTo("CampsiteDetails/${viewModel.campsiteId}") { inclusive = true }
             }
         }
     }
@@ -91,7 +77,8 @@ fun ListCampInLotteryScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = "${viewModel.name} Lottery", fontSize = 36.sp)
+
+            Text(text = "Editing Lottery", fontSize = 36.sp)
             IconButton(
                 colors = iconButtonColors(
                     containerColor = Color(0xFFFF9800),
@@ -109,6 +96,12 @@ fun ListCampInLotteryScreen(
         }
 
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.Center) {
+
+            Text("Any changes will affect these campsites: ")
+            viewModel.names.forEach { name ->
+                Text("- $name")
+            }
+
             Text("* signifies required field", color = Color.Red)
             Text(text = buildAnnotatedString {
                 append("Registration Period ")
@@ -121,8 +114,11 @@ fun ListCampInLotteryScreen(
                 label = "Registration Period",
                 startMillis = viewModel.registrationStart,
                 endMillis = viewModel.registrationEnd,
-                onRangeSelected = { s, e -> viewModel.registrationStart = s; viewModel.registrationEnd = e },
-                minDateMillis = todayUtcMillis()
+                onRangeSelected = { s, e ->
+                    viewModel.registrationStart = s; viewModel.registrationEnd = e
+                },
+                minDateMillis = todayUtcMillis(),
+                modifier = Modifier.testTag("registrationDates")
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -138,7 +134,9 @@ fun ListCampInLotteryScreen(
                 startMillis = viewModel.bookingStart,
                 endMillis = viewModel.bookingEnd,
                 onRangeSelected = { s, e -> viewModel.bookingStart = s; viewModel.bookingEnd = e },
-                minDateMillis = (viewModel.registrationEnd?.plus(86400000))?: todayUtcMillis() // 86400000 is one day in milliseconds
+                minDateMillis = (viewModel.registrationEnd?.plus(86400000))
+                    ?: todayUtcMillis(), // 86400000 is one day in milliseconds
+                modifier = Modifier.testTag("bookingDates")
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -151,10 +149,10 @@ fun ListCampInLotteryScreen(
                 fontSize = 24.sp
             )
             OutlinedTextField(
-                value = numWinners,
+                value = viewModel.numWinners,
                 onValueChange = { input ->
                     if (input.isDigitsOnly() && input.isNotEmpty()) {
-                        numWinners = input
+                        viewModel.numWinners = input
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -165,16 +163,36 @@ fun ListCampInLotteryScreen(
             Spacer(modifier = Modifier.height(10.dp))
             Text("Waitlist Capacity", fontSize = 24.sp)
             OutlinedTextField(
-                value = waitlistCap,
+                value = viewModel.waitlistCap,
                 onValueChange = { input ->
                     if (input.isDigitsOnly()) {
-                        waitlistCap = input
+                        viewModel.waitlistCap = input
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("waitlistCapField")
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(text = buildAnnotatedString {
+                append("Available Dates ")
+                withStyle(style = SpanStyle(color = Color.Red)) {
+                    append("*")
+                }
+            }, fontSize = 24.sp)
+
+            DateRangePickerField(
+                label = "Available Dates",
+                startMillis = viewModel.availabilityStart,
+                endMillis = viewModel.availabilityEnd,
+                onRangeSelected = { s, e ->
+                    viewModel.availabilityStart = s; viewModel.availabilityEnd = e
+                },
+                minDateMillis = (viewModel.bookingEnd?.plus(86400000))
+                    ?: todayUtcMillis(), // 86400000 is one day in milliseconds
+                modifier = Modifier.testTag("availabilityDates")
             )
             (status as? SaveStatus.Error)?.let {
                 Text(
@@ -185,25 +203,18 @@ fun ListCampInLotteryScreen(
             }
             Button(
                 onClick = {
-                    var cap:Int? = null
-                    if (waitlistCap != ""){
-                        cap = waitlistCap.toInt()
-                    }
-                    viewModel.addLottery(
-                        numWinners = numWinners.toInt(),
-                        waitlistCap = cap,
-                    )
+                    viewModel.updateLottery()
                 },
                 enabled = status !is SaveStatus.Saving,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("submitButton"),
+                    .testTag("saveButton"),
                 colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
             ) {
                 if (status is SaveStatus.Saving) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Submit")
+                    Text("Save")
                 }
             }
         }

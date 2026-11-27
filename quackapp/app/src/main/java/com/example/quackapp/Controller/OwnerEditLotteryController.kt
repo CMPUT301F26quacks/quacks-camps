@@ -8,38 +8,41 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Lottery
-import com.example.quackapp.Model.LotteryStatus
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.firestore
-import com.google.firebase.installations.FirebaseInstallations
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.Date
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Controller for the ListCampInLottery screen.
+ * Controller for the editing [Lottery] details
  *
  * Holds some state variables to display on the form.
- * Contains logic to create new lotteries for the selected [Campsite]
+ * Contains logic to edit the [Lottery] containing the [Campsite]
  *
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
-class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
+class OwnerEditLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
-    private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
-    private val db = Firebase.firestore
-    private val lotteryRef = db.collection("lotteries")
 
+    private val db = Firebase.firestore
+    private val campsiteRef = db.collection("campsites")
+    private val lotteryRef = db.collection("lotteries")
     var registrationStart by mutableStateOf<Long?>(null)
     var registrationEnd by mutableStateOf<Long?>(null)
     var bookingStart by mutableStateOf<Long?>(null)
     var bookingEnd by mutableStateOf<Long?>(null)
-    var name by mutableStateOf("")
-    var lottery by mutableStateOf<String?>(null)
+    var numWinners by mutableStateOf("")
+    var waitlistCap by mutableStateOf("")
+    var newAvailability by mutableStateOf(listOf<Long>())
+    var availabilityStart by mutableStateOf<Long?>(null)
+    var availabilityEnd by mutableStateOf<Long?>(null)
+    var names by mutableStateOf(listOf<String>())
+        private set
+    var campsites = arrayListOf<Campsite>()
+    var lotteryId by mutableStateOf<String>("")
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
@@ -54,12 +57,28 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
     init {
         viewModelScope.launch {
             try {
-                val campsite = campsiteRef.get().await().toObject(Campsite::class.java)
+                val campsite = campsiteRef.document(campsiteId).get().await().toObject(Campsite::class.java)
                 if (campsite != null) {
-                    name = campsite.name
-                    lottery = campsite.lotteryId
+                    // If this file is active, a lottery must exist
+                    lotteryId = campsite.lotteryId!!
+                    availabilityStart = campsite.availability[0]
+                    availabilityEnd = campsite.availability.last()
                 } else {
                     _status.value = SaveStatus.Error("Campsite not found")
+                }
+                val lottery = lotteryRef.document(lotteryId).get().await().toObject(Lottery::class.java)
+                registrationStart = lottery!!.registrationPeriodStart
+                registrationEnd = lottery.registrationPeriodEnd
+                bookingStart = lottery.bookingPeriodStart
+                bookingEnd = lottery.bookingPeriodEnd
+                lottery.optionalWaitlistCapacity?.let{
+                    waitlistCap = lottery.optionalWaitlistCapacity.toString()
+                }
+                numWinners = lottery.numLotteryWinners.toString()
+                for (campId in lottery.campIds){
+                    val campsite: Campsite? = campsiteRef.document(campId).get().await().toObject(Campsite::class.java)
+                    campsites.add(campsite!!)
+                    names = names + campsite.name
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -83,20 +102,17 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
         if (close < open) return "Registration must close after it opens"
         if (start <= close) return "Booking must start after registration closes"
         if (end < start) return "Booking must end after it starts"
+        availabilityStart?.let { if (it < end) return "Availability must start after booking ends" }
+        if (availabilityEnd == null || availabilityEnd!! <= availabilityStart!!) return "Availability must be after booking period"
         return null
     }
 
 
     /**
-     * Adds a new [Lottery] object to the Firestore.
+     * Updates a [Lottery] object in the Firestore.
      *
-     * @param numWinners the number of winners allowed for the lottery
-     * @param waitlistCap the number of people allowed in the waitlist, or null if no limit
      */
-    fun addLottery(
-        numWinners: Int,
-        waitlistCap: Int?,
-    ) {
+    fun updateLottery() {
         validateDates()?.let {
             _status.value = SaveStatus.Error(it)
             return
@@ -106,25 +122,23 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
             _status.value = SaveStatus.Saving
             try {
                 // Create database references, any image and campsite object will be linked by their ids (document name)
-                val docRef = lotteryRef.document()
+                val docRef = lotteryRef.document(lotteryId)
 
-                // Make a new lottery object
-                val newLottery = Lottery(
-                    lotteryID = docRef.id,
-                    registrationPeriodStart = Timestamp(Date(registrationStart!!)),
-                    registrationPeriodEnd = Timestamp(Date(registrationEnd!!)),
-                    bookingPeriodStart = Timestamp(Date(bookingStart!!)),
-                    bookingPeriodEnd = Timestamp(Date(bookingEnd!!)),
-                    numLotteryWinners = numWinners,
-                    optionalWaitlistCapacity = waitlistCap,
-                    campIds = listOf(campsiteId),
-                    status = LotteryStatus.OPEN
-                )
-
-                // upload to firestore
-                docRef.set(newLottery).await()
-                // update the campsite to have an active lottery
-                campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
+                docRef.update(
+                    mapOf(
+                        "registrationPeriodStart" to registrationStart,
+                        "registrationPeriodEnd" to registrationEnd,
+                        "bookingPeriodStart" to bookingStart,
+                        "bookingPeriodEnd" to bookingEnd,
+                        "numLotteryWinners" to numWinners.toInt(),
+                        "optionalWaitlistCapacity" to if (waitlistCap != "") waitlistCap.toInt() else null,
+                    )
+                ).await()
+                newAvailability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
+                for (camp in campsites) {
+                    // update the campsites availability
+                    campsiteRef.document(camp.campId).update(mapOf("availability" to newAvailability)).await()
+                }
                 _status.value = SaveStatus.Success
             } catch (e: Exception) {
                 _status.value = SaveStatus.Error(e.message ?: "Something went wrong")

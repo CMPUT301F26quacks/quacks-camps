@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,19 +37,23 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.EntrantDetailedCampsiteController
+import com.google.firebase.installations.FirebaseInstallations
 
 /**
  * Campsite details screen for Entrant
  *
  * When an entrant clicks on an EntrantHomeCard, it sends them to this page
- * with information on the campsite and the ability to enter that campsites lottery
+ * with information on the campsite and the ability to enter or leave
+ * that campsites lottery waitlist
  *
  * [US 01.01.05] As an entrant, I want to see details of a campsite.
+ * [US 01.01.06] As an entrant, I want to join an active lottery from
+ * the campsite details screen.
  *
  * @param modifier mainly for padding
  * @param navController allows entrant to use navigation bar
  * @param controller uses EntrantDetailedCampsiteController to fetch the
- * corresponding campsite
+ * corresponding campsite, all lotteries and use various other functions
  */
 @Composable
 fun EntrantDetailedCampsite(
@@ -58,11 +64,36 @@ fun EntrantDetailedCampsite(
 
     //uses controller to fetch the campsite that was clicked on
     val pulledCampsite by controller.campsite.collectAsState()
+    val pulledLotteries by controller.lotteries.collectAsState()
 
-    //Creates a local version of the campsite info
+    //Creates a local version of the campsite and lotteries info
     val campsite = pulledCampsite
+    val lotteries = pulledLotteries
 
-    var enteredLottery by remember { mutableStateOf(false) }
+    //Get device ID from firebase
+    var deviceId by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        FirebaseInstallations.getInstance().id
+            .addOnSuccessListener { deviceId = it }
+    }
+
+    //Gets Campsite lottery ID
+    val lotteryId = campsite?.lotteryId
+    //local version
+    val currentDeviceId = deviceId
+
+    //Checks if the user is currently entered into the waitlist or not
+    var enteredLottery by remember(
+        lotteryId,
+        lotteries,
+        currentDeviceId)
+    {
+        mutableStateOf(controller.checkIfIdInLottery(
+            lotteryId,
+            currentDeviceId,
+            lotteries)
+        )
+    }
 
     //variables for the user the input a rating later
     var showRatingInput by remember {mutableStateOf(false)}
@@ -103,105 +134,115 @@ fun EntrantDetailedCampsite(
                         //Campsite Name
                         text = campsite.name,
                         style = MaterialTheme.typography.displayMedium,
-                        color = Color(0xFFF16B00)
+                        color = Color(0xFFF16B00),
+                        modifier = Modifier.testTag("campsiteTitle")
                     )
                 }
                 item {
                     Column {
-                        //Campsite Rating
-                        Text(
-                            text = "⭐ ${campsite.rating}",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
-                        )
-                        //User Make a Rating
-                        OutlinedButton(
-                            onClick = {showRatingInput = !showRatingInput}
-                        ) {
+                            //Campsite Rating
                             Text(
-                                if(showRatingInput) "Close" else "Make a Rating"
+                                text = "⭐ ${campsite.rating}",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = Color(0xFFF2BA00),
+                                modifier = Modifier.testTag("rating")
                             )
-                        }
-
-                        //if user wants to rate campsite
-                        if(showRatingInput) {
-                            OutlinedTextField(
-                                value = ratingInput,
-                                onValueChange = { input ->
-                                    //only allow 1 number to be entered
-                                    if (input.length<=1) {
-                                        ratingInput = input
-                                        //ensure that the number is not outside of range
-                                        val ratingNum = input.toIntOrNull()
-                                        if(ratingNum == null || ratingNum < 0 || ratingNum > 5) {
-                                            errorMessage = "Please input a valid rating"
-                                        }
-                                        else{ //valid
-                                            errorMessage = null
-                                        }
-                                    }
-                                },
-                                label = {Text("Enter rating (0-5)")},
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                isError = errorMessage != null,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            //showing the error message when invalid
-                            errorMessage?.let {message ->
+                            //User Make a Rating
+                            OutlinedButton(
+                                onClick = { showRatingInput = !showRatingInput },
+                                modifier = Modifier.testTag("makeRating")
+                            ) {
                                 Text(
-                                    text=message,
-                                    color=Color.Red
+                                    if (showRatingInput) "Close" else "Make a Rating"
                                 )
                             }
 
-                            //submit button if valid (double verification, there will be no mistakes)
-                            val ratingNum = ratingInput.toIntOrNull()
-                            if(ratingNum != null){
-                                Button(
-                                    onClick = {
-                                        com.example.quackapp.Controller.DeviceIdGetter.getDeviceId(
-                                            onSuccess = {deviceId ->
-                                                controller.updateRating(ratingNum.toDouble(), deviceId)
-                                                showRatingInput = !showRatingInput
-                                                ratingInput = "" //set empty
-                                            },
-                                            onFail = {
-                                                errorMessage = "Rating failed to submit. Please try again."
+                            //if user wants to rate campsite
+                            if (showRatingInput) {
+                                OutlinedTextField(
+                                    value = ratingInput,
+                                    onValueChange = { input ->
+                                        //only allow 1 number to be entered
+                                        if (input.length <= 1) {
+                                            ratingInput = input
+                                            //ensure that the number is not outside of range
+                                            val ratingNum = input.toIntOrNull()
+                                            if (ratingNum == null || ratingNum < 0 || ratingNum > 5) {
+                                                errorMessage = "Please input a valid rating"
+                                            } else { //valid
+                                                errorMessage = null
                                             }
-                                        )
+                                        }
                                     },
-                                ) {
-                                    Text("Submit Rating")
+                                    label = { Text("Enter rating (0-5)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    singleLine = true,
+                                    isError = errorMessage != null,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                //showing the error message when invalid
+                                errorMessage?.let { message ->
+                                    Text(
+                                        text = message,
+                                        color = Color.Red
+                                    )
+                                }
+
+                                //submit button if valid (double verification, there will be no mistakes)
+                                val ratingNum = ratingInput.toIntOrNull()
+                                if (ratingNum != null) {
+                                    Button(
+                                        onClick = {
+                                            com.example.quackapp.Controller.DeviceIdGetter.getDeviceId(
+                                                onSuccess = { deviceId ->
+                                                    controller.updateRating(
+                                                        ratingNum.toDouble(),
+                                                        deviceId
+                                                    )
+                                                    showRatingInput = !showRatingInput
+                                                    ratingInput = "" //set empty
+                                                },
+                                                onFail = {
+                                                    errorMessage =
+                                                        "Rating failed to submit. Please try again."
+                                                }
+                                            )
+                                        },
+                                    ) {
+                                        Text("Submit Rating")
+                                    }
                                 }
                             }
-                        }
 
 
                         //Campsite Location
                         Text(
                             text = "\uD83D\uDCCC ${campsite.location}",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
+                            color = Color(0xFFF2BA00),
+                            modifier = Modifier.testTag("location")
                         )
                         //Campsite price per night
                         Text(
                             text = "$${campsite.price} per night",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
+                            color = Color(0xFFF2BA00),
+                            modifier = Modifier.testTag("pricePerNight")
                         )
                         //Campsite capacity
                         Text(
                             text = "Up to ${campsite.capacity} people",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
+                            color = Color(0xFFF2BA00),
+                            modifier = Modifier.testTag("capacity")
                         )
                         //Days left on campsite lottery
                         Text(
                             text = "(TO-DO) days left on lottery",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00)
+                            color = Color(0xFFF2BA00),
+                            modifier = Modifier.testTag("lotteryDaysLeft")
                         )
                     }
                 }
@@ -231,14 +272,16 @@ fun EntrantDetailedCampsite(
                             Text(
                                 text = "Features",
                                 style = MaterialTheme.typography.headlineMedium,
-                                color = Color(0xFFF16B00)
+                                color = Color(0xFFF16B00),
+                                modifier = Modifier.testTag("feature")
                             )
                             //Displays all Campsite Features in bullet point
                             features.forEach { feature ->
                                 Text(
                                     text = "\u2022 $feature",
                                     style = MaterialTheme.typography.headlineSmall,
-                                    color = Color(0xFFF2BA00)
+                                    color = Color(0xFFF2BA00),
+                                    modifier = Modifier.testTag("featureItem")
                                 )
                             }
                         }
@@ -264,7 +307,8 @@ fun EntrantDetailedCampsite(
                                 Text(
                                     text = "\u2022 $rule",
                                     style = MaterialTheme.typography.headlineSmall,
-                                    color = Color(0xFFF2BA00)
+                                    color = Color(0xFFF2BA00),
+                                    modifier = Modifier.testTag("ruleItem")
                                 )
                             }
                         }
@@ -273,7 +317,10 @@ fun EntrantDetailedCampsite(
 
 
             }
-                //Enter/Leave Lottery Button
+
+            //If campsite is in a lottery, then display button
+            if(campsite.lotteryId != null) {
+                //Enter or Leave Lottery Waitlist Button
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFF248AFF),
@@ -281,8 +328,11 @@ fun EntrantDetailedCampsite(
                     ),
                     //When Button is clicked, enter or leave the lottery
                     onClick = {
-                        //TODO Enter or Leave lottery logic
-                        enteredLottery = !enteredLottery
+                        if(lotteryId != null && currentDeviceId != null){
+                            if (enteredLottery) controller.leaveLottery(lotteryId, currentDeviceId)
+                            else controller.enterLottery(lotteryId, currentDeviceId)
+                            enteredLottery = !enteredLottery
+                        }
                     },
                     shape = RoundedCornerShape(20.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
@@ -290,6 +340,7 @@ fun EntrantDetailedCampsite(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 12.dp)
+                        .testTag("inLotteryStatus")
 
                 ) {
                     Text(
@@ -305,6 +356,7 @@ fun EntrantDetailedCampsite(
                     )
 
                 }
+            }
 
         }
     }

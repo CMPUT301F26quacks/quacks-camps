@@ -15,7 +15,6 @@ import com.google.firebase.installations.FirebaseInstallations
 import com.google.firebase.storage.storage
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.lifecycle.SavedStateHandle
-import com.google.firebase.firestore.DocumentReference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -143,11 +142,8 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
                 }
 
                 // Create database references, any image and campsite object will be linked by their ids (document name)
-                val docRef = if (finalOwnerId == "testOwner"){
-                    campsitesRef.document("testCamp")
-                } else {
-                    campsitesRef.document()
-                }
+                val docRef = campsitesRef.document()
+
                 val imageRef = imgStorage.reference.child("campsites/${docRef.id}.jpg")
 
                 // Upload the image if one was selected

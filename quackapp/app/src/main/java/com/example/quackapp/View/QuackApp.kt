@@ -8,17 +8,21 @@ import androidx.navigation.compose.rememberNavController
 import com.example.quackapp.View.Entrant.EntrantHome
 import androidx.navigation.navArgument
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
-import com.example.quackapp.Model.Campsite
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
-import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
-import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
-import com.example.quackapp.View.Entrant.EntrantHome
 import com.example.quackapp.View.Admin.AdminHome
 import com.example.quackapp.View.Admin.AdminImageGallery
 import com.example.quackapp.View.Admin.AdminCampsites
 import com.example.quackapp.View.Admin.AdminCampsiteReviews
+import com.example.quackapp.View.Owner.OwnerCampDetails
+import com.example.quackapp.View.Owner.OwnerEditCamp
+import com.example.quackapp.View.Owner.OwnerEditLottery
+import com.example.quackapp.View.Owner.OwnerCreateLottery
+import com.example.quackapp.View.Owner.OwnerHome
+import com.example.quackapp.View.Owner.OwnerReservationHistory
+import com.example.quackapp.View.Owner.OwnerCreateCamp
+import com.example.quackapp.View.Admin.AdminProfilesScreen
+
 
 /**
  * Sets up navigation between screens for whole app
@@ -36,6 +40,8 @@ fun QuackApp() {
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
 
+        composable("UserChats") { UserChats(navController) }
+
         composable(
             route = "EntrantDetailedCampsite/{campId}",
             arguments = listOf(navArgument("campId") { type = NavType.StringType })
@@ -43,7 +49,11 @@ fun QuackApp() {
             EntrantDetailedCampsite(navController = navController)
         }
 
-        composable("OwnerHome") { OwnerHome(navController) }
+        composable("OwnerHome") {
+            OwnerHome(
+                navController
+            )
+        }
 
         composable(
             route = "CampsiteOwnerHome/{ownerId}",
@@ -54,22 +64,27 @@ fun QuackApp() {
             route = "RegisterCampsite/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
         )
-        { RegisterCampsiteScreen(navController) }
+        { OwnerCreateCamp(navController) }
 
         composable(
             route = "CampsiteDetails/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }))
-        { DetailedCampsiteScreen(navController) }
+        { OwnerCampDetails(navController) }
 
         composable(
             route = "EditCampsite/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
-        ) { EditCampsiteScreen(navController) }
+        ) { OwnerEditCamp(navController) }
+
+        composable<ListCampInLotteryRoute> { entry ->
+            OwnerCreateLottery(navController)
+        }
 
         composable(
-            route = "ListCampInLotteryScreen/{campsiteId}",
+            route = "editLottery/{campsiteId}",
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
-        ) { ListCampInLotteryScreen(navController) }
+        ) { OwnerEditLottery(navController) }
+
 
 
         composable("CreateEntrantProfile") {
@@ -84,9 +99,10 @@ fun QuackApp() {
                 selectedRole = "OWNER"
             )
         }
-        composable("EditProfile") {
+        composable("EditProfile/{role}") { backStackEntry ->
             UserProfile(
                 navController = navController,
+                selectedRole = backStackEntry.arguments?.getString("role"),
                 isEditing = true
             )
         }
@@ -97,12 +113,15 @@ fun QuackApp() {
             )
         }
         composable("OwnerReservationHistory") {
-            OwnerReservationHistoryScreen(navController = navController)
+            OwnerReservationHistory(
+                navController = navController
+            )
         }
 
         composable("AdminHome") { AdminHome(navController) }
         composable("AdminImageGallery") { AdminImageGallery(navController) }
         composable("AdminCampsites") { AdminCampsites(navController) }
+        composable("AdminProfiles") { AdminProfilesScreen(navController) }
         composable(
             route = "AdminCampsiteReviews/{campId}",
             arguments = listOf(navArgument("campId") { type = NavType.StringType })
@@ -111,3 +130,4 @@ fun QuackApp() {
         }
     }
 }
+

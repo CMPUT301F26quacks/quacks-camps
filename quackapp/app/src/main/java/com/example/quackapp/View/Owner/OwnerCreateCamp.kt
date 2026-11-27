@@ -1,4 +1,4 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -30,6 +30,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,30 +56,40 @@ import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.quackapp.Controller.EditCampsiteController
+import com.example.quackapp.Controller.RegisterCampsiteController
 import com.example.quackapp.Controller.SaveStatus
-import com.google.android.gms.maps.model.LatLng
+import com.example.quackapp.View.LocationPicker
 
 /**
- * UI for campsite owners to edit [com.example.quackapp.Model.Campsite] details
+ * UI for the page that campsite owners use to register new campsites
  *
- * @param navController navController object used to navigate to this screen
- * @param viewModel the controller used with this screen. Default [EditCampsiteController]
+ * @param navController the number of winners allowed for the lottery
+ * @param viewModel the number of people allowed in the waitlist, or null if no limit
  */
 @Composable
-fun EditCampsiteScreen(
+fun OwnerCreateCamp(
     navController: NavController,
-    viewModel: EditCampsiteController = viewModel()
+    viewModel: RegisterCampsiteController = viewModel()
 ) {
+    // String version of these two fields since
+    // displaying ints can crash the app when no number is there
+    var priceAsString: String by remember { mutableStateOf("") }
+    var capacityAsString: String by remember { mutableStateOf("") }
+
     var newTag: String by remember { mutableStateOf("") }
     val status by viewModel.status.collectAsState()
+
     // launcher for the photo selector
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri -> if (uri != null) viewModel.imageUri = uri }
-    // when the screen is rebuilt, if there was a successful save, go back to previous screen
+    // when the screen is rebuilt, if there was a successful upload
+    // reset the form
     LaunchedEffect(status) {
         if (status is SaveStatus.Success){
+            viewModel.resetForm()
+            priceAsString = ""
+            capacityAsString = ""
             navController.popBackStack()
         }
     }
@@ -90,7 +101,7 @@ fun EditCampsiteScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
 
-        ) {
+    ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
@@ -98,7 +109,7 @@ fun EditCampsiteScreen(
                 .padding(top = 8.dp)
         ){
             Text(
-                text = "Edit Campsite",
+                text = "Register Campsite",
                 fontSize = 32.sp
             )
 
@@ -118,7 +129,7 @@ fun EditCampsiteScreen(
             withStyle(style = SpanStyle(color = Color.Red)) {
                 append("*")
             }
-        }
+            }
         )
         OutlinedTextField(
             value = viewModel.name,
@@ -151,10 +162,13 @@ fun EditCampsiteScreen(
         }
         )
         OutlinedTextField(
-            value = viewModel.price,
+            value = priceAsString,
             onValueChange = { input ->
-                if (input.isDigitsOnly() && input.isNotEmpty()) {
-                    viewModel.price = input
+                if (input.isDigitsOnly()) {
+                    priceAsString = input
+                    if (input.isNotEmpty()){
+                        viewModel.price = input.toInt()
+                    }
                 }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -171,10 +185,13 @@ fun EditCampsiteScreen(
         }
         )
         OutlinedTextField(
-            value = viewModel.capacity,
+            value = capacityAsString,
             onValueChange = { input ->
-                if (input.isDigitsOnly() && input.isNotEmpty()) {
-                    viewModel.capacity = input
+                if (input.isDigitsOnly()) {
+                    capacityAsString = input
+                    if (input.isNotEmpty()){
+                        viewModel.capacity = input.toInt()
+                    }
                 }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -190,6 +207,7 @@ fun EditCampsiteScreen(
             label = { Text("Policy") },
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("cancelPolicyField")
         )
         Text("Amenities/Features")
         Column() {
@@ -207,7 +225,7 @@ fun EditCampsiteScreen(
                         enabled = viewModel.features.size > 1,
                         colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
                         modifier = Modifier.testTag("deleteAmenity${index + 1}")
-                    )
+                        )
                     { Text("X") }
                 }
             }
@@ -219,7 +237,7 @@ fun EditCampsiteScreen(
                     .fillMaxWidth()
                     .testTag("addAmenity"),
                 colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-            ) {
+                ) {
                 Text("Add Amenity")
             }
         }
@@ -238,8 +256,8 @@ fun EditCampsiteScreen(
                         onClick = { viewModel.removeRule(index) },
                         enabled = viewModel.rules.size > 1,
                         colors = ButtonDefaults.buttonColors(Color(0xFFFF0000)),
-                        modifier = Modifier.testTag("removeRule${index+1}")
-                    ) { Text("X") }
+                        modifier = Modifier.testTag("deleteRule${index+1}")
+                        ) { Text("X") }
                 }
             }
             Button(
@@ -250,24 +268,25 @@ fun EditCampsiteScreen(
                     .fillMaxWidth()
                     .testTag("addRule"),
                 colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-            ) {
+                ) {
                 Text("Add Rule")
             }
         }
-        Text("Map Location")
-        // If statement here because the Map loads before location data is ready
-        // meaning it would default to (0.00, 0.00) instead of the real location
-        if (viewModel.latitude != 0.00 && viewModel.longitude != 0.00) {
-            LocationPicker(
-                onConfirm = { viewModel.setMapLoc(it) },
-                startLoc = LatLng(viewModel.latitude, viewModel.longitude)
-            )
-        }
+        Text(text = buildAnnotatedString {
+            append("Map Location ")
+            withStyle(style = SpanStyle(color = Color.Red)) {
+                append("*")
+            }
+        })
+        LocationPicker(
+            onConfirm = { viewModel.setMapLoc(it) },
+            startLoc = null
+        )
+
         Text("Promotional Image (Optional)")
-        // Show the newly picked image if there is one, otherwise the saved one
-        val preview: Any? = viewModel.imageUri ?: viewModel.existingImageUrl.ifBlank { null }
         Box(
             modifier = Modifier
+                .padding(4.dp)
                 .fillMaxWidth()
                 .height(200.dp)
                 .clip(RoundedCornerShape(12.dp))
@@ -276,13 +295,14 @@ fun EditCampsiteScreen(
                     picker.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
-                },
+                }
+                .testTag("imgUploadArea"),
             contentAlignment = Alignment.Center
         ) {
-            if (preview != null) {
+            if (viewModel.imageUri != null) {
                 AsyncImage(
-                    model = preview,
-                    contentDescription = "Promo image",
+                    model = viewModel.imageUri,
+                    contentDescription = "Selected image",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -321,6 +341,19 @@ fun EditCampsiteScreen(
                 .fillMaxWidth()
                 .testTag("newTagField")
         )
+        Spacer(Modifier.width(8.dp))
+        Button(
+            onClick = {
+                viewModel.addCustomTag(newTag)
+                newTag = ""
+            },
+            colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
+            enabled = newTag.isNotBlank(),
+            modifier = Modifier.testTag("addTagButton")
+        ) {
+            Text("Add")
+        }
+
         (status as? SaveStatus.Error)?.let {
             Text(
                 it.message,
@@ -329,18 +362,40 @@ fun EditCampsiteScreen(
             )
         }
         Button(
-            onClick = { viewModel.saveChanges() },
+            onClick = { viewModel.addCampsite() },
             enabled = status !is SaveStatus.Saving,
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("saveButton"),
+                .testTag("submitButton"),
             colors = ButtonDefaults.buttonColors(Color(0xFFFF9800)),
-        ) {
+            ) {
             if (status is SaveStatus.Saving) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
-                Text("Save")
+                Text("Submit")
             }
         }
+
+
+    }
+}
+@Composable
+fun Tag(
+    modifier: Modifier,
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = if (selected) Color(0xFFFFC107) else Color.Gray,
+    ) {
+        Text(
+            text = text,
+            color = if (selected) Color.Black else Color.White,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp)
+        )
     }
 }

@@ -12,6 +12,7 @@ object NavBarLists {
     val entrant = listOf(
         NavBarItem.EntrantHome,
         NavBarItem.EntrantActiveCampsites,
+        NavBarItem.UserChats,
         NavBarItem.EntrantProfile
     )
 
