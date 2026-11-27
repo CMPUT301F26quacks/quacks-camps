@@ -151,6 +151,9 @@ class AdminController : ViewModel() {
         }
     }
 
+    /**
+     * Delete campsites as an admin
+     */
     fun deleteCampsite(campsite: Campsite) {
         viewModelScope.launch {
             try {
@@ -164,6 +167,11 @@ class AdminController : ViewModel() {
             }
         }
     }
+
+    /**
+     * Delete profile as an admin
+     */
+    //fun deleteProfile()
 }
 
 /**

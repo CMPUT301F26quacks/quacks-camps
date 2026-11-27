@@ -46,7 +46,6 @@ import com.example.quackapp.Controller.OwnerCampDetailsController
 import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.View.MapPreviewCard
 import com.example.quackapp.View.toDisplayDate
-import com.example.quackapp.Controller.DetailedCampsiteController
 import com.google.android.gms.maps.model.LatLng
 
 /**
