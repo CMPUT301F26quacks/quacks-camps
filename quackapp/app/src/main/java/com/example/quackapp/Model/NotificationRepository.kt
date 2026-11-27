@@ -417,19 +417,26 @@ class NotificationRepository private constructor() {
                 .toObject(Lottery::class.java)
                 ?: throw Exception("Lottery not found")
 
-            val entrants = lottery?.waitlist
-                ?.filter { it.isNotBlank() }
-                ?.distinct()
+            if (
+                campsiteId !in lottery.campIds ||
+                campsite.lotteryId != lotteryId
+            ) {
+                throw Exception("Campsite does not belong to this lottery")
+            }
+
+            val entrants = lottery.waitlist
+                .filter { it.isNotBlank() }
+                .distinct()
 
             // sets max announcement size for the waitlist, configurable is list is too long
-            val maxAnnouncementSize = 500
-            entrants?.size?.let {
+            val maxAnnouncementSize = 200
+            entrants.size.let {
                 if (it > maxAnnouncementSize) {
                     throw Exception("Waitlist is too large for one announcement")
                 }
             }
 
-            val recipients = entrants?.filter { entrantId ->
+            val recipients = entrants.filter { entrantId ->
 
                 val userRef = db.collection("users")
                     .document(entrantId)
@@ -441,33 +448,32 @@ class NotificationRepository private constructor() {
 
             // database reads complete above, database transaction writes start below
 
-            if (recipients != null) {
-                for (recipientId in recipients) {
 
-                    val notification = AppNotification(
-                        recipientDeviceId = recipientId,
-                        senderDeviceId = ownerId,
-                        title = title.trim(),
-                        message = message.trim(),
-                        type = NotificationType.GENERAL,
-                        relatedLotteryId = lotteryId,
-                        relatedCampsiteId = campsiteId,
-                        announcementId = announcementId
-                    )
+            for (recipientId in recipients) {
 
-                    val notificationRef = db.collection("notifications")
-                        .document(notification.id)
+                val notification = AppNotification(
+                    recipientDeviceId = recipientId,
+                    senderDeviceId = ownerId,
+                    title = title.trim(),
+                    message = message.trim(),
+                    type = NotificationType.GENERAL,
+                    relatedLotteryId = lotteryId,
+                    relatedCampsiteId = campsiteId,
+                    announcementId = announcementId
+                )
 
-                    val logRef = db.collection("notification_logs")
-                        .document(notification.id)
+                val notificationRef = db.collection("notifications")
+                    .document(notification.id)
 
-                    transaction.set(notificationRef, notification)
-                    transaction.set(logRef, notification)
-                }
+                val logRef = db.collection("notification_logs")
+                    .document(notification.id)
+
+                transaction.set(notificationRef, notification)
+                transaction.set(logRef, notification)
             }
 
             // returns the number of recipients
-            recipients?.size
+            recipients.size
 
         }.addOnSuccessListener {
             count -> onSuccess(count) 
@@ -582,7 +588,7 @@ class NotificationRepository private constructor() {
                             )
                         }
 
-                    onListening
+                    onListening(listener)
 
                 }
             },
