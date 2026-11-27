@@ -1,12 +1,15 @@
 package com.example.quackapp
 
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -14,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.ComposeNavigator
@@ -147,22 +151,21 @@ class CreateLotteryTests {
 
         waitFor("Campsites")
         waitFor("Test Camp")
-        waitForTag("detailsTest Camp")
-
 
         composeRule
-            .onNodeWithTag("detailsTest Camp")
-            .performClick()
+            .onNodeWithTag("Test Camp row")
+            .performTouchInput { longClick(Offset(40f, 40f)) }
 
+        waitForTag("createLotteryButton")
         composeRule
-            .onNodeWithTag("lotteryInfo")
-            .performScrollTo()
+            .onNodeWithTag("selectedCount")
+            .assertTextEquals("1 selected")
 
         composeRule
             .onNodeWithTag("createLotteryButton")
-            .performScrollTo()
             .performClick()
 
+        waitFor("Test Camp Lottery")
         composeRule
             .onNodeWithText("Test Camp Lottery")
             .assertExists()
@@ -249,9 +252,14 @@ class CreateLotteryTests {
             .onNodeWithTag("submitButton")
             .performClick()
 
-        waitForTag("editLotteryButton")
+        waitForTag("detailsTest Camp")
         composeRule
-            .onNodeWithTag("editLotteryButton")
+            .onNodeWithTag("detailsTest Camp")
+            .performClick()
+
+        waitForTag("lotteryInfo")
+        composeRule
+            .onNodeWithTag("lotteryInfo")
             .performScrollTo()
 
         waitFor("Registration: Dec 10, 2026 to Dec 14, 2026")
@@ -371,22 +379,19 @@ class CreateLotteryTests {
 
         waitFor("Campsites")
         waitFor("Test Camp")
-        waitForTag("detailsTest Camp")
-
-
         composeRule
-            .onNodeWithTag("detailsTest Camp")
-            .performClick()
+            .onNodeWithTag("Test Camp row")
+            .performTouchInput { longClick(Offset(40f, 40f)) }
 
+        waitForTag("createLotteryButton")
         composeRule
-            .onNodeWithTag("lotteryInfo")
-            .performScrollTo()
+            .onNodeWithTag("selectedCount")
+            .assertTextEquals("1 selected")
 
         composeRule
             .onNodeWithTag("createLotteryButton")
-            .performScrollTo()
             .performClick()
-
+        waitFor("Test Camp Lottery")
         composeRule
             .onNodeWithText("Test Camp Lottery")
             .assertExists()
@@ -478,10 +483,6 @@ class CreateLotteryTests {
             .onNodeWithTag("backButton")
             .performClick()
 
-        waitForTag("backButton")
-        composeRule
-            .onNodeWithTag("backButton")
-            .performClick()
 
         waitForTag("deleteTest Camp")
         composeRule

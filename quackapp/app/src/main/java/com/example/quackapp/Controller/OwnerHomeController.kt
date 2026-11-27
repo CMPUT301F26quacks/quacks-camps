@@ -230,7 +230,7 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     /**
      * Approval function for when other owners want to enter your camp into
      * a lottery with theirs
-     * @param req the lottery request object with all info pertaining to the request
+     * @param req the [LotteryRequest] object with all info pertaining to the request
      */
     fun approve(req: LotteryRequest) = viewModelScope.launch {
         try {
@@ -252,9 +252,9 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     }
 
     /**
-     * Declline function for when other owners want to enter your camp into
+     * Decline function for when other owners want to enter your camp into
      * a lottery with theirs
-     * @param req the lottery request object with all info pertaining to the request
+     * @param req the [LotteryRequest] object with all info pertaining to the request
      */
     fun decline(req: LotteryRequest) = viewModelScope.launch {
         db.collection("lotteryRequests").document(req.requestId)

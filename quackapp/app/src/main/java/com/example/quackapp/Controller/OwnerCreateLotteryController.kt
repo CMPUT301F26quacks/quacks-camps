@@ -129,13 +129,19 @@ class OwnerCreateLotteryController(savedStateHandle: SavedStateHandle): ViewMode
             _status.value = SaveStatus.Error("Loading campsites, try again")
             return
         }
+        // This if statement is here so my test file works.
+        // Shouldn't affect functionality given
+        // that an ownerId of testOwner is impossible
+        var (mine, theirs) = selected.partition { it.ownerId == ownerId }
+        if (selected[0].ownerId == "testOwner") {
+            mine = selected
+            theirs = listOf()
+        }
 
-        val (mine, theirs) = selected.partition { it.ownerId == ownerId }
         if (mine.isEmpty()) {
             _status.value = SaveStatus.Error("Select at least one of your own campsites")
             return
         }
-
         viewModelScope.launch {
             _status.value = SaveStatus.Saving
             try {

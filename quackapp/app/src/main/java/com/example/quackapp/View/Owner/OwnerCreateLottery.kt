@@ -70,15 +70,7 @@ fun OwnerCreateLottery(
             viewModel.bookingEnd = null
             numWinners = ""
             waitlistCap = ""
-            if (viewModel.multiCampLottery){
-                navController.popBackStack()
-            }
-            else { // forces the screen to recompose with the updated information
-                navController.navigate(route = "CampsiteDetails/${viewModel.campsiteIds[0]}")
-                {
-                    popUpTo("CampsiteDetails/${viewModel.campsiteIds[0]}") { inclusive = true }
-                }
-            }
+            navController.popBackStack()
         }
     }
 
