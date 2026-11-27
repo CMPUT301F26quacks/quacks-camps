@@ -48,11 +48,14 @@ object UserProfileValidator {
 
         val digits = phoneNumber.filter {it.isDigit()}
 
-        return if (digits.length != 10) {
+        val validCharacters = phoneNumber.all {
+            it in "0123456789()- "
+        }
+
+        return if (digits.length != 10 || !validCharacters) {
             "Please enter a valid 10-digit phone number"
         } else {
             null
         }
-
     }
 }
