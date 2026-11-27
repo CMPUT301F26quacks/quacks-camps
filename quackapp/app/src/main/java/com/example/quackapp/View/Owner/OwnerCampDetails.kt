@@ -1,6 +1,5 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
-import android.R.attr.onClick
 import com.example.quackapp.Model.ReservationRepository
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -31,10 +30,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,21 +42,22 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.quackapp.Controller.DetailedCampsiteController
+import com.example.quackapp.Controller.OwnerCampDetailsController
 import com.example.quackapp.Model.ListCampInLotteryRoute
+import com.example.quackapp.View.MapPreviewCard
+import com.example.quackapp.View.toDisplayDate
 import com.google.android.gms.maps.model.LatLng
 
 /**
  * Owner-side UI for viewing the details of their campsite
  * @param navController navController object used to navigate to this screen
- * @param viewModel the controller used with this screen. Default [DetailedCampsiteController]
+ * @param viewModel the controller used with this screen. Default [OwnerCampDetailsController]
  */
 @Composable
-fun DetailedCampsiteScreen(
+fun OwnerCampDetails(
     navController: NavController,
-    viewModel: DetailedCampsiteController = viewModel()
+    viewModel: OwnerCampDetailsController = viewModel()
 ) {
-    var showMultiSelect by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
@@ -289,12 +285,6 @@ fun DetailedCampsiteScreen(
                             "No active lottery created for this campsite.",
                             fontSize = 16.sp
                         )
-                        Button(
-                            modifier = Modifier.testTag("createLotteryButton"),
-                            onClick = { navController.navigate(ListCampInLotteryRoute(campsiteIds = listOf(viewModel.campsiteId))) }
-                        ) {
-                            Text("Create Lottery")
-                        }
                     }
                 }
 

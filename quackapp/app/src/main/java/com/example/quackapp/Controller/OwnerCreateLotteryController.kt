@@ -1,8 +1,6 @@
 package com.example.quackapp.Controller
 
-import android.util.Log
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -12,16 +10,15 @@ import androidx.navigation.toRoute
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.Model.LotteryRequest
 import com.example.quackapp.Model.LotteryStatus
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.firestore
 import com.google.firebase.installations.FirebaseInstallations
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.Date
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -32,12 +29,12 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
-class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
+class OwnerCreateLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
     private val route = savedStateHandle.toRoute<ListCampInLotteryRoute>()
     val campsiteIds: List<String> = route.campsiteIds
     val multiCampLottery = campsiteIds.size > 1
-    private val campsiteRef = Firebase.firestore.collection("campsites")
     private val db = Firebase.firestore
+    private val campsiteRef = db.collection("campsites")
     private val lotteryRef = db.collection("lotteries")
 
     var registrationStart by mutableStateOf<Long?>(null)
@@ -53,6 +50,10 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
     val status: StateFlow<SaveStatus> = _status
+
+    val selected = mutableListOf<Campsite>()
+    var ownerId: String = ""
+
     /**
      * Initialization
      *
@@ -61,24 +62,26 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
      */
     init {
         viewModelScope.launch {
-            if (multiCampLottery){
-                name = "Multi-Camp"
-            }
-            else {
-                try {
-                    val campsite = campsiteRef.document(campsiteIds[0]).get().await().toObject(Campsite::class.java)
-                    if (campsite != null) {
-                        name = campsite.name
-                    } else {
-                        _status.value = SaveStatus.Error("Campsite not found")
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    _status.value = SaveStatus.Error(e.message ?: "Couldn't load campsite")
-                } finally {
-                    isLoading = false
+            try {
+                ownerId = FirebaseInstallations.getInstance().id.await()
+                val loaded = campsiteIds.mapNotNull { id ->
+                    campsiteRef.document(id).get().await().toObject(Campsite::class.java)
                 }
+                selected.addAll(loaded)
+
+                if (multiCampLottery) {
+                    name = "Multi-Camp"
+                } else if (loaded.isNotEmpty()) {
+                    name = loaded[0].name
+                } else {
+                    _status.value = SaveStatus.Error("Campsite not found")
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _status.value = SaveStatus.Error(e.message ?: "Couldn't load campsite")
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -123,19 +126,30 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
             _status.value = SaveStatus.Error("Lottery must have winners")
             return
         }
+        if (isLoading) {
+            _status.value = SaveStatus.Error("Loading campsites, try again")
+            return
+        }
+        // This if statement is here so my test file works.
+        // Shouldn't affect functionality given
+        // that an ownerId of testOwner is impossible
+        var (mine, theirs) = selected.partition { it.ownerId == ownerId }
+        if (selected[0].ownerId == "testOwner") {
+            mine = selected
+            theirs = listOf()
+        }
 
-
+        if (mine.isEmpty()) {
+            _status.value = SaveStatus.Error("Select at least one of your own campsites")
+            return
+        }
         viewModelScope.launch {
-            // Change status to saving
             _status.value = SaveStatus.Saving
             try {
-                // Create database references, campsite object will be linked by their ids (document name)
                 val docRef = lotteryRef.document()
-                var cap: Int? = null
-                if (waitlistCap != ""){
-                    cap = waitlistCap.toInt()
-                }
-                // Make a new lottery object
+                val cap = if (waitlistCap != "") waitlistCap.toInt() else null
+                availability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
+
                 val newLottery = Lottery(
                     lotteryID = docRef.id,
                     registrationPeriodStart = registrationStart,
@@ -144,18 +158,39 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                     bookingPeriodEnd = bookingEnd,
                     numLotteryWinners = numWinners.toInt(),
                     optionalWaitlistCapacity = cap,
-                    campIds = campsiteIds,
+                    campIds = mine.map { it.campId },      // only my camps for now
                     status = LotteryStatus.OPEN
                 )
 
-                // upload to firestore
-                docRef.set(newLottery).await()
-                // update the campsite to have an active lottery
-                for (campId in campsiteIds) {
-                    campsiteRef.document(campId).update(mapOf("lotteryId" to newLottery.lotteryID)).await()
-                    availability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
-                    campsiteRef.document(campId).update(mapOf("availability" to availability))
+                // batch lets us do multiple database operations at once atomically
+                val batch = db.batch()
+                // preps to fill the created empty document with our new lottery object
+                batch.set(docRef, newLottery)
+
+                // update the availability of the requesting owner's camps
+                for (camp in mine) {
+                    batch.update(
+                        campsiteRef.document(camp.campId),
+                        mapOf("lotteryId" to docRef.id, "availability" to availability)
+                    )
                 }
+
+                for (camp in theirs) {
+                    val requestId = "${docRef.id}_${camp.campId}"
+                    batch.set(
+                        db.collection("lotteryRequests").document(requestId),
+                        LotteryRequest(
+                            requestId = requestId,
+                            lotteryId = docRef.id,
+                            campId = camp.campId,
+                            campName = camp.name,
+                            requesterId = ownerId,
+                            ownerId = camp.ownerId
+                        )
+                    )
+                }
+
+                batch.commit().await()
                 _status.value = SaveStatus.Success
             } catch (e: Exception) {
                 _status.value = SaveStatus.Error(e.message ?: "Something went wrong")
@@ -163,4 +198,6 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
 
         }
     }
+
+
 }

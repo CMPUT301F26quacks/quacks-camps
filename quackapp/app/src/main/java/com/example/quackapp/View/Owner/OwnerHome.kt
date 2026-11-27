@@ -1,4 +1,4 @@
-package com.example.quackapp.View
+package com.example.quackapp.View.Owner
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -18,15 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,7 +41,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -57,12 +51,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.quackapp.Controller.ListCampInLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.CampsiteOwner
 import com.example.quackapp.Model.ListCampInLotteryRoute
-import com.example.quackapp.Model.Lottery
 
 /**
  * UI for the home page that Campsite owners are directed to
@@ -75,17 +67,25 @@ fun OwnerHome(
     navController: NavController,
     viewModel: OwnerHomeController = viewModel()
 ) {
-    val camps by viewModel.camps.collectAsState()
+    val ownedCamps by viewModel.ownedCamps.collectAsState()
+    val otherCamps by viewModel.otherCamps.collectAsState()
     var campToDelete by remember { mutableStateOf<Campsite?>(null) }
     var campToShowQR by remember { mutableStateOf<Campsite?>(null) }    //track which campsite's QR code to display
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val selectionMode = selectedIds.isNotEmpty()
+    var showOtherCamps by remember { mutableStateOf(false) }
+    val requests by viewModel.incomingRequests.collectAsStateWithLifecycle()
+    var showRequests by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.clearSelection()
+
+    }
+    LaunchedEffect(requests.isEmpty()) {
+        if (requests.isEmpty()) showRequests = false
     }
 
-    OwnerScaffold (
+    OwnerScaffold(
         navController = navController,
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
@@ -96,8 +96,17 @@ fun OwnerHome(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column() {
-                        Text(text = "Campsites", fontSize = 40.sp)
-                        Text(text = "Tap and hold to select", fontSize = 10.sp, modifier = Modifier.padding(start = 4.dp))
+                        Text(text = "Campsites", fontSize = 36.sp)
+                        Text(
+                            text = "Tap and hold to select",
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
+                    if (requests.isNotEmpty()) {
+                        Button(onClick = { showRequests = true }) {
+                            Text("Requests (${requests.size})")
+                        }
                     }
                     FloatingActionButton(
                         containerColor = Color(0xFFFF9800),
@@ -114,7 +123,7 @@ fun OwnerHome(
 
         }
     ) { innerPadding ->
-        if (camps.isEmpty()) {
+        if (ownedCamps.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -123,12 +132,14 @@ fun OwnerHome(
             ) {
                 Text("No campsites registered")
             }
-        }
-        else {
+        } else {
             BackHandler(enabled = selectionMode) { viewModel.clearSelection() }
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 AnimatedVisibility(visible = selectionMode) {
                     Row(
                         modifier = Modifier
@@ -139,7 +150,9 @@ fun OwnerHome(
                     ) {
                         Button(
                             modifier = Modifier.testTag("createLotteryButton"),
-                            onClick = {navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))},
+                            onClick = {
+                                navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))
+                                      },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color(0xFFF3AE00))
                         ) {
@@ -164,15 +177,16 @@ fun OwnerHome(
                     }
                 }
                 LazyColumn(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(if (showOtherCamps) 0.5f else 1f),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    items(camps, key = { it.campId }) { campsite ->
+                    items(ownedCamps, key = { it.campId }) { campsite ->
                         CampRow(
                             campsite,
                             navController,
+                            owned = true,
                             onDeleteClick = { campToDelete = campsite },
                             onQRClick = { campToShowQR = campsite },
                             isSelected = campsite.campId in selectedIds,
@@ -183,6 +197,41 @@ fun OwnerHome(
                             },
                             onLongClick = { viewModel.toggleSelection(campsite.campId) }
                         )
+                    }
+                }
+                Button(
+                    onClick = {showOtherCamps = !showOtherCamps},
+                    colors = if (!showOtherCamps) ButtonDefaults.buttonColors(Color(0xFF2196F3))
+                             else ButtonDefaults.buttonColors(Color(0xFFF3AE00))
+                ) {
+                    Text("View other Owners' camps")
+                }
+
+                AnimatedVisibility(
+                    visible = showOtherCamps,
+                    modifier = Modifier.weight(0.5f),
+                ) {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        items(otherCamps, key = { it.campId }) { campsite ->
+                            CampRow(
+                                campsite,
+                                navController,
+                                owned = false,
+                                onDeleteClick = { campToDelete = campsite },
+                                onQRClick = { campToShowQR = campsite },
+                                isSelected = campsite.campId in selectedIds,
+                                selectionMode = selectionMode,
+                                onClick = {
+                                    if (selectionMode) viewModel.toggleSelection(campsite.campId)
+                                    else navController.navigate("CampsiteDetails/${campsite.campId}")
+                                },
+                                onLongClick = { viewModel.toggleSelection(campsite.campId) }
+                            )
+                        }
                     }
                 }
                 // As soon as the campToDelete is not null anymore, create a popup to confirm deletion
@@ -231,6 +280,26 @@ fun OwnerHome(
                     )
 
                 }
+                if (showRequests) {
+                    AlertDialog(
+                        onDismissRequest = { showRequests = false },
+                        title = { Text("Lottery requests") },
+                        text = {
+                            LazyColumn {
+                                items(requests, key = { it.requestId }) { req ->
+                                    Column(Modifier.padding(vertical = 8.dp)) {
+                                        Text("Add \"${req.campName}\" to a lottery?")
+                                        Row {
+                                            TextButton(onClick = { viewModel.approve(req) }) { Text("Approve") }
+                                            TextButton(onClick = { viewModel.decline(req) }) { Text("Decline") }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = { TextButton(onClick = { showRequests = false }) { Text("Close") } }
+                    )
+                }
             }
         }
     }
@@ -244,6 +313,7 @@ fun OwnerHome(
 fun CampRow(
     campsite: Campsite,
     navController: NavController,
+    owned: Boolean,
     onDeleteClick: () -> Unit,
     onQRClick: () -> Unit,
     isSelected: Boolean,
@@ -308,44 +378,48 @@ fun CampRow(
                 color = Color.White
             )
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Edit",
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    modifier = Modifier
-                        .testTag("edit${campsite.name}")
-                        .clickable(onClick = { navController.navigate("EditCampsite/${campsite.campId}") })
-                )
-                Text(
-                    text = "Details",
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    modifier = Modifier
-                        .testTag("details${campsite.name}")
-                        .clickable(onClick = { navController.navigate("CampsiteDetails/${campsite.campId}") })
-                )
-                // TODO delete campId from related lotteries
-                //  and maybe the lottery itself if the campIds list is empty
-                Text(
-                    text = "Delete",
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    modifier = Modifier
-                        .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable(onClick = onDeleteClick)
-                        .testTag("delete${campsite.name}")
-                )
-                Text(
-                    text = "QR Code",
-                    fontSize = 16.sp,
-                    color=Color.White,
-                    modifier = Modifier
-                        .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable(onClick = onQRClick)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+            if (owned) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Edit",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .testTag("edit${campsite.name}")
+                            .clickable(onClick = { navController.navigate("EditCampsite/${campsite.campId}") })
+                    )
+                    Text(
+                        text = "Details",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .testTag("details${campsite.name}")
+                            .clickable(onClick = { navController.navigate("CampsiteDetails/${campsite.campId}") })
+                    )
+                    // TODO delete campId from related lotteries
+                    //  and maybe the lottery itself if the campIds list is empty
+                    Text(
+                        text = "Delete",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .pointerHoverIcon(PointerIcon.Hand)
+                            .clickable(onClick = onDeleteClick)
+                            .testTag("delete${campsite.name}")
+                    )
+                    Text(
+                        text = "QR Code",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .pointerHoverIcon(PointerIcon.Hand)
+                            .clickable(onClick = onQRClick)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
             }
         }
 
