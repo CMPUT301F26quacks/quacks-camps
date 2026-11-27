@@ -27,7 +27,7 @@ import com.example.quackapp.Model.ReservationRepository
  * Fetches a campsite from Firestore and stores its fields into their
  * respective state variables
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
 class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])

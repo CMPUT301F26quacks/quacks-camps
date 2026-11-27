@@ -22,7 +22,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * Holds some state variables to display on the form.
  * Contains logic to edit the [Lottery] containing the [Campsite]
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
 class OwnerEditLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])

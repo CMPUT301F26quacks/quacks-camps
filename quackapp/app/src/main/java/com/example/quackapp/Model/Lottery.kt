@@ -7,20 +7,33 @@ import kotlin.time.Duration.Companion.minutes
 
 
 //enum so easy to filter, typos get flagged etc.
+/**
+ * Denotes the status of a lottery
+ * Can be OPEN or CLOSED
+ */
 enum class LotteryStatus { OPEN, CLOSED}
+/**
+ * Denotes the status of an entrant in lottery's waitlist
+ * Can be WAITING for the booking period, SELECTED to book the camp, or NOT_SELECTED if they lost the lottery
+ */
 enum class WaitlistStatus {WAITING, SELECTED, NOT_SELECTED}
 
-/*-registration period
--booking period
--list of entrants
--number of lottery winners
--optional capacity of waitlist
-
--notify winners and non-selected entrants
--proceeding with booking
--automatically draw winners?
-*/
-
+/**
+ * Lottery class
+ *
+ * Contains all information necessary for Owner and Entrant interactions in regard to booking campsites
+ *
+ * @property lotteryID unique ID used to distinguish lotteries
+ * @property registrationPeriodStart timestamp in milliseconds for when the registration period starts
+ * @property registrationPeriodEnd timestamp in milliseconds for when the registration period ends
+ * @property bookingPeriodStart timestamp in milliseconds for when the booking period starts
+ * @property bookingPeriodEnd timestamp in milliseconds for when the booking period ends
+ * @property numLotteryWinners number of Entrants who are selected to book
+ * @property optionalWaitlistCapacity max capacity of Entrants in the waitlist
+ * @property waitlist list of Entrant's user IDs who are interested in booking the camps in this lottery
+ * @property status whether this lottery is open (active) or closed (done/completed)
+ * @property campIds unique IDs of the camps involved in this lottery
+ */
 class Lottery(
     var lotteryID: String = "",
     var registrationPeriodStart: Long? = null,

@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.example.quackapp.Model.Campsite
-import com.example.quackapp.Model.ListCampInLotteryRoute
+import com.example.quackapp.Model.CreateLotteryRoute
 import com.example.quackapp.Model.Lottery
 import com.example.quackapp.Model.LotteryRequest
 import com.example.quackapp.Model.LotteryStatus
@@ -27,10 +27,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * Holds some state variables to display on the form.
  * Contains logic to create new lotteries for the selected [Campsite]
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
-class OwnerCreateLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
-    private val route = savedStateHandle.toRoute<ListCampInLotteryRoute>()
+class OwnerCreateLotteryController(savedStateHandle: SavedStateHandle) : ViewModel() {
+    private val route = savedStateHandle.toRoute<CreateLotteryRoute>()
     val campsiteIds: List<String> = route.campsiteIds
     val multiCampLottery = campsiteIds.size > 1
     private val db = Firebase.firestore
@@ -91,9 +91,12 @@ class OwnerCreateLotteryController(savedStateHandle: SavedStateHandle): ViewMode
      * @return a String message of the error or null if all good
      */
     private fun validateDates(): String? {
-        val open = registrationStart; val close = registrationEnd
-        val start = bookingStart; val end = bookingEnd
-        val availStart = availabilityStart; val availEnd = availabilityEnd
+        val open = registrationStart
+        val close = registrationEnd
+        val start = bookingStart
+        val end = bookingEnd
+        val availStart = availabilityStart
+        val availEnd = availabilityEnd
 
         if (open == null || close == null || start == null || end == null)
             return "Pick registration and booking dates"

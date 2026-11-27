@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 /**
- * Represents the state of the campsite registration, mostly for the optional
+ * Represents the save state of data to the Firestore, mostly for the optional
  * promo image upload.
  *
  * The UI observes this to decide what to display (for example, a progress
@@ -41,7 +41,7 @@ sealed interface SaveStatus {
  * If the user picked a promo image, it is uploaded to Firebase Storage first and
  * its download URL is stored on the [Campsite] document.
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  *
  */
 class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(){

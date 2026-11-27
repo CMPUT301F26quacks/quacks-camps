@@ -54,7 +54,7 @@ import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.CampsiteOwner
-import com.example.quackapp.Model.ListCampInLotteryRoute
+import com.example.quackapp.Model.CreateLotteryRoute
 
 /**
  * UI for the home page that Campsite owners are directed to
@@ -151,7 +151,7 @@ fun OwnerHome(
                         Button(
                             modifier = Modifier.testTag("createLotteryButton"),
                             onClick = {
-                                navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))
+                                navController.navigate(CreateLotteryRoute(campsiteIds = selectedIds.toList()))
                                       },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color(0xFFF3AE00))

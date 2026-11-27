@@ -26,7 +26,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * If the user picked a promo image, it is uploaded to Firebase Storage first and
  * its download URL is stored on the [Campsite] document.
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
 class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
@@ -53,7 +53,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
         private set
 
     var latitude by mutableDoubleStateOf(0.00)
-    var longitude by  mutableDoubleStateOf(0.00)
+    var longitude by mutableDoubleStateOf(0.00)
 
 
     var isLoading by mutableStateOf(true)
@@ -61,6 +61,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
 
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
     val status: StateFlow<SaveStatus> = _status
+
     /**
      * Initialization
      *
@@ -81,7 +82,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
                     rules = campsite.rules
                     cancellationPolicy = campsite.cancellationPolicy
                     selectedTags = campsite.tags.toSet()
-                    for (tag in selectedTags){
+                    for (tag in selectedTags) {
                         tags = tags + tag
                     }
                     latitude = campsite.latitude
@@ -99,6 +100,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
         }
 
     }
+
     /**
      * Validates state variable and alters [Campsite] object in the Firestore.
      * [Campsite] objects may have images which are stored into Firebase Storage
@@ -108,16 +110,13 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
         if (name.isBlank()) {
             _status.value = SaveStatus.Error("Campsite must have a name")
             return
-        }
-        else if (location.isBlank()) {
+        } else if (location.isBlank()) {
             _status.value = SaveStatus.Error("Campsite must have a location")
             return
-        }
-        else if (price.toInt() <= 0) {
+        } else if (price.toInt() <= 0) {
             _status.value = SaveStatus.Error("Price must be non-zero")
             return
-        }
-        else if (capacity.toInt() <= 0) {
+        } else if (capacity.toInt() <= 0) {
             _status.value = SaveStatus.Error("Capacity must be non-zero")
             return
         }
@@ -160,10 +159,14 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
             }
         }
     }
+
     /**
      * Adds another element to the amentities/features list
      */
-    fun addFeature() { features = features + "" }
+    fun addFeature() {
+        features = features + ""
+    }
+
     /**
      * Updates an element of the amentities/features list at the index
      * @param index Used to find the element to update
@@ -172,6 +175,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
     fun updateFeature(index: Int, value: String) {
         features = features.toMutableList().also { it[index] = value }
     }
+
     /**
      * Deletes an element of the amentities/features list at the index
      * @param index Used to find the element to delete
@@ -179,10 +183,14 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
     fun removeFeature(index: Int) {
         features = features.toMutableList().also { it.removeAt(index) }
     }
+
     /**
      * Adds another element to the rules list
      */
-    fun addRule() { rules = rules + "" }
+    fun addRule() {
+        rules = rules + ""
+    }
+
     /**
      * Updates an element of the rules list at the index
      * @param index Used to find the element to update
@@ -191,6 +199,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
     fun updateRule(index: Int, value: String) {
         rules = rules.toMutableList().also { it[index] = value }
     }
+
     /**
      * Deletes an element of the rules list at the index
      * @param index Used to find the element to delete
@@ -198,6 +207,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
     fun removeRule(index: Int) {
         rules = rules.toMutableList().also { it.removeAt(index) }
     }
+
     /**
      * Toggles the selection of a tag
      * @param tag Identifies the element to toggle
@@ -205,6 +215,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
     fun toggleTag(tag: String) {
         selectedTags = if (tag in selectedTags) selectedTags - tag else selectedTags + tag
     }
+
     /**
      * Adds a custom Tag to the tags list
      * @param raw Name of the new tag
@@ -221,6 +232,7 @@ class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() 
             selectedTags = selectedTags + existing
         }
     }
+
     /**
      * Sets the latitude and longitude location based on a LatLng
      * @param loc the LatLng that gets separated into its parts

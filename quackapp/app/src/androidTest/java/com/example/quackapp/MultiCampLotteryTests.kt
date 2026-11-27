@@ -23,7 +23,7 @@ import com.example.quackapp.Controller.OwnerEditLotteryController
 import com.example.quackapp.Controller.OwnerCreateLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.RegisterCampsiteController
-import com.example.quackapp.Model.ListCampInLotteryRoute
+import com.example.quackapp.Model.CreateLotteryRoute
 import com.example.quackapp.View.Owner.OwnerCampDetails
 import com.example.quackapp.View.Owner.OwnerEditLottery
 import com.example.quackapp.View.Owner.OwnerCreateLottery
@@ -78,7 +78,7 @@ class MultiCampLotteryTests {
                     }
                     OwnerCampDetails(navController, detailVM)
                 }
-                composable<ListCampInLotteryRoute> { entry ->
+                composable<CreateLotteryRoute> { entry ->
                     val vm: OwnerCreateLotteryController = viewModel()
                     lotteryVM = vm
                     OwnerCreateLottery(navController, vm)
