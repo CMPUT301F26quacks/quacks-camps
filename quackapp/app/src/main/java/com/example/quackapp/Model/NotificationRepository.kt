@@ -592,7 +592,7 @@ class NotificationRepository private constructor() {
 
                 }
             },
-            
+
             onFail = onFail
 
         )
