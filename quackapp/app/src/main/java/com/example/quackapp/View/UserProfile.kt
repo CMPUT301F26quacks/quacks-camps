@@ -52,6 +52,7 @@ import com.example.quackapp.Controller.UserProfileValidator
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import com.example.quackapp.View.Owner.OwnerScaffold
 
 /**
  * Shared screen for creating and editing a user profile.
@@ -465,6 +466,7 @@ fun UserProfile(
         }
     }
 
+    //Gets the right Scaffold for the user editing their profile
     if (isEditing && selectedRole == "ENTRANT") {
         EntrantScaffold(navController) { content(it) }
     } else if (isEditing && selectedRole == "OWNER") {
