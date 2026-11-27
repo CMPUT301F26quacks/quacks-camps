@@ -7,12 +7,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Review
@@ -153,6 +155,42 @@ class AdminIntentTest {
         composeRule.onNodeWithText("Tunnel Mountain").assertDoesNotExist()
     }
 
+    /** US 03.06.01: search also works with the location, and clearing it shows everything again */
+    @Test
+    fun gallerySearchByLocationThenClear() {
+        composeRule.setContent {
+            AdminImageGalleryContent(campsites = listOf(tunnelMountain, whistlers), onDeleteImage = {})
+        }
+        composeRule.onNodeWithTag("gallerySearch").performTextInput("banff")
+        composeRule.onNodeWithText("Tunnel Mountain").assertIsDisplayed()
+        composeRule.onNodeWithText("Whistlers").assertDoesNotExist()
+
+        composeRule.onNodeWithTag("gallerySearch").performTextClearance()
+        composeRule.onNodeWithText("Tunnel Mountain").assertIsDisplayed()
+        composeRule.onNodeWithText("Whistlers").assertIsDisplayed()
+    }
+
+    /** searching for something that isnt there says no images match instead of no images at all */
+    @Test
+    fun gallerySearchNoMatchMessage() {
+        composeRule.setContent {
+            AdminImageGalleryContent(campsites = listOf(tunnelMountain, whistlers), onDeleteImage = {})
+        }
+        composeRule.onNodeWithTag("gallerySearch").performTextInput("zzz")
+        composeRule.onNodeWithText("No images match \"zzz\"").assertIsDisplayed()
+        composeRule.onNodeWithText("No uploaded images yet").assertDoesNotExist()
+        composeRule.onNodeWithText("Tunnel Mountain").assertDoesNotExist()
+    }
+
+
+    @Test
+    fun galleryEmptyWhenNoImagesUploaded() {
+        composeRule.setContent {
+            AdminImageGalleryContent(campsites = listOf(noImageCamp), onDeleteImage = {})
+        }
+        composeRule.onNodeWithText("No uploaded images yet").assertIsDisplayed()
+    }
+
     @Test
     fun manageCampsitesOpensCampsite() {
         var clicked: Campsite? = null
@@ -196,6 +234,20 @@ class AdminIntentTest {
         composeRule.onNodeWithText("Cancel").performClick()
         assertEquals(null, deleted)
         composeRule.onNodeWithText("Tunnel Mountain").assertIsDisplayed()
+    }
+
+
+    /** US 03.04.01: searching manage campsites for a name that doesnt exist shows the empty message */
+    @Test
+    fun manageCampsitesSearchNoMatch() {
+        composeRule.setContent {
+            AdminCampsitesContent(campsites = listOf(tunnelMountain, whistlers), onCampsiteClick = {})
+        }
+        // search bar doesnt have a tag so just find the text field
+        composeRule.onNode(hasSetTextAction()).performTextInput("zzz")
+        composeRule.onNodeWithText("No campsites found").assertIsDisplayed()
+        composeRule.onNodeWithText("Tunnel Mountain").assertDoesNotExist()
+        composeRule.onNodeWithText("Whistlers").assertDoesNotExist()
     }
 
     /** US 03.09.01: remove an abusive rating. */

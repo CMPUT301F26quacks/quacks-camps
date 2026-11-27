@@ -41,6 +41,8 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
         private set
     var actionError by mutableStateOf<String?>(null)
         private set
+    var actionSuccess by mutableStateOf<String?>(null)
+        private set
 
     /** Every rating/review left on this campsite, live. A [Review.rating] of 0 means "no rating". */
     val reviews: StateFlow<List<Review>> = callbackFlow {
@@ -87,10 +89,13 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
      * @param review the review whose rating violates app policy.
      */
     fun removeRating(review: Review) {
+        actionError = null
+        actionSuccess = null
         viewModelScope.launch {
             try {
-                removeField(review, field = "rating", otherPartEmpty = review.feedback.isBlank())
+                removeField(review, field = "rating")
                 CampsiteRatingUpdater.recompute(campId)
+                actionSuccess = "Rating removed"
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -106,9 +111,12 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
      * @param review the review whose text violates app policy.
      */
     fun removeReview(review: Review) {
+        actionError = null
+        actionSuccess = null
         viewModelScope.launch {
             try {
-                removeField(review, field = "feedback", otherPartEmpty = review.rating == 0F)
+                removeField(review, field = "feedback")
+                actionSuccess = "Review removed"
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -118,12 +126,28 @@ class AdminReviewController(savedStateHandle: SavedStateHandle) : ViewModel() {
     }
 
     /** Deletes [field] from the review document, or the whole document if nothing else is left in it. */
-    private suspend fun removeField(review: Review, field: String, otherPartEmpty: Boolean) {
+    private suspend fun removeField(review: Review, field: String) {
         val doc = db.collection("reviews").document(review.reviewID)
-        if (otherPartEmpty) {
+        if (reviewWillBeEmpty(review, field)) {
             doc.delete().await()
         } else {
             doc.update(field, FieldValue.delete()).await()
         }
     }
+}
+
+
+/**
+ * Checks if removing one part of a review leaves nothing in it, so the whole doc should get deleted.
+ *
+ * @param review the review the admin is changing.
+ * @param field "rating" or "feedback", whichever part is being removed.
+ * @return true if the other part is already empty.
+ */
+fun reviewWillBeEmpty(review: Review, field: String): Boolean {
+    if (field == "rating") {
+        return review.feedback.isBlank()
+    }
+    // removing the feedback, so check if theres a rating left
+    return review.rating == 0F
 }

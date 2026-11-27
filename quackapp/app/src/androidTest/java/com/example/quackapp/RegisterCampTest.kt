@@ -6,7 +6,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -21,16 +20,14 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.testing.TestNavHostController
-import com.example.quackapp.Controller.DetailedCampsiteController
-import com.example.quackapp.Controller.EditCampsiteController
+import com.example.quackapp.Controller.OwnerCampDetailsController
+import com.example.quackapp.Controller.OwnerEditCampController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.RegisterCampsiteController
-import com.example.quackapp.Model.Campsite
-import com.example.quackapp.View.DetailedCampsiteScreen
-import com.example.quackapp.View.EditCampsiteScreen
-import com.example.quackapp.View.OwnerHome
-import com.example.quackapp.View.RegisterCampsiteScreen
-import okhttp3.internal.wait
+import com.example.quackapp.View.Owner.OwnerCampDetails
+import com.example.quackapp.View.Owner.OwnerEditCamp
+import com.example.quackapp.View.Owner.OwnerHome
+import com.example.quackapp.View.Owner.OwnerCreateCamp
 import org.junit.Rule
 import org.junit.Test
 
@@ -58,20 +55,20 @@ class RegisterCampTest {
             }
             NavHost(navController, startDestination = "OwnerHome") {
                 composable("OwnerHome") { OwnerHome(navController, homeVM) }
-                composable("RegisterCampsite/{id}") { RegisterCampsiteScreen(navController, registerVM) }
+                composable("RegisterCampsite/{id}") { OwnerCreateCamp(navController, registerVM) }
                 composable("CampsiteDetails/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()
                     val detailVM = remember(id) {
-                        DetailedCampsiteController(SavedStateHandle(mapOf("campsiteId" to id)))
+                        OwnerCampDetailsController(SavedStateHandle(mapOf("campsiteId" to id)))
                     }
-                    DetailedCampsiteScreen(navController, detailVM)
+                    OwnerCampDetails(navController, detailVM)
                 }
                 composable("EditCampsite/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()
                     val editVM = remember(id) {
-                        EditCampsiteController(SavedStateHandle(mapOf("campsiteId" to id)))
+                        OwnerEditCampController(SavedStateHandle(mapOf("campsiteId" to id)))
                     }
-                    EditCampsiteScreen(navController, editVM)
+                    OwnerEditCamp(navController, editVM)
                 }
             }
         }

@@ -1,6 +1,5 @@
 package com.example.quackapp.Controller
 
-import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -12,7 +11,6 @@ import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Lottery
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import com.google.firebase.storage.storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -31,7 +29,7 @@ import com.example.quackapp.Model.ReservationRepository
  *
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
-class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel() {
+class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
     private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
     private val lotteryRef = Firebase.firestore.collection("lotteries")
@@ -58,9 +56,7 @@ class DetailedCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
     val status: StateFlow<SaveStatus> = _status
     var rating by mutableStateOf("0.0")
         private set
-
     var bookedReservations by mutableStateOf<List<Reservation>>(emptyList())
-
     var waitlistEntrants by mutableStateOf<List<String>>(emptyList())
         private set
 

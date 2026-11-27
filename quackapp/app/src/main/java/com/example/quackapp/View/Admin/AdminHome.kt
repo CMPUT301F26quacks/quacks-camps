@@ -65,6 +65,7 @@ fun AdminHome(
             userCount = userCount,
             onManageCampsites = { navController.navigate("AdminCampsites") },
             onManageMedia = { navController.navigate("AdminImageGallery") },
+            onManageUsers = { navController.navigate("AdminProfiles") },
             onSwitchProfile = { route -> navController.navigate(route) }
         )
     }
