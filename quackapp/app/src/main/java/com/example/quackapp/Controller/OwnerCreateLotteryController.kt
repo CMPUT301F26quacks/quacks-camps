@@ -45,6 +45,7 @@ class OwnerCreateLotteryController(savedStateHandle: SavedStateHandle): ViewMode
     var availability by mutableStateOf(listOf<Long>())
     var availabilityStart by mutableStateOf<Long?>(null)
     var availabilityEnd by mutableStateOf<Long?>(null)
+
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)

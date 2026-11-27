@@ -58,6 +58,7 @@ fun OwnerEditLottery(
 
 
     val status by viewModel.status.collectAsState()
+
     LaunchedEffect(status) {
         if (status is SaveStatus.Success){
             navController.navigate(route = "CampsiteDetails/${viewModel.campsiteId}")
@@ -76,6 +77,7 @@ fun OwnerEditLottery(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+
             Text(text = "Editing Lottery", fontSize = 36.sp)
             IconButton(
                 colors = iconButtonColors(
@@ -94,10 +96,12 @@ fun OwnerEditLottery(
         }
 
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.Center) {
+
             Text("Any changes will affect these campsites: ")
             viewModel.names.forEach { name ->
                 Text("- $name")
             }
+
             Text("* signifies required field", color = Color.Red)
             Text(text = buildAnnotatedString {
                 append("Registration Period ")

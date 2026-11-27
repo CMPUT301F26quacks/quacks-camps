@@ -86,6 +86,7 @@ class CreateLotteryTests {
                     }
                     OwnerCampDetails(navController, detailVM)
                 }
+
                 composable<ListCampInLotteryRoute> { entry ->
                     val vm: OwnerCreateLotteryController = viewModel()
                     lotteryVM = vm
@@ -284,8 +285,8 @@ class CreateLotteryTests {
             .onNodeWithTag("editLotteryButton")
             .performClick()
 
-        waitFor("Editing Lottery")
 
+        waitFor("Editing Lottery")
         composeRule.runOnIdle {
             editLotteryVM.bookingStart = millis(2026, 12, 16)
             editLotteryVM.bookingEnd = millis(2026, 12, 18)
@@ -300,6 +301,7 @@ class CreateLotteryTests {
         composeRule
             .onNodeWithTag("lotteryInfo")
             .performScrollTo()
+
 
         waitFor("Registration: Dec 10, 2026 to Dec 14, 2026")
 

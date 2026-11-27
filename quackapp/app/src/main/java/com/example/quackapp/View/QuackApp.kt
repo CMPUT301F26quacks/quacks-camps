@@ -21,6 +21,7 @@ import com.example.quackapp.View.Owner.OwnerCreateLottery
 import com.example.quackapp.View.Owner.OwnerHome
 import com.example.quackapp.View.Owner.OwnerReservationHistory
 import com.example.quackapp.View.Owner.OwnerCreateCamp
+import com.example.quackapp.View.Admin.AdminProfilesScreen
 
 /**
  * Sets up navigation between screens for whole app
@@ -82,6 +83,7 @@ fun QuackApp() {
         ) { OwnerEditLottery(navController) }
 
 
+
         composable("CreateEntrantProfile") {
             UserProfile(
                 navController = navController,
@@ -115,6 +117,7 @@ fun QuackApp() {
         composable("AdminHome") { AdminHome(navController) }
         composable("AdminImageGallery") { AdminImageGallery(navController) }
         composable("AdminCampsites") { AdminCampsites(navController) }
+        composable("AdminProfiles") { AdminProfilesScreen(navController) }
         composable(
             route = "AdminCampsiteReviews/{campId}",
             arguments = listOf(navArgument("campId") { type = NavType.StringType })
