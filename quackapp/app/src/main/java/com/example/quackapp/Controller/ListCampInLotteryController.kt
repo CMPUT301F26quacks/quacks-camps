@@ -48,10 +48,7 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
     var availability by mutableStateOf(listOf<Long>())
     var availabilityStart by mutableStateOf<Long?>(null)
     var availabilityEnd by mutableStateOf<Long?>(null)
-<<<<<<< HEAD
-    var lottery by mutableStateOf<String?>(null)
-=======
->>>>>>> dev
+
     var isLoading by mutableStateOf(true)
         private set
     private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
@@ -147,28 +144,18 @@ class ListCampInLotteryController(savedStateHandle: SavedStateHandle): ViewModel
                     bookingPeriodEnd = bookingEnd,
                     numLotteryWinners = numWinners.toInt(),
                     optionalWaitlistCapacity = cap,
-<<<<<<< HEAD
-                    campIds = listOf(campsiteId),
-=======
                     campIds = campsiteIds,
->>>>>>> dev
                     status = LotteryStatus.OPEN
                 )
 
                 // upload to firestore
                 docRef.set(newLottery).await()
                 // update the campsite to have an active lottery
-<<<<<<< HEAD
-                campsiteRef.update(mapOf("lotteryId" to newLottery.lotteryID)).await()
-                availability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
-                campsiteRef.update(mapOf("availability" to availability))
-=======
                 for (campId in campsiteIds) {
                     campsiteRef.document(campId).update(mapOf("lotteryId" to newLottery.lotteryID)).await()
                     availability = (availabilityStart!!..availabilityEnd!! step 86400000).toList()
                     campsiteRef.document(campId).update(mapOf("availability" to availability))
                 }
->>>>>>> dev
                 _status.value = SaveStatus.Success
             } catch (e: Exception) {
                 _status.value = SaveStatus.Error(e.message ?: "Something went wrong")

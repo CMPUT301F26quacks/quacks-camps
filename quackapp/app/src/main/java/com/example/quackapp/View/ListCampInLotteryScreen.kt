@@ -69,11 +69,7 @@ fun ListCampInLotteryScreen(
             viewModel.bookingEnd = null
             numWinners = ""
             waitlistCap = ""
-<<<<<<< HEAD
-            navController.navigate(route = "CampsiteDetails/${viewModel.campsiteId}")
-            {
-                popUpTo("CampsiteDetails/${viewModel.campsiteId}") { inclusive = true }
-=======
+
             if (viewModel.multiCampLottery){
                 navController.popBackStack()
             }
@@ -82,7 +78,6 @@ fun ListCampInLotteryScreen(
                 {
                     popUpTo("CampsiteDetails/${viewModel.campsiteIds[0]}") { inclusive = true }
                 }
->>>>>>> dev
             }
         }
     }
