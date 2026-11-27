@@ -39,6 +39,8 @@ class AdminController : ViewModel() {
 
     var deleteError by mutableStateOf<String?>(null)
         private set
+    var deleteSuccess by mutableStateOf<String?>(null)
+        private set
 
     val campsites: StateFlow<List<Campsite>> = callbackFlow {
         val listener = db.collection("campsites")
@@ -86,6 +88,7 @@ class AdminController : ViewModel() {
      */
     fun deleteImage(campsite: Campsite) {
         deleteError = null
+        deleteSuccess = null
         viewModelScope.launch {
             try {
                 db.collection("campsites").document(campsite.campId)
@@ -96,6 +99,7 @@ class AdminController : ViewModel() {
                     // A missing file shouldn't make the removal look like it failed
                     Log.w("AdminController", "Couldn't delete image file", e)
                 }
+                deleteSuccess = "Image removed"
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

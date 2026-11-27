@@ -75,6 +75,11 @@ fun AdminImageGallery(
         viewModel.deleteError?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     }
 
+    // and let them know when it worked
+    LaunchedEffect(viewModel.deleteSuccess) {
+        viewModel.deleteSuccess?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    }
+
     AdminScaffold(navController) { innerPadding ->
         AdminImageGalleryContent(
             modifier = Modifier.padding(innerPadding),
