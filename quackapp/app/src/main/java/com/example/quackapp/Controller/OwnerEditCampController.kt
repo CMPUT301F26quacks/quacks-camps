@@ -3,7 +3,6 @@ package com.example.quackapp.Controller
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -29,7 +28,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
-class EditCampsiteController(savedStateHandle: SavedStateHandle) : ViewModel() {
+class OwnerEditCampController(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
     private val campsiteRef = Firebase.firestore.collection("campsites").document(campsiteId)
     private val imgStorage = Firebase.storage

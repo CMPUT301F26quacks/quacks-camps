@@ -48,6 +48,11 @@ import coil.compose.AsyncImage
 import com.example.quackapp.View.Admin.AdminScaffold
 import com.example.quackapp.View.Entrant.EntrantScaffold
 
+import com.example.quackapp.Controller.UserProfileValidator
+
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+
 /**
  * Shared screen for creating and editing a user profile.
  *
@@ -93,6 +98,13 @@ fun UserProfile(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     var policyExpanded by remember { mutableStateOf<Boolean>(false) }
+
+    var nameError by remember { mutableStateOf<String?>(null) }
+
+    var emailError by remember { mutableStateOf<String?>(null) }
+
+    var phoneError by remember { mutableStateOf<String?>(null) }
+
 
     LaunchedEffect(Unit) {
 

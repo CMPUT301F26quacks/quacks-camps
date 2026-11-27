@@ -1,8 +1,6 @@
 package com.example.quackapp.Controller
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -10,15 +8,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Lottery
-import com.example.quackapp.Model.LotteryStatus
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.Date
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -29,7 +24,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
  */
-class EditLotteryDetailsController(savedStateHandle: SavedStateHandle): ViewModel() {
+class OwnerEditLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
 
     private val db = Firebase.firestore

@@ -18,17 +18,17 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.testing.TestNavHostController
-import com.example.quackapp.Controller.DetailedCampsiteController
-import com.example.quackapp.Controller.EditLotteryDetailsController
-import com.example.quackapp.Controller.ListCampInLotteryController
+import com.example.quackapp.Controller.OwnerCampDetailsController
+import com.example.quackapp.Controller.OwnerEditLotteryController
+import com.example.quackapp.Controller.OwnerCreateLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Controller.RegisterCampsiteController
 import com.example.quackapp.Model.ListCampInLotteryRoute
-import com.example.quackapp.View.DetailedCampsiteScreen
-import com.example.quackapp.View.EditLotteryDetailsScreen
-import com.example.quackapp.View.ListCampInLotteryScreen
-import com.example.quackapp.View.OwnerHome
-import com.example.quackapp.View.RegisterCampsiteScreen
+import com.example.quackapp.View.Owner.OwnerCampDetails
+import com.example.quackapp.View.Owner.OwnerEditLottery
+import com.example.quackapp.View.Owner.OwnerCreateLottery
+import com.example.quackapp.View.Owner.OwnerHome
+import com.example.quackapp.View.Owner.OwnerCreateCamp
 import androidx.compose.ui.test.longClick
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.junit.Rule
@@ -70,33 +70,33 @@ class MultiCampLotteryTests {
             }
             NavHost(navController, startDestination = "OwnerHome") {
                 composable("OwnerHome") { OwnerHome(navController, homeVM) }
-                composable("RegisterCampsite/{id}") { RegisterCampsiteScreen(navController, registerVM) }
+                composable("RegisterCampsite/{id}") { OwnerCreateCamp(navController, registerVM) }
                 composable("CampsiteDetails/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()
                     val detailVM = remember(id) {
-                        DetailedCampsiteController(SavedStateHandle(mapOf("campsiteId" to id)))
+                        OwnerCampDetailsController(SavedStateHandle(mapOf("campsiteId" to id)))
                     }
-                    DetailedCampsiteScreen(navController, detailVM)
+                    OwnerCampDetails(navController, detailVM)
                 }
                 composable<ListCampInLotteryRoute> { entry ->
-                    val vm: ListCampInLotteryController = viewModel()
+                    val vm: OwnerCreateLotteryController = viewModel()
                     lotteryVM = vm
-                    ListCampInLotteryScreen(navController, vm)
+                    OwnerCreateLottery(navController, vm)
                 }
                 composable("editLottery/{id}") { entry ->
                     val id = entry.arguments?.getString("id").orEmpty()
                     val editVM = remember(id) {
-                        EditLotteryDetailsController(SavedStateHandle(mapOf("campsiteId" to id)))
+                        OwnerEditLotteryController(SavedStateHandle(mapOf("campsiteId" to id)))
                     }
                     editLotteryVM = editVM
-                    EditLotteryDetailsScreen(navController, editLotteryVM)
+                    OwnerEditLottery(navController, editLotteryVM)
                 }
             }
         }
     }
 
-    private lateinit var lotteryVM: ListCampInLotteryController
-    private lateinit var editLotteryVM: EditLotteryDetailsController
+    private lateinit var lotteryVM: OwnerCreateLotteryController
+    private lateinit var editLotteryVM: OwnerEditLotteryController
     @Test
     fun createAndEditMultiCampLottery(){
         launch()

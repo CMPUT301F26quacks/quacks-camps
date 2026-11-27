@@ -1,7 +1,6 @@
 package com.example.quackapp.Model
 
-import java.sql.Time
-import java.sql.Timestamp
+import com.google.firebase.Timestamp
 
 /**
  * Chat between a campsite owner and an entrant regarding a

@@ -59,6 +59,11 @@ fun AdminCampsiteReviews(
         viewModel.actionError?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     }
 
+    // and when it did
+    LaunchedEffect(viewModel.actionSuccess) {
+        viewModel.actionSuccess?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    }
+
     AdminScaffold(navController, title = "Reviews") { innerPadding ->
         AdminCampsiteReviewsContent(
             modifier = Modifier.padding(innerPadding),
