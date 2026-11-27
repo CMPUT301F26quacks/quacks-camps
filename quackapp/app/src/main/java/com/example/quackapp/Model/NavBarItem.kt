@@ -3,6 +3,7 @@ package com.example.quackapp.Model
 import androidx.compose.ui.graphics.vector.ImageVector
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.ManageAccounts
@@ -22,14 +23,26 @@ sealed class NavBarItem(
     val sendsTo: String
 ){
     object EntrantHome:
-        NavBarItem("Home",Icons.Filled.Home, "EntrantHome")
-
+        NavBarItem(
+            "Home",
+            Icons.Filled.Home,
+            "EntrantHome")
     object EntrantActiveCampsites:
-        NavBarItem("Active Campsites", Icons.Filled.Bookmark, "EntrantActiveCampsites")
-
+        NavBarItem(
+            "Reservations",
+            Icons.Filled.Bookmark,
+            "EntrantActiveCampsites")
     object EntrantProfile:
-        NavBarItem("Profile", Icons.Filled.ManageAccounts, "EditProfile")
+        NavBarItem(
+            "Profile",
+            Icons.Filled.ManageAccounts,
+            "EditProfile/ENTRANT")
 
+    object UserChats:
+        NavBarItem(
+            "Messages",
+            Icons.AutoMirrored.Filled.Chat,
+            "UserChats")
 
     object OwnerHome:
         NavBarItem("Home",
@@ -45,7 +58,7 @@ sealed class NavBarItem(
     object OwnerProfile:
         NavBarItem("Profile",
                    Icons.Filled.ManageAccounts,
-                   "OwnerProfile")
+                   "EditProfile/OWNER")
 
     object AdminHome:
         NavBarItem("Home",
@@ -55,7 +68,7 @@ sealed class NavBarItem(
     object AdminProfile:
         NavBarItem("Profile",
                    Icons.Filled.ManageAccounts,
-                   "EditProfile")
+                   "EditProfile/ADMIN")
 }
 
 

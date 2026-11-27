@@ -23,6 +23,7 @@ import com.example.quackapp.View.Owner.OwnerReservationHistory
 import com.example.quackapp.View.Owner.OwnerCreateCamp
 import com.example.quackapp.View.Admin.AdminProfilesScreen
 
+
 /**
  * Sets up navigation between screens for whole app
  *
@@ -38,6 +39,8 @@ fun QuackApp() {
 
         composable("EntrantHome") { EntrantHome(navController) }
         composable("EntrantActiveCampsites") { EntrantActiveCampsites(navController) }
+
+        composable("UserChats") { UserChats(navController) }
 
         composable(
             route = "EntrantDetailedCampsite/{campId}",
@@ -96,9 +99,10 @@ fun QuackApp() {
                 selectedRole = "OWNER"
             )
         }
-        composable("EditProfile") {
+        composable("EditProfile/{role}") { backStackEntry ->
             UserProfile(
                 navController = navController,
+                selectedRole = backStackEntry.arguments?.getString("role"),
                 isEditing = true
             )
         }
