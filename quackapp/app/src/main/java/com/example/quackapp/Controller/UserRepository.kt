@@ -1,10 +1,9 @@
 package com.example.quackapp.Controller
 
+import android.net.Uri
 import com.example.quackapp.Model.User
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
-
-import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage
 
 /**

@@ -1,12 +1,19 @@
 package com.example.quackapp.View.Entrant
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -29,7 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,7 +47,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.EntrantDetailedCampsiteController
+import com.example.quackapp.R
 import com.google.firebase.installations.FirebaseInstallations
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 
 /**
  * Campsite details screen for Entrant
@@ -55,6 +69,7 @@ import com.google.firebase.installations.FirebaseInstallations
  * @param controller uses EntrantDetailedCampsiteController to fetch the
  * corresponding campsite, all lotteries and use various other functions
  */
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun EntrantDetailedCampsite(
     modifier: Modifier = Modifier,
@@ -111,10 +126,11 @@ fun EntrantDetailedCampsite(
 
     //Provides bottom navigation bar
     EntrantScaffold(navController) { innerPadding ->
+        val screenWidth = LocalConfiguration.current.screenWidthDp.dp
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
 
             //Scrollable column of the campsite info
@@ -123,12 +139,46 @@ fun EntrantDetailedCampsite(
                 contentPadding = PaddingValues(
                     start = 24.dp,
                     end = 24.dp,
-                    top = 32.dp,
+                    top = 0.dp,
                     bottom = 120.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                item {
+                    Box {
+                        //If the campsite listing has an image, display it
+                        if (campsite.optionalPromoImage != "") {
+                            AsyncImage(
+                                model = campsite.optionalPromoImage,
+                                contentDescription = campsite.name,
+                                modifier = Modifier
+                                    .requiredWidth(screenWidth)
+                                    .height(300.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = R.drawable.defaultcampsite),
+                                contentDescription = "Blank Campsite",
+                                modifier = Modifier
+                                    .requiredWidth(screenWidth)
+                                    .height(300.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .requiredWidth(screenWidth)
+                                .height(24.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.background,
+                                    RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                                )
+                        )
+                    }
 
+                }
                 item {
                     Text(
                         //Campsite Name
@@ -246,20 +296,7 @@ fun EntrantDetailedCampsite(
                         )
                     }
                 }
-                item {
-                    //If the campsite listing has an image, display it
-                    if (campsite.optionalPromoImage != "") {
-                        AsyncImage(
-                            model = campsite.optionalPromoImage,
-                            contentDescription = campsite.name,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp)),
-                            contentScale = ContentScale.FillWidth
-                        )
 
-                    }
-                }
 
                 //Gets all the campsite's features that are not empty
                 val features = campsite.features.filter { it.isNotBlank() }
@@ -320,45 +357,93 @@ fun EntrantDetailedCampsite(
 
             //If campsite is in a lottery, then display button
             if(campsite.lotteryId != null) {
-                //Enter or Leave Lottery Waitlist Button
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF248AFF),
-                        contentColor = Color.White,
-                    ),
-                    //When Button is clicked, enter or leave the lottery
-                    onClick = {
-                        if(lotteryId != null && currentDeviceId != null){
-                            if (enteredLottery) controller.leaveLottery(lotteryId, currentDeviceId)
-                            else controller.enterLottery(lotteryId, currentDeviceId)
-                            enteredLottery = !enteredLottery
-                        }
-                    },
-                    shape = RoundedCornerShape(20.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-                    modifier = modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 12.dp)
-                        .testTag("inLotteryStatus")
-
-                ) {
-                    Text(
-                        //Switches text to reflect click
-                        text =
-                            if (!enteredLottery) "Enter Lottery Waitlist"
-                            else "Leave Lottery Waitlist",
-                        style = MaterialTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
+                    //Enter or Leave Lottery Waitlist Button
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF248AFF),
+                            contentColor = Color.White,
+                        ),
+                        //When Button is clicked, enter or leave the lottery
+                        onClick = {
+                            if(lotteryId != null && currentDeviceId != null){
+                                if (enteredLottery) controller.leaveLottery(lotteryId, currentDeviceId)
+                                else controller.enterLottery(lotteryId, currentDeviceId)
+                                enteredLottery = !enteredLottery
+                            }
+                        },
+                        shape = RoundedCornerShape(20.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+                        modifier = modifier
+                            .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp)
-                    )
+                            .padding(horizontal = 24.dp, vertical = 12.dp)
+                            .testTag("inLotteryStatus")
 
-                }
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+
+                            Text(
+                                //Switches text to reflect click
+                                text =
+                                    if (!enteredLottery) "Enter Lottery Waitlist"
+                                    else "Leave Lottery Waitlist",
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp)
+                            )
+
+                            val locale = LocalLocale.current.platformLocale
+
+                            fun format(millis: Long, pattern: String): String =
+                                SimpleDateFormat(pattern, locale)
+                                    .apply { timeZone = TimeZone.getTimeZone("UTC") }
+                                    .format(Date(millis))
+
+                            val start = campsite.availability.minOrNull()
+                            val end = campsite.availability.maxOrNull()
+
+                            val availabilityText = if (start == null || end == null) {
+                                "No dates available"
+                            } else {
+                                when {
+
+                                    format(start, "yyyyMMdd") == format(end, "yyyyMMdd") ->
+                                        format(start, "MMM d, yyyy")
+
+                                    format(start, "yyyyMM") == format(end, "yyyyMM") ->
+                                        "${format(start, "MMM d")} - ${format(end, "d, yyyy")}"
+
+                                    format(start, "yyyy") == format(end, "yyyy") ->
+                                        "${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}"
+
+                                    else ->
+                                        "${format(start, "MMM d, yyyy")} - ${format(end, "MMM d, yyyy")}"
+                                }
+                            }
+
+                            Text(
+                                text = "Campsite Availability: $availabilityText",
+                                style = MaterialTheme.typography.headlineSmall,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    //`.fillMaxWidth()
+                                    .padding(vertical = 16.dp)
+                            )
+
+                        }
+                    }
+            }
             }
 
         }
     }
 
-}
+
