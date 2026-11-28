@@ -30,6 +30,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +61,9 @@ fun OwnerCampDetails(
     navController: NavController,
     viewModel: OwnerCampDetailsController = viewModel()
 ) {
+
+    var showNotificationDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
@@ -241,7 +248,9 @@ fun OwnerCampDetails(
             }
             val currentLottery = viewModel.lottery
             Card(
-                modifier = Modifier.fillMaxWidth().testTag("lotteryInfo"),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("lotteryInfo"),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
@@ -392,6 +401,45 @@ fun OwnerCampDetails(
                                     modifier = Modifier.testTag("waitlistEntrant${index + 1}")
                                 )
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val entrantCount = currentLottery.waitlist
+                            .filter { it.isNotBlank() }
+                            .distinct()
+                            .size
+
+                        Button(
+
+                            onClick = {
+                                viewModel.resetNotificationStatus()
+                                showNotificationDialog = true
+                            },
+
+                            enabled = !viewModel.notificationSending,
+
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("openNotificationDialog"),
+
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFF9800),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text("Send Notification")
+                        }
+
+                        if (showNotificationDialog) {
+
+                            OwnerNotificationDialog(
+                                viewModel = viewModel,
+                                entrantCount = entrantCount,
+                                onDismiss = {
+                                    showNotificationDialog = false
+                                }
+                            )
                         }
                     }
                 }
