@@ -43,7 +43,7 @@ object ChatRepository {
         val chatRef = database.collection("chats")
             .document(reservationId)
 
-        val reservationRef = database.collection("reservationns")
+        val reservationRef = database.collection("reservations")
             .document(reservationId)
 
         // firebase transaction allows firebase to retry an operation if the document is changing
@@ -395,7 +395,7 @@ object ChatRepository {
             },
 
             onFail = onFail
-            
+
         )
     }
 }

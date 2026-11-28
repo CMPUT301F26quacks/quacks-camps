@@ -1,6 +1,7 @@
 package com.example.quackapp.Controller
 
 import android.util.Log
+import androidx.compose.ui.platform.LocalLocale
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +18,10 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Provides campsite and lottery data from firebase as well as useful functions
@@ -68,7 +73,6 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
-
     /**
      * Enters the entrant into the lottery waitlist
      * [US 01.02.01] As an entrant, I want to join the waiting list
@@ -110,9 +114,9 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
         lotteries: List<Lottery>
     ): Boolean {
         return lotteries.any { lottery ->
-                lottery.lotteryID == lotteryId &&
-                        lottery.waitlist.contains(currentDeviceId)
-            }
+            lottery.lotteryID == lotteryId &&
+                    lottery.waitlist.contains(currentDeviceId)
+        }
     }
 
 
@@ -135,12 +139,11 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
                     .get()
                     .await()
 
-                if(!querySnapshot.isEmpty){
+                if (!querySnapshot.isEmpty) {
                     //update existing review for this user and campsite
                     val existingReview = querySnapshot.documents[0].id
                     reviewsRef.document(existingReview).update("rating", updatedRating).await()
-                }
-                else{   //create new review for this user and this campsite
+                } else {   //create new review for this user and this campsite
                     val newReview = mapOf(
                         "campsiteID" to campId,
                         "entrantID" to entrantId,
@@ -153,8 +156,49 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
                 CampsiteRatingUpdater.recompute(campId)
             } catch (e: Exception) {
                 //handle error
-                Log.e("EntrantDetailedCampsiteController", "Failed to update rating for campId: $campId", e)
+                Log.e(
+                    "EntrantDetailedCampsiteController",
+                    "Failed to update rating for campId: $campId",
+                    e
+                )
             }
+        }
+    }
+
+    /**
+     * Takes a campsite's available dates and converts it to text.
+     *
+     * Ex: 12373297327, 213761325479, 31264913277 to December 24th - December 26th
+     *
+     * @param campsite campsite whose availability is formatted
+     * @param locale locale used for month names
+     * @return the formatted range, or "No dates available" if there are no dates
+     */
+    fun availabilityToText(campsite: Campsite, locale: Locale): String {
+        val start = campsite.availability.minOrNull() ?: return "No dates available"
+        val end = campsite.availability.maxOrNull() ?: return "No dates available"
+
+        fun format(millis: Long, pattern: String): String =
+            SimpleDateFormat(pattern, locale)
+                .apply { timeZone = TimeZone.getTimeZone("UTC") }
+                .format(Date(millis))
+
+        return when {
+            //Ex: Dec 5, 2026
+            format(start, "yyyyMMdd") == format(end, "yyyyMMdd") ->
+                format(start, "MMM d, yyyy")
+
+            //Ex: Dec 5-8, 2026
+            format(start, "yyyyMM") == format(end, "yyyyMM") ->
+                "${format(start, "MMM d")} - ${format(end, "d, yyyy")}"
+
+            //Ex: Nov 29 - Dec 3, 2026
+            format(start, "yyyy") == format(end, "yyyy") ->
+                "${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}"
+
+            //Ex: Dec 30, 2026 - Jan 3, 2027
+            else ->
+                "${format(start, "MMM d, yyyy")} - ${format(end, "MMM d, yyyy")}"
         }
     }
 }

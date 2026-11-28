@@ -2,6 +2,7 @@ package com.example.quackapp
 
 import com.example.quackapp.Model.Entrant
 import com.example.quackapp.Model.OfferStatus
+import com.example.quackapp.Model.Reservation
 import com.example.quackapp.Model.ReservationRepository
 import com.example.quackapp.Model.ReservationStatus
 import org.junit.Assert.assertEquals
@@ -203,5 +204,26 @@ class ReservationRepositoryTest {
             assertNotNull(resList)
         }
         assertTrue("Firestore sync callback should complete gracefully in test mode", callbackInvoked)
+    }
+
+    /**
+     * US 01.06.01: active reservations show the soonest stay first,
+     * and ones with a date we cant read go at the end.
+     */
+    @Test
+    fun testActiveReservationsSortedByDate() {
+        val august = Reservation(id = "aug", dateRange = "Aug 3, 2027 - Aug 5, 2027")
+        val badDate = Reservation(id = "bad", dateRange = "sometime")
+        val june = Reservation(id = "june", dateRange = "Jun 10, 2027 - Jun 12, 2027")
+        val decLastYear = Reservation(id = "dec", dateRange = "Dec 20, 2026 - Dec 22, 2026")
+        repository.setLocalData(listOf(august, badDate, june, decLastYear), emptyList())
+
+        val active = repository.getActiveReservations()
+
+        assertEquals(4, active.size)
+        assertEquals("dec", active[0].id)
+        assertEquals("june", active[1].id)
+        assertEquals("aug", active[2].id)
+        assertEquals("bad", active[3].id)
     }
 }

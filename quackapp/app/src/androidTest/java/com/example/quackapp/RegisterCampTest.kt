@@ -23,7 +23,7 @@ import androidx.navigation.testing.TestNavHostController
 import com.example.quackapp.Controller.OwnerCampDetailsController
 import com.example.quackapp.Controller.OwnerEditCampController
 import com.example.quackapp.Controller.OwnerHomeController
-import com.example.quackapp.Controller.RegisterCampsiteController
+import com.example.quackapp.Controller.OwnerCreateCampController
 import com.example.quackapp.View.Owner.OwnerCampDetails
 import com.example.quackapp.View.Owner.OwnerEditCamp
 import com.example.quackapp.View.Owner.OwnerHome
@@ -48,7 +48,7 @@ class RegisterCampTest {
 
     private fun launch() {
         val homeVM = OwnerHomeController(SavedStateHandle(mapOf("ownerId" to ownerId)))
-        val registerVM = RegisterCampsiteController(SavedStateHandle(mapOf("ownerId" to ownerId)))
+        val registerVM = OwnerCreateCampController(SavedStateHandle(mapOf("ownerId" to ownerId)))
         composeRule.setContent {
             navController = TestNavHostController(LocalContext.current).apply {
                 navigatorProvider.addNavigator(ComposeNavigator())

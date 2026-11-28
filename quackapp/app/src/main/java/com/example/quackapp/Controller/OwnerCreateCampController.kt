@@ -2,49 +2,54 @@ package com.example.quackapp.Controller
 
 import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.SaveStatus
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.installations.FirebaseInstallations
 import com.google.firebase.storage.storage
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-/**
- * Represents the state of the campsite registration, mostly for the optional
- * promo image upload.
- *
- * The UI observes this to decide what to display (for example, a progress
- * indicator while [Saving] or an error message for [Error]).
- */
-sealed interface SaveStatus {
-    object Idle : SaveStatus
-    object Saving : SaveStatus
-    object Success : SaveStatus
-    data class Error(val message: String) : SaveStatus
-}
 
 /**
- * Controller for the "Register Campsite" screen.
+ * Controller for the OwnerCreateCamp screen.
  *
  * Holds the form state, validates it, and saves a new [Campsite] to Firestore.
  * If the user picked a promo image, it is uploaded to Firebase Storage first and
  * its download URL is stored on the [Campsite] document.
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
- *
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @property db Firestore reference
+ * @property ownerId unique ID of the owner who's creating the camp
+ * @property campsitesRef Firestore reference to the campsites collection
+ * @property imgStorage: Firebase Storage reference
+ * @property name camp's given name
+ * @property location camp's location
+ * @property price camp's price per night
+ * @property capacity camp's max capacity
+ * @property features camp's amenities/features
+ * @property rules camp's rules
+ * @property cancellationPolicy camp's cancellation policy
+ * @property tags all tags that can describe the camp
+ * @property selectedTags tags the owner selected
+ * @property imageUri Uri of the image the owner uploads
+ * @property latitude camp's map latitude
+ * @property longitude camp's map longitude
+ * @property _status private status of loading info from Firestore. Holds error messages too
+ * @property status public status of loading info from Firestore. Holds error messages too
  */
-class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(){
+class OwnerCreateCampController(savedStateHandle: SavedStateHandle): ViewModel(){
     // Firestore database instance
     private val db = Firebase.firestore
     private var ownerId: String = savedStateHandle.get<String>("ownerId") ?: ""
@@ -54,7 +59,6 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
 
     // Firebase Storage instance used for promo image uploads
     private val imgStorage = Firebase.storage
-
     var name by mutableStateOf("")
     var location by mutableStateOf("")
     var price by mutableIntStateOf(0)
@@ -67,9 +71,10 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
     var tags by mutableStateOf(listOf("Pet Friendly", "Smoke Free", "Luxurious", "Back Camping"))
     var selectedTags by mutableStateOf(setOf<String>())
         private set
-
     var latitude by mutableDoubleStateOf(0.00)
     var longitude by mutableDoubleStateOf(0.00)
+    private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
+    val status: StateFlow<SaveStatus> = _status
     /**
      * Toggles the selection of a tag
      * @param tag Identifies the element to toggle
@@ -93,8 +98,7 @@ class RegisterCampsiteController(savedStateHandle: SavedStateHandle): ViewModel(
             selectedTags = selectedTags + existing
         }
     }
-    private val _status = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
-    val status: StateFlow<SaveStatus> = _status
+
 
     /**
      * Validates and adds a new [Campsite] object to the Firestore.

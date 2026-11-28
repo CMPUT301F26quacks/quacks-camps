@@ -2,6 +2,7 @@ package com.example.quackapp.View.Owner
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +26,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,6 +47,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,7 +59,9 @@ import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.CampsiteOwner
-import com.example.quackapp.Model.ListCampInLotteryRoute
+import com.example.quackapp.R
+import com.example.quackapp.Model.CreateLotteryRoute
+import com.example.quackapp.Model.SaveStatus
 
 /**
  * UI for the home page that Campsite owners are directed to
@@ -79,7 +86,7 @@ fun OwnerHome(
 
     LaunchedEffect(Unit) {
         viewModel.clearSelection()
-
+        viewModel.clearCreateLotteryError()
     }
     LaunchedEffect(requests.isEmpty()) {
         if (requests.isEmpty()) showRequests = false
@@ -89,38 +96,40 @@ fun OwnerHome(
         navController = navController,
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column() {
-                        Text(text = "Campsites", fontSize = 36.sp)
-                        Text(
-                            text = "Tap and hold to select",
-                            fontSize = 10.sp,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-                    }
-                    if (requests.isNotEmpty()) {
-                        Button(onClick = { showRequests = true }) {
-                            Text("Requests (${requests.size})")
-                        }
-                    }
-                    FloatingActionButton(
-                        containerColor = Color(0xFFFF9800),
-                        contentColor = Color.White,
-                        onClick = { navController.navigate("RegisterCampsite/${viewModel.ownerId}") },
+                Column {
+
+                    Row(
                         modifier = Modifier
-                            .pointerHoverIcon(PointerIcon.Hand)
-                            .testTag("addCampsiteButton")
+                            .fillMaxWidth()
+                            .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("+", fontSize = 18.sp)
+                        Column() {
+                            Text(text = "Campsites", fontSize = 36.sp)
+                            Text(
+                                text = "Tap and hold to select",
+                                fontSize = 10.sp,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                        if (requests.isNotEmpty()) {
+                            Button(onClick = { showRequests = true }) {
+                                Text("Requests (${requests.size})")
+                            }
+                        }
+                        FloatingActionButton(
+                            containerColor = Color(0xFFFF9800),
+                            contentColor = Color.White,
+                            onClick = { navController.navigate("RegisterCampsite/${viewModel.ownerId}") },
+                            modifier = Modifier
+                                .pointerHoverIcon(PointerIcon.Hand)
+                                .testTag("addCampsiteButton")
+                        ) {
+                            Text("+", fontSize = 18.sp)
+                        }
                     }
                 }
             }
-
         }
     ) { innerPadding ->
         if (ownedCamps.isEmpty()) {
@@ -137,7 +146,8 @@ fun OwnerHome(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                    .padding(horizontal = 8.dp, vertical = 0.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AnimatedVisibility(visible = selectionMode) {
@@ -151,8 +161,10 @@ fun OwnerHome(
                         Button(
                             modifier = Modifier.testTag("createLotteryButton"),
                             onClick = {
-                                navController.navigate(ListCampInLotteryRoute(campsiteIds = selectedIds.toList()))
-                                      },
+                                if (viewModel.validateSelection()) {
+                                    navController.navigate(CreateLotteryRoute(campsiteIds = selectedIds.toList()))
+                                }
+                            },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color(0xFFF3AE00))
                         ) {
@@ -175,6 +187,13 @@ fun OwnerHome(
                             }
                         }
                     }
+                }
+                viewModel.createLotteryError?.let {
+                    Text(
+                        viewModel.createLotteryError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
                 }
                 LazyColumn(
                     modifier = Modifier.weight(if (showOtherCamps) 0.5f else 1f),
@@ -199,20 +218,36 @@ fun OwnerHome(
                         )
                     }
                 }
-                Button(
-                    onClick = {showOtherCamps = !showOtherCamps},
-                    colors = if (!showOtherCamps) ButtonDefaults.buttonColors(Color(0xFF2196F3))
-                             else ButtonDefaults.buttonColors(Color(0xFFF3AE00))
-                ) {
-                    Text("View other Owners' camps")
-                }
+                Row() {
+                    TextButton(
+                        onClick = { showOtherCamps = !showOtherCamps },
+                        modifier = Modifier.weight(0.5f)
+//                        colors = if (!showOtherCamps) ButtonDefaults.buttonColors(Color(0xFF2196F3))
+//                        else ButtonDefaults.buttonColors(Color(0xFFF3AE00))
+                    ) {
+                        Text("View Others' camps",color = Color(0xFFF16B00))
+                    }
+                    TextButton(
+                        onClick = {
+                            navController.navigate("OwnerNotificationHistory")
+                        },
 
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("sentNotificationsButton")
+                            .weight(0.5f)
+                    ) {
+                        Text(
+                            text = "Sent Notifications",
+                            color = Color(0xFFF16B00)
+                        )
+                    }
+                }
                 AnimatedVisibility(
                     visible = showOtherCamps,
                     modifier = Modifier.weight(0.5f),
                 ) {
                     LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -355,6 +390,15 @@ fun CampRow(
             )
         }
         else{
+            Image(
+                painter = painterResource(id = R.drawable.defaultcampsite),
+                contentDescription = "Blank Campsite",
+                modifier = Modifier
+                    .height(80.dp)
+                    .width(100.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+            )
+            /*
             Box(contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .height(80.dp)
@@ -364,6 +408,7 @@ fun CampRow(
             ){
                 Text("No Image", textAlign = TextAlign.Center)
             }
+             */
         }
         Spacer(modifier = Modifier.width(18.dp))
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -399,8 +444,6 @@ fun CampRow(
                             .testTag("details${campsite.name}")
                             .clickable(onClick = { navController.navigate("CampsiteDetails/${campsite.campId}") })
                     )
-                    // TODO delete campId from related lotteries
-                    //  and maybe the lottery itself if the campIds list is empty
                     Text(
                         text = "Delete",
                         fontSize = 16.sp,

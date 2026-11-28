@@ -28,8 +28,8 @@ import com.example.quackapp.Controller.OwnerCampDetailsController
 import com.example.quackapp.Controller.OwnerEditLotteryController
 import com.example.quackapp.Controller.OwnerCreateLotteryController
 import com.example.quackapp.Controller.OwnerHomeController
-import com.example.quackapp.Controller.RegisterCampsiteController
-import com.example.quackapp.Model.ListCampInLotteryRoute
+import com.example.quackapp.Controller.OwnerCreateCampController
+import com.example.quackapp.Model.CreateLotteryRoute
 import com.example.quackapp.View.Owner.OwnerCampDetails
 import com.example.quackapp.View.Owner.OwnerEditLottery
 import com.example.quackapp.View.Owner.OwnerCreateLottery
@@ -71,7 +71,7 @@ class CreateLotteryTests {
             .toInstant().toEpochMilli()
     private fun launch() {
         val homeVM = OwnerHomeController(SavedStateHandle(mapOf("ownerId" to ownerId)))
-        val registerVM = RegisterCampsiteController(SavedStateHandle(mapOf("ownerId" to ownerId)))
+        val registerVM = OwnerCreateCampController(SavedStateHandle(mapOf("ownerId" to ownerId)))
         composeRule.setContent {
             navController = TestNavHostController(LocalContext.current).apply {
                 navigatorProvider.addNavigator(ComposeNavigator())
@@ -87,7 +87,7 @@ class CreateLotteryTests {
                     OwnerCampDetails(navController, detailVM)
                 }
 
-                composable<ListCampInLotteryRoute> { entry ->
+                composable<CreateLotteryRoute> { entry ->
                     val vm: OwnerCreateLotteryController = viewModel()
                     lotteryVM = vm
                     OwnerCreateLottery(navController, vm)

@@ -81,4 +81,25 @@ class ReservationCsvExporterTest {
         assertTrue(csv.contains("Reservation ID"))
         assertTrue(csv.contains("res-csv-test-01"))
     }
+
+    /**
+     * The CSV file name uses the campsite name and the first date of the stay,
+     * with spaces and commas turned into underscores.
+     */
+    @Test
+    fun testCsvFileNameHasCampsiteNameAndDate() {
+        val res = sampleReservation.copy(dateRange = "Aug 1, 2027 - Aug 3, 2027")
+        val fileName = ReservationCsvExporter.makeFileName(res)
+
+        assertEquals("campsite_reservation_Lake_Minnewanka_Shoreline_Lot_4_Aug_1_2027.csv", fileName)
+    }
+
+
+    @Test
+    fun testCsvFileNameWithNoNameOrDate() {
+        val res = sampleReservation.copy(campsiteName = "", dateRange = "")
+        val fileName = ReservationCsvExporter.makeFileName(res)
+
+        assertEquals("campsite_reservation_campsite.csv", fileName)
+    }
 }

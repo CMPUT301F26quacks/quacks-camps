@@ -56,8 +56,8 @@ import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.quackapp.Controller.RegisterCampsiteController
-import com.example.quackapp.Controller.SaveStatus
+import com.example.quackapp.Controller.OwnerCreateCampController
+import com.example.quackapp.Model.SaveStatus
 import com.example.quackapp.View.LocationPicker
 
 /**
@@ -69,7 +69,7 @@ import com.example.quackapp.View.LocationPicker
 @Composable
 fun OwnerCreateCamp(
     navController: NavController,
-    viewModel: RegisterCampsiteController = viewModel()
+    viewModel: OwnerCreateCampController = viewModel()
 ) {
     // String version of these two fields since
     // displaying ints can crash the app when no number is there

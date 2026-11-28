@@ -36,6 +36,11 @@ enum class NotificationType {
  * @property isRead Whether the notification has been viewed by the entrant.
  * @property relatedOfferId Optional ID of the associated [LotteryOffer], if applicable.
  * @property relatedReservationId Optional ID of the associated [Reservation], if applicable.
+ *
+ * @property senderDeviceId Device ID of the user who sent the notification
+ * @property relatedLotteryId ID of the associated lottery
+ * @property relatedCampsiteId ID of the associated campsite
+ * @property announcementId Shared ID for notifications sent as part of the same announcement, for mass anouncements
  */
 data class AppNotification(
     val id: String = UUID.randomUUID().toString(),
@@ -46,5 +51,11 @@ data class AppNotification(
     val timestamp: Long = System.currentTimeMillis(),
     val isRead: Boolean = false,
     val relatedOfferId: String? = null,
-    val relatedReservationId: String? = null
+    val relatedReservationId: String? = null,
+
+    // information for owner sending notification
+    val senderDeviceId: String? = null,
+    val relatedLotteryId: String? = null,
+    val relatedCampsiteId: String? = null,
+    val announcementId: String? = null
 )

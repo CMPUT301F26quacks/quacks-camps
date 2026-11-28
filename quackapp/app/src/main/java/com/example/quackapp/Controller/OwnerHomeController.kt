@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,7 +35,16 @@ import kotlin.coroutines.cancellation.CancellationException
  *  Contains functions related to editing existing [Campsite] and
  *  deleting campsites from the database
  *
- *  @property savedStateHandle a map which contains data passed from outside. Used here get ownerId
+ * @param savedStateHandle a map which contains data passed from outside. Used here get ownerId
+ * @property db Firebase Firestore reference
+ * @property ownerId Unique ID of the logged in owner
+ * @property deleteError Error message in case there's one when deleting a [Campsite]
+ * @property imgStorage Firebase Storage reference
+ * @property _selectedIds Private set of campsite IDs that the owner selected
+ * @property selectedIds Public set of campsite IDs that the owner selected
+ * @property ownedCamps List of campsites the logged in Owner owns
+ * @property otherCamps List of campsites the logged in Owner does not own
+ * @property incomingRequests List of [LotteryRequest] that are being sent to the logged in Owner
  */
 class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val db = Firebase.firestore
@@ -43,6 +53,9 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val imgStorage = Firebase.storage
     var deleteError by mutableStateOf<String?>(null)
         private set
+    var createLotteryError by mutableStateOf<String?>(null)
+        private set
+
     private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
 
@@ -192,7 +205,28 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     fun deleteCampsite(campsite: Campsite) {
         viewModelScope.launch {
             try {
-                // Delete the document first; the list updates automatically
+                val lotteries = db.collection("lotteries")
+                    .whereArrayContains("campIds", campsite.campId)
+                    .whereEqualTo("status", "OPEN")
+                    .get()
+                    .await()
+
+                // Take the camp out of each OPEN lottery, delete the lottery if its the last camp
+                for (doc in lotteries.documents) {
+                    val ids = (doc.get("campIds") as? List<*>) ?: emptyList<Any>()
+                    val remaining = ids.filter { it != campsite.campId }
+
+                    if (remaining.isEmpty()) {
+                        // This was the last camp, so the lottery is empty
+                        doc.reference.delete().await()
+                    } else {
+                        doc.reference
+                            .update("campIds", FieldValue.arrayRemove(campsite.campId))
+                            .await()
+                    }
+                }
+
+                // Then delete the camp itself; the list updates automatically
                 db.collection("campsites").document(campsite.campId).delete().await()
 
                 // Then remove the image, if the campsite had one
@@ -201,7 +235,7 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                         imgStorage.reference.child("campsites/${campsite.campId}.jpg").delete().await()
                     }
                     catch (e: Exception) {
-                        // An orphaned or missing image shouldn't make the delete look like it failed
+                        // A missing image shouldn't make the delete look like it failed
                         Log.w("OwnerHome", "Couldn't delete image", e)
                     }
                 }
@@ -226,6 +260,24 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
      * Clears all the selected campsites
      */
     fun clearSelection() { _selectedIds.value = emptySet() }
+
+    /**
+     * Clears createLotteryError
+     */
+    fun clearCreateLotteryError() { createLotteryError = null }
+
+    /**
+     * Checks whether the selected camps can go into a new lottery.
+     * @return true if every selected camp is free of a lottery
+     */
+    fun validateSelection(): Boolean{
+        val invalid = ownedCamps.value.filter { it.campId in _selectedIds.value && !it.lotteryId.isNullOrEmpty() }
+        if (invalid.isNotEmpty()) {
+            createLotteryError = "Already in a lottery: ${invalid.joinToString { it.name }}"
+            return false
+        }
+        return true
+    }
 
     /**
      * Approval function for when other owners want to enter your camp into

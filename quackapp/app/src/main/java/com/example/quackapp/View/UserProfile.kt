@@ -51,6 +51,8 @@ import com.example.quackapp.View.Entrant.EntrantScaffold
 import com.example.quackapp.Controller.UserProfileValidator
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.quackapp.View.Owner.OwnerScaffold
 
@@ -166,7 +168,7 @@ fun UserProfile(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp),
+                .padding(start = 32.dp, end = 32.dp, bottom = 40.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -174,11 +176,12 @@ fun UserProfile(
             AsyncImage(
                 model = selectedImageUri ?: profileImageUrl,
                 contentDescription = "User profile picture",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
             )
-
+            Spacer(Modifier.height(15.dp))
             Button(
                 onClick = {
                     imagePicker.launch(
@@ -221,26 +224,44 @@ fun UserProfile(
 
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
-                label = {
-                    Text("Name")
-                }
+                onValueChange = {
+                    name = it
+                    nameError = null
+                },
+                label = { Text("Name") },
+                isError = nameError != null,
+                supportingText = { nameError?.let { Text(it) }},
+                modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
-                label = {
-                    Text("Email")
-                }
+                onValueChange = {
+                    email = it
+                    emailError = null
+                },
+                label = { Text("Email") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email
+                ),
+                isError = emailError != null,
+                supportingText = { emailError?.let {Text(it)}},
+                modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = phoneNumber,
-                onValueChange = { phoneNumber = it },
-                label = {
-                    Text("Phone Number")
-                }
+                onValueChange = {
+                    phoneNumber = it
+                    phoneError = null
+                },
+                label = { Text("Phone Number") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Phone
+                ),
+                isError = phoneError != null,
+                supportingText = { phoneError?.let { Text(it) }},
+                modifier = Modifier.fillMaxWidth()
             )
 
             Button(
@@ -264,6 +285,18 @@ fun UserProfile(
 
             Button(
                 onClick = {
+
+                    nameError = UserProfileValidator.validateName(name)
+                    emailError = UserProfileValidator.validateEmail(email)
+                    phoneError = UserProfileValidator.validatePhoneNumber(phoneNumber)
+
+                    if (
+                        nameError != null ||
+                        emailError != null ||
+                        phoneError != null
+                    ) {
+                        return@Button
+                    }
 
                     val id = deviceId
 
@@ -316,7 +349,7 @@ fun UserProfile(
                                 profileImageUrl = profileImageUrl,
 
                                 onSuccess = {
-                                    navController.popBackStack()
+                                    //navController.popBackStack()
                                 },
                                 onFail = { exception ->
                                     errorMessage =
@@ -335,7 +368,6 @@ fun UserProfile(
                             notificationsEnabled = notificationsEnabled,
                             roles = listOf(selectedRole)
                         )
-
                         UserRepository.createUser(
 
                             user = user,
@@ -419,7 +451,7 @@ fun UserProfile(
 
             }
 
-            Spacer(Modifier.height(80.dp))
+            Spacer(Modifier.height(10.dp))
 
 
             if (isEditing) {
@@ -476,8 +508,4 @@ fun UserProfile(
     } else {
         Scaffold { content(it) }
     }
-
 }
-
-// [US 01.10.01] As an entrant, I want to opt out of receiving notification
-// [US 01.11.01] As an entrant, I want to see the app policy and guidelines
