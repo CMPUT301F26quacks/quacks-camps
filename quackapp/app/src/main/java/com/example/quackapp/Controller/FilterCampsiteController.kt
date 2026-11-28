@@ -46,8 +46,8 @@ class FilterCampsiteController {
                     //Checks to see if the campsites availability is between the filtered range
                     lottery.lotteryID == campsite.lotteryId &&
                             start != null && end != null &&
-                            start >= inputtedStartingDate &&
-                            end <= inputtedEndingDate
+                            start <= inputtedStartingDate &&
+                            end >= inputtedEndingDate
                 }
             if (datesMatch) {
                     testsPassed += 1

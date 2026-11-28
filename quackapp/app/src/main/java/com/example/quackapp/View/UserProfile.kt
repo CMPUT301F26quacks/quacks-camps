@@ -52,6 +52,7 @@ import com.example.quackapp.Controller.UserProfileValidator
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.quackapp.View.Owner.OwnerScaffold
 
@@ -167,7 +168,7 @@ fun UserProfile(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp),
+                .padding(start = 32.dp, end = 32.dp, bottom = 40.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -175,11 +176,12 @@ fun UserProfile(
             AsyncImage(
                 model = selectedImageUri ?: profileImageUrl,
                 contentDescription = "User profile picture",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
             )
-
+            Spacer(Modifier.height(15.dp))
             Button(
                 onClick = {
                     imagePicker.launch(
@@ -347,7 +349,7 @@ fun UserProfile(
                                 profileImageUrl = profileImageUrl,
 
                                 onSuccess = {
-                                    navController.popBackStack()
+                                    //navController.popBackStack()
                                 },
                                 onFail = { exception ->
                                     errorMessage =
@@ -366,7 +368,6 @@ fun UserProfile(
                             notificationsEnabled = notificationsEnabled,
                             roles = listOf(selectedRole)
                         )
-
                         UserRepository.createUser(
 
                             user = user,
@@ -450,7 +451,7 @@ fun UserProfile(
 
             }
 
-            Spacer(Modifier.height(80.dp))
+            Spacer(Modifier.height(10.dp))
 
 
             if (isEditing) {
