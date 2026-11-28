@@ -191,6 +191,76 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
         }
     }
 
+
+    /**
+     * Edit an entrant's existing  review od a campsite.
+     *
+     * @param updatedReview The updated review text
+     * @param entrantId Entrant's ID
+     */
+    fun updateReview(updatedReview: String, entrantId: String) {
+        viewModelScope.launch {
+            try {
+                val querySnapshot = db.collection("reviews")
+                    .whereEqualTo("campsiteID", campId)
+                    .whereEqualTo("entrantID", entrantId)
+                    .get()
+                    .await()
+
+                //edit the same document that getUserReview loads
+                querySnapshot.documents
+                    .firstOrNull { it.getString("feedback") != null }
+                    ?.reference
+                    ?.update("feedback", updatedReview)
+                    ?.await()
+            } catch (e: Exception) {
+                Log.e(
+                    "EntrantDetailedCampsiteController",
+                    "Failed to update review for campId: $campId",
+                    e
+                )
+            }
+        }
+    }
+
+
+    /**
+     * Get an entrant's existing review for this campsite.
+     *
+     * @param entrantId Entrant's ID
+     * @param onSuccess Gives the review text, or null if there isn't one
+     * @param onFail Called if the review couldn't be loaded
+     */
+    fun getUserReview(
+        entrantId: String,
+        onSuccess: (String?) -> Unit,
+        onFail: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+
+                val querySnapshot = db.collection("reviews")
+                    .whereEqualTo("campsiteID", campId)
+                    .whereEqualTo("entrantID", entrantId)
+                    .get()
+                    .await()
+
+                val existingFeedback = querySnapshot.documents
+                    .firstNotNullOfOrNull { it.getString("feedback") }
+
+                onSuccess(existingFeedback)
+            } catch (e: Exception) {
+                Log.e(
+                    "EntrantDetailedCampsiteController",
+                    "Failed to load review for campId: $campId",
+                    e
+                )
+                onFail()
+            }
+        }
+    }
+
+
     /**
      * Takes a campsite's available dates and converts it to text.
      *
