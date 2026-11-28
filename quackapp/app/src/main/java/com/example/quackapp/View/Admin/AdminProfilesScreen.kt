@@ -45,7 +45,8 @@ import com.example.quackapp.Model.User
 
 /**
  * Screen for searching entrant and owner profiles by name, viewing their details,
- * and removing owner privileges when an owner violates app policy.
+ * and removing owner privileges when an owner violates app policy, and deleting entrants and owners.
+ * Deleting an admin is not possible
  *
  * @param navController navigation controller for [AdminScaffold].
  * @param viewModel controller providing the live list of [User] profiles and owner removal.
@@ -58,11 +59,6 @@ fun AdminProfilesScreen(
 ) {
     val profiles by viewModel.profiles.collectAsState()
     val context = LocalContext.current
-    var search by remember { mutableStateOf("") }
-    var selectedUser by remember { mutableStateOf<User?>(null) }
-    var userToRemove by remember { mutableStateOf<User?>(null) }
-    var userToDelete by remember { mutableStateOf<User?>(null) }
-    var adminUserWarning by remember { mutableStateOf<User?>(null) }
 
     LaunchedEffect(viewModel.deleteError) {
         viewModel.deleteError?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
@@ -72,63 +68,84 @@ fun AdminProfilesScreen(
         viewModel.deleteSuccess?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     }
 
+    AdminScaffold(navController = navController, title = "Browse Profiles") { padding ->
+        AdminProfilesContent(
+            modifier = Modifier.padding(padding),
+            profiles = profiles,
+            onDeleteProfile = onDeleteProfile,
+            onRemoveOwner = { viewModel.removeOwner(it) }
+        )
+    }
+}
+
+
+@Composable
+fun AdminProfilesContent(
+    modifier: Modifier = Modifier,
+    profiles: List<User>,
+    onDeleteProfile: (User) -> Unit,
+    onRemoveOwner: (String) -> Unit
+) {
+    var search by remember { mutableStateOf("") }
+    var selectedUser by remember { mutableStateOf<User?>(null) }
+    var userToRemove by remember { mutableStateOf<User?>(null) }
+    var userToDelete by remember { mutableStateOf<User?>(null) }
+    var adminUserWarning by remember { mutableStateOf<User?>(null) }
+
     val filtered = profiles.filter {
         search.isBlank() || it.name.contains(search.trim(), ignoreCase = true)
     }
 
-    AdminScaffold(navController = navController, title = "Browse Profiles") { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            OutlinedTextField(
-                value = search,
-                onValueChange = { search = it },
-                label = { Text("Search by name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        OutlinedTextField(
+            value = search,
+            onValueChange = { search = it },
+            label = { Text("Search by name") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(filtered) { user ->
-                    Card(
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(filtered) { user ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { selectedUser = user }
+                ) {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { selectedUser = user }
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(AdminBlue, RoundedCornerShape(12.dp))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = user.name.ifBlank { "Unnamed User" },
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                )
-                                Text(text = user.roles.joinToString(", "))
+                            .background(AdminBlue, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = user.name.ifBlank { "Unnamed User" },
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                            )
+                            Text(text = user.roles.joinToString(", "))
+                        }
+                        IconButton(onClick = {
+                            if (user.roles.any { it.equals("ADMIN", ignoreCase = true) }) {
+                                adminUserWarning = user
+                            } else {
+                                userToDelete = user
                             }
-                            IconButton(onClick = {
-                                if (user.roles.any { it.equals("ADMIN", ignoreCase = true) }) {
-                                    adminUserWarning = user
-                                } else {
-                                    userToDelete = user
-                                }
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Remove profile",
-                                    tint = Color.White
-                                )
-                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove profile",
+                                tint = Color.White
+                            )
                         }
 
                     }
@@ -183,7 +200,7 @@ fun AdminProfilesScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.removeOwner(user.deviceId)
+                        onRemoveOwner(user.deviceId)
                         userToRemove = null
                     }
                 ) {

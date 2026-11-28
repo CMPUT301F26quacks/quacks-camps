@@ -18,10 +18,12 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Review
+import com.example.quackapp.Model.User
 import com.example.quackapp.View.Admin.AdminCampsiteReviewsContent
 import com.example.quackapp.View.Admin.AdminCampsitesContent
 import com.example.quackapp.View.Admin.AdminHomeContent
 import com.example.quackapp.View.Admin.AdminImageGalleryContent
+import com.example.quackapp.View.Admin.AdminProfilesContent
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -313,4 +315,112 @@ class AdminIntentTest {
         campId = c.campId, name = c.name, location = c.location, price = c.price,
         capacity = c.capacity, optionalPromoImage = ""
     )
+
+    /** Entrant profile successfully deleted */
+    @Test
+    fun entrantProfileSuccessfullyDeleted() {
+        val entrant = User(deviceId = "ent-1", name = "entrant1", roles = listOf("Entrant"))
+        var deleted: User? = null
+        composeRule.setContent {
+            var users by remember { mutableStateOf(listOf(entrant)) }
+            AdminProfilesContent(
+                profiles = users,
+                onDeleteProfile = { user ->
+                    deleted = user
+                    users = users.filterNot { it.deviceId == user.deviceId }
+                },
+                onRemoveOwner = {}
+            )
+        }
+        composeRule.onNodeWithText("entrant1").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Remove profile").performClick()
+        composeRule.onNodeWithText("Delete profile?").assertIsDisplayed()
+        composeRule.onNodeWithTag("confirmDeleteProfile").performClick()
+        assertEquals("ent-1", deleted?.deviceId)
+        composeRule.onNodeWithText("entrant1").assertDoesNotExist()
+    }
+
+    /** Entrant profile clicked cancel and didn't delete */
+    @Test
+    fun entrantProfileCancelKeepsProfile() {
+        val entrant = User(deviceId = "ent-1", name = "entrant1", roles = listOf("Entrant"))
+        var deleted: User? = null
+        composeRule.setContent {
+            AdminProfilesContent(
+                profiles = listOf(entrant),
+                onDeleteProfile = { deleted = it },
+                onRemoveOwner = {}
+            )
+        }
+        composeRule.onNodeWithText("entrant1").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Remove profile").performClick()
+        composeRule.onNodeWithText("Delete profile?").assertIsDisplayed()
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals(null, deleted)
+        composeRule.onNodeWithText("entrant1").assertIsDisplayed()
+    }
+
+    /** Owner profile successfully deleted */
+    @Test
+    fun ownerProfileSuccessfullyDeleted() {
+        val owner = User(deviceId = "own-1", name = "owner1", roles = listOf("Owner"))
+        var deleted: User? = null
+        composeRule.setContent {
+            var users by remember { mutableStateOf(listOf(owner)) }
+            AdminProfilesContent(
+                profiles = users,
+                onDeleteProfile = { user ->
+                    deleted = user
+                    users = users.filterNot { it.deviceId == user.deviceId }
+                },
+                onRemoveOwner = {}
+            )
+        }
+        composeRule.onNodeWithText("owner1").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Remove profile").performClick()
+        composeRule.onNodeWithText("Delete profile?").assertIsDisplayed()
+        composeRule.onNodeWithTag("confirmDeleteProfile").performClick()
+        assertEquals("own-1", deleted?.deviceId)
+        composeRule.onNodeWithText("owner1").assertDoesNotExist()
+    }
+
+    /** Owner profile clicked cancel and didn't delete */
+    @Test
+    fun ownerProfileCancelKeepsProfile() {
+        val owner = User(deviceId = "own-1", name = "owner1", roles = listOf("Owner"))
+        var deleted: User? = null
+        composeRule.setContent {
+            AdminProfilesContent(
+                profiles = listOf(owner),
+                onDeleteProfile = { deleted = it },
+                onRemoveOwner = {}
+            )
+        }
+        composeRule.onNodeWithText("owner1").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Remove profile").performClick()
+        composeRule.onNodeWithText("Delete profile?").assertIsDisplayed()
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals(null, deleted)
+        composeRule.onNodeWithText("owner1").assertIsDisplayed()
+    }
+
+    /** Admin couldn't delete (correct) */
+    @Test
+    fun adminCannotBeDeletedWarning() {
+        val admin = User(deviceId = "adm-1", name = "admin1", roles = listOf("Admin"))
+        var deleted: User? = null
+        composeRule.setContent {
+            AdminProfilesContent(
+                profiles = listOf(admin),
+                onDeleteProfile = { deleted = it },
+                onRemoveOwner = {}
+            )
+        }
+        composeRule.onNodeWithText("admin1").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Remove profile").performClick()
+        composeRule.onNodeWithText("Cannot delete admin").assertIsDisplayed()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(null, deleted)
+        composeRule.onNodeWithText("admin1").assertIsDisplayed()
+    }
 }
