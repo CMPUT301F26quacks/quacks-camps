@@ -236,14 +236,27 @@ fun EntrantDetailedCampsite(
                             color = Color(0xFFF2BA00),
                             modifier = Modifier.testTag("rating")
                         )
-                        //User Make a Rating
-                        OutlinedButton(
-                            onClick = { showRatingInput = !showRatingInput },
-                            modifier = Modifier.testTag("makeRating")
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                if (showRatingInput) "Close" else "Make a Rating"
-                            )
+                            //User Make a Rating
+                            OutlinedButton(
+                                onClick = { showRatingInput = !showRatingInput },
+                                modifier = Modifier.testTag("makeRating")
+                            ) {
+                                Text(
+                                    if (showRatingInput) "Close" else "Make a Rating"
+                                )
+                            }
+
+                            //Show Reviews Button
+                            OutlinedButton(
+                                onClick = { navController.navigate("EntrantCampsiteReviews/${campsite.campId}") },
+                                modifier = Modifier.testTag("showReviewsButton")
+                            ) {
+                                Text("Show Reviews")
+                            }
                         }
 
                         //if user wants to rate campsite
