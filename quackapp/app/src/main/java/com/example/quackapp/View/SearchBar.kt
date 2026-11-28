@@ -50,7 +50,7 @@ fun SearchBar(
         shape = RoundedCornerShape(28.dp),
         placeholder = { Text(
             searchBarText,
-            fontSize = 15.sp
+            fontSize = 14.sp
         ) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {

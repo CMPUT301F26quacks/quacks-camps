@@ -1,6 +1,7 @@
 package com.example.quackapp.View.Owner
 
-import com.example.quackapp.Model.ReservationRepository
+//import com.example.quackapp.Model.ListCampInLotteryRoute
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,6 +49,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerCampDetailsController
+import com.example.quackapp.Model.ReservationRepository
+import com.example.quackapp.R
 import com.example.quackapp.View.MapPreviewCard
 import com.example.quackapp.View.toDisplayDate
 import com.google.android.gms.maps.model.LatLng
@@ -121,7 +125,12 @@ fun OwnerCampDetails(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    Text("No Image")
+                    Image(
+                        painter = painterResource(id = R.drawable.defaultcampsite),
+                        contentDescription = "Blank Campsite",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
                 }
             }
 

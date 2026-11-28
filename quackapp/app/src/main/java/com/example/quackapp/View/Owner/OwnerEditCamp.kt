@@ -288,6 +288,7 @@ fun OwnerEditCamp(
                     contentScale = ContentScale.Crop
                 )
             } else {
+
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
                     Text("Tap to upload an image")

@@ -38,11 +38,11 @@ sealed class NavBarItem(
             Icons.Filled.ManageAccounts,
             "EditProfile/ENTRANT")
 
-    object UserChats:
+    object UserChatList:
         NavBarItem(
             "Messages",
             Icons.AutoMirrored.Filled.Chat,
-            "UserChats")
+            "UserChatList")
 
     object OwnerHome:
         NavBarItem("Home",
