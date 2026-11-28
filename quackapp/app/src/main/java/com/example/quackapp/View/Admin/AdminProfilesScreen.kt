@@ -1,6 +1,6 @@
 package com.example.quackapp.View.Admin
 
-import android.R.attr.onClick
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,12 +54,23 @@ import com.example.quackapp.Model.User
 fun AdminProfilesScreen(
     navController: NavController,
     viewModel: AdminController = viewModel(),
-    onDeleteClick: (() -> Unit)? = null
+    onDeleteProfile: (User) -> Unit = { viewModel.deleteProfile(it) }
 ) {
     val profiles by viewModel.profiles.collectAsState()
+    val context = LocalContext.current
     var search by remember { mutableStateOf("") }
     var selectedUser by remember { mutableStateOf<User?>(null) }
     var userToRemove by remember { mutableStateOf<User?>(null) }
+    var userToDelete by remember { mutableStateOf<User?>(null) }
+    var adminUserWarning by remember { mutableStateOf<User?>(null) }
+
+    LaunchedEffect(viewModel.deleteError) {
+        viewModel.deleteError?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    }
+
+    LaunchedEffect(viewModel.deleteSuccess) {
+        viewModel.deleteSuccess?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    }
 
     val filtered = profiles.filter {
         search.isBlank() || it.name.contains(search.trim(), ignoreCase = true)
@@ -102,7 +116,13 @@ fun AdminProfilesScreen(
                                 )
                                 Text(text = user.roles.joinToString(", "))
                             }
-                            IconButton(onClick = { onDeleteClick?.invoke() }) {
+                            IconButton(onClick = {
+                                if (user.roles.any { it.equals("ADMIN", ignoreCase = true) }) {
+                                    adminUserWarning = user
+                                } else {
+                                    userToDelete = user
+                                }
+                            }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Remove profile",
@@ -173,6 +193,47 @@ fun AdminProfilesScreen(
             dismissButton = {
                 TextButton(onClick = { userToRemove = null }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Confirmation dialog before deleting profile
+    userToDelete?.let { user ->
+        AlertDialog(
+            onDismissRequest = { userToDelete = null },
+            title = { Text("Delete profile?") },
+            text = {
+                Text("\"${user.name.ifBlank { "This user" }}\" will be permanently deleted. This can't be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteProfile(user)
+                        userToDelete = null
+                    },
+                    modifier = Modifier.testTag("confirmDeleteProfile")
+                ) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { userToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Warning dialog when trying to delete an admin user
+    adminUserWarning?.let { user ->
+        AlertDialog(
+            onDismissRequest = { adminUserWarning = null },
+            title = { Text("Cannot delete admin") },
+            text = { Text("You cannot delete an admin user.") },
+            confirmButton = {
+                TextButton(onClick = { adminUserWarning = null }) {
+                    Text("OK")
                 }
             }
         )

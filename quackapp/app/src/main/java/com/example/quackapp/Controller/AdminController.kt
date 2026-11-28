@@ -171,7 +171,18 @@ class AdminController : ViewModel() {
     /**
      * Delete profile as an admin
      */
-    //fun deleteProfile()
+    fun deleteProfile(user: User) {
+        viewModelScope.launch {
+            try {
+                db.collection("users").document(user.deviceId).delete().await()
+                deleteSuccess = "Profile deleted"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                deleteError = e.message ?: "Couldn't delete profile"
+            }
+        }
+    }
 }
 
 /**
