@@ -151,6 +151,9 @@ class AdminController : ViewModel() {
         }
     }
 
+    /**
+     * Delete campsites as an admin
+     */
     fun deleteCampsite(campsite: Campsite) {
         viewModelScope.launch {
             try {
@@ -161,6 +164,22 @@ class AdminController : ViewModel() {
                 throw e
             } catch (e: Exception) {
                 deleteError = e.message ?: "Couldn't delete campsite"
+            }
+        }
+    }
+
+    /**
+     * Delete profile as an admin
+     */
+    fun deleteProfile(user: User) {
+        viewModelScope.launch {
+            try {
+                db.collection("users").document(user.deviceId).delete().await()
+                deleteSuccess = "Profile deleted"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                deleteError = e.message ?: "Couldn't delete profile"
             }
         }
     }
