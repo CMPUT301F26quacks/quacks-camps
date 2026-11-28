@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -52,6 +53,9 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     private val imgStorage = Firebase.storage
     var deleteError by mutableStateOf<String?>(null)
         private set
+    var createLotteryError by mutableStateOf<String?>(null)
+        private set
+
     private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
 
@@ -235,6 +239,24 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
      * Clears all the selected campsites
      */
     fun clearSelection() { _selectedIds.value = emptySet() }
+
+    /**
+     * Clears createLotteryError
+     */
+    fun clearCreateLotteryError() { createLotteryError = null }
+
+    /**
+     * Checks whether the selected camps can go into a new lottery.
+     * @return true if every selected camp is free of a lottery
+     */
+    fun validateSelection(): Boolean{
+        val invalid = ownedCamps.value.filter { it.campId in _selectedIds.value && !it.lotteryId.isNullOrEmpty() }
+        if (invalid.isNotEmpty()) {
+            createLotteryError = "Already in a lottery: ${invalid.joinToString { it.name }}"
+            return false
+        }
+        return true
+    }
 
     /**
      * Approval function for when other owners want to enter your camp into

@@ -264,7 +264,8 @@ fun OwnerCampDetails(
                     if (currentLottery != null) {
                         Button(
                             modifier = Modifier.testTag("editLotteryButton"),
-                            onClick = {navController.navigate("editLottery/${viewModel.campsiteId}")}
+                            onClick = {navController.navigate("editLottery/${viewModel.campsiteId}")},
+                            colors = ButtonDefaults.buttonColors(Color(0xFFFFC107))
                         ) {
                             Text("Edit details")
                         }

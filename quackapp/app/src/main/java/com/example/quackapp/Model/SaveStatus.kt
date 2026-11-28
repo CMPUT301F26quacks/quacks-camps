@@ -1,6 +1,5 @@
 package com.example.quackapp.Model
 
-import com.example.quackapp.Controller.SaveStatus
 /**
  * Represents the save state of data to the Firestore, mostly for the optional
  * promo image upload.
