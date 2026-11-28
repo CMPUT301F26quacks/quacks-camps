@@ -166,8 +166,8 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
     }
 
     /**
-     * Save or update the entrant's review for a campsite.
-     * Uses the same "reviews" collection as ratings.
+     * Submit an entrant's written review for a campsite.
+     * Uses the same "reviews" collection in Firebase.
      *
      * @param feedback The written review text
      * @param entrantId Entrant's ID
@@ -175,27 +175,12 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
     fun submitReview(feedback: String, entrantId: String) {
         viewModelScope.launch {
             try {
-                val reviewsRef = db.collection("reviews")
-
-                val querySnapshot = reviewsRef
-                    .whereEqualTo("campsiteID", campId)
-                    .whereEqualTo("entrantID", entrantId)
-                    .get()
-                    .await()
-
-                if (!querySnapshot.isEmpty) {
-                    // Update feedback on existing review document for this user and campsite
-                    val existingReview = querySnapshot.documents[0].id
-                    reviewsRef.document(existingReview).update("feedback", feedback).await()
-                } else {
-                    // Create new review document with feedback for this user and campsite
-                    val newReview = mapOf(
-                        "campsiteID" to campId,
-                        "entrantID" to entrantId,
-                        "feedback" to feedback
-                    )
-                    reviewsRef.add(newReview).await()
-                }
+                val newReview = mapOf(
+                    "campsiteID" to campId,
+                    "entrantID" to entrantId,
+                    "feedback" to feedback
+                )
+                db.collection("reviews").add(newReview).await()
             } catch (e: Exception) {
                 Log.e(
                     "EntrantDetailedCampsiteController",
