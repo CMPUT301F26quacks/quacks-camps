@@ -430,8 +430,6 @@ fun CampRow(
                             .testTag("details${campsite.name}")
                             .clickable(onClick = { navController.navigate("CampsiteDetails/${campsite.campId}") })
                     )
-                    // TODO delete campId from related lotteries
-                    //  and maybe the lottery itself if the campIds list is empty
                     Text(
                         text = "Delete",
                         fontSize = 16.sp,

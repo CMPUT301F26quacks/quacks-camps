@@ -205,7 +205,28 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
     fun deleteCampsite(campsite: Campsite) {
         viewModelScope.launch {
             try {
-                // Delete the document first; the list updates automatically
+                val lotteries = db.collection("lotteries")
+                    .whereArrayContains("campIds", campsite.campId)
+                    .whereEqualTo("status", "OPEN")
+                    .get()
+                    .await()
+
+                // Take the camp out of each OPEN lottery, delete the lottery if its the last camp
+                for (doc in lotteries.documents) {
+                    val ids = (doc.get("campIds") as? List<*>) ?: emptyList<Any>()
+                    val remaining = ids.filter { it != campsite.campId }
+
+                    if (remaining.isEmpty()) {
+                        // This was the last camp, so the lottery is empty
+                        doc.reference.delete().await()
+                    } else {
+                        doc.reference
+                            .update("campIds", FieldValue.arrayRemove(campsite.campId))
+                            .await()
+                    }
+                }
+
+                // Then delete the camp itself; the list updates automatically
                 db.collection("campsites").document(campsite.campId).delete().await()
 
                 // Then remove the image, if the campsite had one
@@ -214,7 +235,7 @@ class OwnerHomeController(savedStateHandle: SavedStateHandle): ViewModel(){
                         imgStorage.reference.child("campsites/${campsite.campId}.jpg").delete().await()
                     }
                     catch (e: Exception) {
-                        // An orphaned or missing image shouldn't make the delete look like it failed
+                        // A missing image shouldn't make the delete look like it failed
                         Log.w("OwnerHome", "Couldn't delete image", e)
                     }
                 }
