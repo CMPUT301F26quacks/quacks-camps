@@ -6,6 +6,9 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Repository and Controller for managing Entrant reservations and lottery win offers.
@@ -61,12 +64,35 @@ class ReservationRepository private constructor() {
      * Retrieves all active (confirmed) reservations.
      * US 01.06.01: As an entrant, I want to view a list of my active reservations.
      *
+     * Sorted so the soonest stay is first.
+     *
      * @param deviceId The entrant device identifier. If blank, returns all confirmed reservations.
      */
     fun getActiveReservations(deviceId: String = ""): List<Reservation> {
-        return _reservations.value.filter { res ->
+        val active = _reservations.value.filter { res ->
             res.status == ReservationStatus.CONFIRMED &&
                     (deviceId.isBlank() || res.entrantDeviceId == deviceId)
+        }
+        return active.sortedBy { startDateOf(it.dateRange) }
+    }
+
+
+    /**
+     * Gets the first date out of a date range like "Jan 1, 2026 - Jan 5, 2026"
+     * (the format LotteryDraw makes with toDisplayDate).
+     *
+     * @param dateRange the date range string
+     * @return the start date in millis, or Long.MAX_VALUE if it cant be read
+     */
+    private fun startDateOf(dateRange: String): Long {
+        val start = dateRange.split(" - ")[0].trim()
+        val format = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+        format.timeZone = TimeZone.getTimeZone("UTC")
+        try {
+            return format.parse(start)!!.time
+        } catch (e: Exception) {
+            // cant read the date so just put it at the end
+            return Long.MAX_VALUE
         }
     }
 

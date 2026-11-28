@@ -3,6 +3,16 @@ import android.net.Uri
 import com.example.quackapp.Model.User
 import kotlin.random.Random
 
+/**
+ * Campsite Owner class
+ *
+ * mostly used to create a qr code for a camp
+ * @param deviceId Unique hardware or application identifier for passwordless authentication.
+ * @param name Full name of the entrant.
+ * @param email Contact email address.
+ * @param phoneNumber Contact telephone number.
+ * @param notificationsEnabled Whether the entrant opts into push/in-app notifications.
+ */
 class CampsiteOwner(
     deviceId: String,
     name: String = "",

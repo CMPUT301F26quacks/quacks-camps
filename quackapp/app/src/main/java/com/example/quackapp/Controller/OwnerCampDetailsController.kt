@@ -9,6 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.Model.Reservation
+import com.example.quackapp.Model.ReservationRepository
+import com.example.quackapp.Model.SaveStatus
+import com.example.quackapp.Model.Message
+import com.example.quackapp.Model.NotificationRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,9 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
-import com.example.quackapp.Model.Reservation
-import com.example.quackapp.Model.ReservationRepository
-
 
 
 /**
@@ -27,7 +29,22 @@ import com.example.quackapp.Model.ReservationRepository
  * Fetches a campsite from Firestore and stores its fields into their
  * respective state variables
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @property campsiteId unique camp ID. This is the camp whose details we grab from Firestore
+ * @property campsiteRef reference to the campsite document in Firestore
+ * @property name campsite's name fetched from the
+ * @property location campsite's location
+ * @property price campsite's price
+ * @property capacity campsite's max capacity
+ * @property features campsite's amenities/features
+ * @property rules campsite's rules
+ * @property cancellationPolicy campsite's cancellation policy
+ * @property selectedTags campsite's tags
+ * @property latitude campsite's map latitude
+ * @property longitude campsite's map longitude
+ * @property isLoading status of loading the campsite from Firestore
+ * @property _status private status of loading info from Firestore. Holds error messages too
+ * @property status public status of loading info from Firestore. Holds error messages too
  */
 class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])
@@ -58,6 +75,15 @@ class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel(
         private set
     var bookedReservations by mutableStateOf<List<Reservation>>(emptyList())
     var waitlistEntrants by mutableStateOf<List<String>>(emptyList())
+        private set
+
+    var notificationSending by mutableStateOf(false)
+        private set
+
+    var notificationError by mutableStateOf<String?>(null)
+        private set
+
+    var notificationSentCount by mutableStateOf<Int?>(null)
         private set
 
     /**
@@ -112,12 +138,12 @@ class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel(
 
                     for (id in entryIds) {
                         val userDoc = usersRef.document(id).get().await()
-                        val userName = userDoc.getString("name")
+                        val userName = userDoc.getString("name")?.trim()
 
-                        if (userName != null && userName != "") {
-                            namesList.add("$userName ($id)")
+                        if (!userName.isNullOrEmpty()) {
+                            namesList.add(userName)
                         } else {
-                            namesList.add(id)
+                            namesList.add("Entrant")
                         }
                     }
                     waitlistEntrants = namesList
@@ -136,5 +162,77 @@ class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel(
             }
         }
 
+    }
+
+    /**
+     * Sends a notification to entrants on the campsite's lottery waitlist.
+     *
+     * Supports US 02.10.01.
+     *
+     * @param title Tile of the notification
+     * @param message Content of the notification
+     */
+    fun sendWaitlistNotification(
+        title: String,
+        message: String
+    ) {
+
+        if (notificationSending) {
+            return
+        }
+
+        notificationError = null
+        notificationSentCount = null
+
+        val currentLotteryId = lotteryId
+
+        if (currentLotteryId.isNullOrBlank()) {
+            notificationError = "No lottery found"
+            return
+        }
+
+        notificationSending = true
+
+        DeviceIdGetter.getDeviceId(
+
+            onSuccess =  { ownerId ->
+
+                NotificationRepository.getInstance()
+                    .sendWaitlistNotification(
+                        ownerId = ownerId,
+                        campsiteId = campsiteId,
+                        lotteryId = currentLotteryId,
+                        title = title,
+                        message = message,
+
+                        onSuccess = { count ->
+                            notificationSentCount = count
+                            notificationSending = false
+                        },
+
+                        onFail = { exception ->
+                            notificationError = exception.message ?: "Unable to send notification"
+
+                            notificationSending = false
+                        }
+                    )
+            },
+
+            onFail = { exception ->
+                notificationError = exception.message ?: "Unable to identify this device"
+
+                notificationSending = false
+            }
+        )
+    }
+
+    /**
+     * Resets notification status before opening a new announcement.
+     */
+    fun resetNotificationStatus() {
+        if (!notificationSending) {
+            notificationError = null
+            notificationSentCount = null
+        }
     }
 }
