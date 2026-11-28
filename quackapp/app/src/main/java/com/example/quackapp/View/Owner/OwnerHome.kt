@@ -59,7 +59,6 @@ import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerHomeController
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.CampsiteOwner
-import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.R
 import com.example.quackapp.Model.CreateLotteryRoute
 import com.example.quackapp.Model.SaveStatus
