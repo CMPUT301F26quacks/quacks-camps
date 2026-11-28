@@ -3,6 +3,7 @@ package com.example.quackapp.View.Entrant
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Controller.EntrantDetailedCampsiteController
 import com.example.quackapp.Controller.UserRepository
 import com.example.quackapp.R
@@ -121,10 +123,15 @@ fun EntrantDetailedCampsite(
         )
     }
 
-    //variables for the user the input a rating later
+    //variables for the user the input a rating
     var showRatingInput by remember {mutableStateOf(false)}
     var ratingInput by remember {mutableStateOf("")}
     var errorMessage by remember {mutableStateOf<String?>(null)}
+
+    //variables for the user to input a review
+    var showReviewInput by remember {mutableStateOf(false)}
+    var reviewInput by remember {mutableStateOf("")}
+    var reviewErrorMessage by remember {mutableStateOf<String?>(null)}
 
     //Fetches number of days left on that campsites lottery
     val bookingPeriodEnd = lotteries.find { it.lotteryID == campsite?.lotteryId }?.registrationPeriodEnd
@@ -132,6 +139,7 @@ fun EntrantDetailedCampsite(
     val numDaysLeftToEnterWaitlist: Long =
         bookingPeriodEnd?.let { ((it - now) / 86400000).coerceAtLeast(0) } ?: 0L
 
+    var isEditingReview by remember { mutableStateOf(false) }
 
     //If campsite has not loaded in yet, wait
     if (campsite == null) {
@@ -222,78 +230,214 @@ fun EntrantDetailedCampsite(
                 }
                 item {
                     Column {
-
-                        //Campsite Rating
-                        Text(
-                            text = "⭐ ${campsite.rating}",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFFF2BA00),
-                            modifier = Modifier.testTag("rating")
-                        )
-                        //User Make a Rating
-                        OutlinedButton(
-                            onClick = { showRatingInput = !showRatingInput },
-                            modifier = Modifier.testTag("makeRating")
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            //Campsite Rating
                             Text(
-                                if (showRatingInput) "Close" else "Make a Rating"
+                                text = "⭐ ${campsite.rating}",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = Color(0xFFF2BA00),
+                                modifier = Modifier.testTag("rating")
                             )
-                        }
-
-                        //if user wants to rate campsite
-                        if (showRatingInput) {
-                            OutlinedTextField(
-                                value = ratingInput,
-                                onValueChange = { input ->
-                                    //only allow 1 number to be entered
-                                    if (input.length <= 1) {
-                                        ratingInput = input
-                                        //ensure that the number is not outside of range
-                                        val ratingNum = input.toIntOrNull()
-                                        if (ratingNum == null || ratingNum < 0 || ratingNum > 5) {
-                                            errorMessage = "Please input a valid rating"
-                                        } else { //valid
-                                            errorMessage = null
-                                        }
-                                    }
-                                },
-                                label = { Text("Enter rating (0-5)") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                isError = errorMessage != null,
-                                modifier = Modifier.fillMaxWidth()
+                            Text(
+                                text = "Reviews",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFFF2BA00),
+                                textDecoration = TextDecoration.Underline,
+                                modifier = Modifier
+                                    .clickable { navController.navigate("EntrantCampsiteReviews/${campsite.campId}") }
+                                    .testTag("showReviewsButton")
                             )
-
-                            //showing the error message when invalid
-                            errorMessage?.let { message ->
-                                Text(
-                                    text = message,
-                                    color = Color.Red
-                                )
+                            /*
+                            //Show Reviews Button
+                            OutlinedButton(
+                                onClick = { navController.navigate("EntrantCampsiteReviews/${campsite.campId}") },
+                                modifier = Modifier.testTag("showReviewsButton")
+                            ) {
+                                Text("Show Reviews")
                             }
 
-                            //submit button if valid (double verification, there will be no mistakes)
-                            val ratingNum = ratingInput.toIntOrNull()
-                            if (ratingNum != null) {
+                             */
+                        }
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalAlignment = Alignment.Start,
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                //User Make a Rating
+                                OutlinedButton(
+                                    onClick = { showRatingInput = !showRatingInput },
+                                    modifier = Modifier.testTag("makeRating")
+                                ) {
+                                    Text(
+                                        if (showRatingInput) "Close" else "Make a Rating"
+                                    )
+                                }
+                            /*
+                                //User Post Review Button
+                                OutlinedButton(
+                                    onClick = { showReviewInput = !showReviewInput },
+                                    modifier = Modifier.testTag("makeReview")
+                                ) {
+                                    Text(
+                                        if (showReviewInput) "Close Review" else "Post a Review"
+                                    )
+                                }
+
+                             */
+                                //User Post Review Button
+                                OutlinedButton(
+                                    onClick = {
+                                        if (showReviewInput) {
+                                            showReviewInput = false
+                                        } else {
+                                            DeviceIdGetter.getDeviceId(
+                                                onSuccess = { deviceId ->
+                                                    controller.getUserReview(
+                                                        deviceId,
+                                                        onSuccess = { existingReview ->
+                                                            reviewInput = existingReview ?: ""
+                                                            isEditingReview = existingReview != null
+                                                            reviewErrorMessage = null
+                                                            showReviewInput = true
+                                                        },
+                                                        onFail = {
+                                                            reviewErrorMessage = "Couldn't load your review. Close and try again."
+                                                            showReviewInput = true
+                                                        }
+                                                    )
+                                                },
+                                                onFail = {
+                                                    reviewErrorMessage = "Couldn't load your review. Close and try again."
+                                                    showReviewInput = true
+                                                }
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.testTag("makeReview")
+                                ) {
+                                    Text(
+                                        if (showReviewInput) "Close Review" else "Post a Review"
+                                    )
+                                }
+                            }
+                            //if user wants to rate campsite
+                            if (showRatingInput) {
+                                OutlinedTextField(
+                                    value = ratingInput,
+                                    onValueChange = { input ->
+                                        //only allow 1 number to be entered
+                                        if (input.length <= 1) {
+                                            ratingInput = input
+                                            //ensure that the number is not outside of range
+                                            val ratingNum = input.toIntOrNull()
+                                            if (ratingNum == null || ratingNum < 0 || ratingNum > 5) {
+                                                errorMessage = "Please input a valid rating"
+                                            } else { //valid
+                                                errorMessage = null
+                                            }
+                                        }
+                                    },
+                                    label = { Text("Enter rating (0-5)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    singleLine = true,
+                                    isError = errorMessage != null,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                //showing the error message when invalid
+                                errorMessage?.let { message ->
+                                    Text(
+                                        text = message,
+                                        color = Color.Red
+                                    )
+                                }
+
+                                //submit button if valid (double verification, there will be no mistakes)
+                                val ratingNum = ratingInput.toIntOrNull()
+                                if (ratingNum != null) {
+                                    Button(
+                                        onClick = {
+                                            DeviceIdGetter.getDeviceId(
+                                                onSuccess = { deviceId ->
+                                                    controller.updateRating(
+                                                        ratingNum.toDouble(),
+                                                        deviceId
+                                                    )
+                                                    showRatingInput = false
+                                                    ratingInput = "" //set empty
+                                                },
+                                                onFail = {
+                                                    errorMessage =
+                                                        "Rating failed to submit. Please try again."
+                                                }
+                                            )
+                                        },
+                                    ) {
+                                        Text("Submit Rating")
+                                    }
+                                }
+                            }
+
+                            Spacer(Modifier.height(8.dp))
+
+
+
+                            //if user wants to post a review
+                            if (showReviewInput) {
+                                OutlinedTextField(
+                                    value = reviewInput,
+                                    onValueChange = {
+                                        reviewInput = it
+                                        reviewErrorMessage =
+                                            if (it.isBlank()) "Review cannot be empty" else null
+                                    },
+                                    label = { Text("Write your review") },
+                                    singleLine = false,
+                                    isError = reviewErrorMessage != null,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                reviewErrorMessage?.let { message ->
+                                    Text(
+                                        text = message,
+                                        color = Color.Red
+                                    )
+                                }
+
                                 Button(
                                     onClick = {
-                                        com.example.quackapp.Controller.DeviceIdGetter.getDeviceId(
-                                            onSuccess = { deviceId ->
-                                                controller.updateRating(
-                                                    ratingNum.toDouble(),
-                                                    deviceId
-                                                )
-                                                showRatingInput = !showRatingInput
-                                                ratingInput = "" //set empty
-                                            },
-                                            onFail = {
-                                                errorMessage =
-                                                    "Rating failed to submit. Please try again."
-                                            }
-                                        )
+                                        if (reviewInput.isNotBlank()) {
+                                            DeviceIdGetter.getDeviceId(
+                                                onSuccess = { deviceId ->
+                                                    if (isEditingReview) {
+                                                        controller.updateReview(
+                                                            reviewInput,
+                                                            deviceId)
+                                                    } else {
+                                                        controller.submitReview(
+                                                            reviewInput,
+                                                            deviceId)
+                                                    } //changed
+                                                    showReviewInput = false
+                                                    reviewInput = ""
+                                                },
+                                                onFail = {
+                                                    reviewErrorMessage =
+                                                        "Review failed to submit. Please try again."
+                                                }
+                                            )
+                                        }
                                     },
+                                    modifier = Modifier.testTag("submitReviewButton")
                                 ) {
-                                    Text("Submit Rating")
+                                    Text(if (isEditingReview) "Update Review" else "Submit Review")
                                 }
                             }
                         }

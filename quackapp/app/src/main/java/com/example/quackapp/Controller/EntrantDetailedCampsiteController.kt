@@ -166,6 +166,102 @@ class EntrantDetailedCampsiteController(savedStateHandle: SavedStateHandle) : Vi
     }
 
     /**
+     * Submit an entrant's written review for a campsite.
+     * Uses the same "reviews" collection in Firebase.
+     *
+     * @param feedback The written review text
+     * @param entrantId Entrant's ID
+     */
+    fun submitReview(feedback: String, entrantId: String) {
+        viewModelScope.launch {
+            try {
+                val newReview = mapOf(
+                    "campsiteID" to campId,
+                    "entrantID" to entrantId,
+                    "feedback" to feedback
+                )
+                db.collection("reviews").add(newReview).await()
+            } catch (e: Exception) {
+                Log.e(
+                    "EntrantDetailedCampsiteController",
+                    "Failed to submit review feedback for campId: $campId",
+                    e
+                )
+            }
+        }
+    }
+
+
+    /**
+     * Edit an entrant's existing  review od a campsite.
+     *
+     * @param updatedReview The updated review text
+     * @param entrantId Entrant's ID
+     */
+    fun updateReview(updatedReview: String, entrantId: String) {
+        viewModelScope.launch {
+            try {
+                val querySnapshot = db.collection("reviews")
+                    .whereEqualTo("campsiteID", campId)
+                    .whereEqualTo("entrantID", entrantId)
+                    .get()
+                    .await()
+
+                //edit the same document that getUserReview loads
+                querySnapshot.documents
+                    .firstOrNull { it.getString("feedback") != null }
+                    ?.reference
+                    ?.update("feedback", updatedReview)
+                    ?.await()
+            } catch (e: Exception) {
+                Log.e(
+                    "EntrantDetailedCampsiteController",
+                    "Failed to update review for campId: $campId",
+                    e
+                )
+            }
+        }
+    }
+
+
+    /**
+     * Get an entrant's existing review for this campsite.
+     *
+     * @param entrantId Entrant's ID
+     * @param onSuccess Gives the review text, or null if there isn't one
+     * @param onFail Called if the review couldn't be loaded
+     */
+    fun getUserReview(
+        entrantId: String,
+        onSuccess: (String?) -> Unit,
+        onFail: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+
+                val querySnapshot = db.collection("reviews")
+                    .whereEqualTo("campsiteID", campId)
+                    .whereEqualTo("entrantID", entrantId)
+                    .get()
+                    .await()
+
+                val existingFeedback = querySnapshot.documents
+                    .firstNotNullOfOrNull { it.getString("feedback") }
+
+                onSuccess(existingFeedback)
+            } catch (e: Exception) {
+                Log.e(
+                    "EntrantDetailedCampsiteController",
+                    "Failed to load review for campId: $campId",
+                    e
+                )
+                onFail()
+            }
+        }
+    }
+
+
+    /**
      * Takes a campsite's available dates and converts it to text.
      *
      * Ex: 12373297327, 213761325479, 31264913277 to December 24th - December 26th
