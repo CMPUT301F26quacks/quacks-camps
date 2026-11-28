@@ -145,7 +145,7 @@ class AdminCommunicationLogsController : ViewModel() {
     }
 
     /**
-     * Listens for all conversations recorder in Firebase.
+     * Listens for all conversations recorded in Firebase.
      *
      * @param deviceId Device ID of the admin.
      */
