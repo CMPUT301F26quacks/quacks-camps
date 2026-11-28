@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.quackapp.Controller.DeviceIdGetter
 import com.example.quackapp.Controller.EntrantDetailedCampsiteController
 import com.example.quackapp.Controller.UserRepository
 import com.example.quackapp.R
@@ -121,10 +122,15 @@ fun EntrantDetailedCampsite(
         )
     }
 
-    //variables for the user the input a rating later
+    //variables for the user the input a rating
     var showRatingInput by remember {mutableStateOf(false)}
     var ratingInput by remember {mutableStateOf("")}
     var errorMessage by remember {mutableStateOf<String?>(null)}
+
+    //variables for the user to input a review
+    var showReviewInput by remember {mutableStateOf(false)}
+    var reviewInput by remember {mutableStateOf("")}
+    var reviewErrorMessage by remember {mutableStateOf<String?>(null)}
 
     //Fetches number of days left on that campsites lottery
     val bookingPeriodEnd = lotteries.find { it.lotteryID == campsite?.lotteryId }?.registrationPeriodEnd
@@ -295,6 +301,64 @@ fun EntrantDetailedCampsite(
                                 ) {
                                     Text("Submit Rating")
                                 }
+                            }
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        //User Post Review Button
+                        OutlinedButton(
+                            onClick = { showReviewInput = !showReviewInput },
+                            modifier = Modifier.testTag("makeReview")
+                        ) {
+                            Text(
+                                if (showReviewInput) "Close Review" else "Post a Review"
+                            )
+                        }
+
+                        //if user wants to post a review
+                        if (showReviewInput) {
+                            OutlinedTextField(
+                                value = reviewInput,
+                                onValueChange = {
+                                    reviewInput = it
+                                    reviewErrorMessage = if (it.isBlank()) "Review cannot be empty" else null
+                                },
+                                label = { Text("Write your review") },
+                                singleLine = false,
+                                isError = reviewErrorMessage != null,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            reviewErrorMessage?.let { message ->
+                                Text(
+                                    text = message,
+                                    color = Color.Red
+                                )
+                            }
+
+                            Button(
+                                onClick = {
+                                    if (reviewInput.isNotBlank()) {
+                                        DeviceIdGetter.getDeviceId(
+                                            onSuccess = { deviceId ->
+                                                controller.submitReview(
+                                                    reviewInput,
+                                                    deviceId
+                                                )
+                                                showReviewInput = false
+                                                reviewInput = ""
+                                            },
+                                            onFail = {
+                                                reviewErrorMessage =
+                                                    "Review failed to submit. Please try again."
+                                            }
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.testTag("submitReviewButton")
+                            ) {
+                                Text("Submit Review")
                             }
                         }
 
