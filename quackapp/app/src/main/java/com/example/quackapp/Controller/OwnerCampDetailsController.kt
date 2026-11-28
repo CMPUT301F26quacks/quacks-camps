@@ -9,6 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.Model.Message
+import com.example.quackapp.Model.NotificationRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +60,15 @@ class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel(
         private set
     var bookedReservations by mutableStateOf<List<Reservation>>(emptyList())
     var waitlistEntrants by mutableStateOf<List<String>>(emptyList())
+        private set
+
+    var notificationSending by mutableStateOf(false)
+        private set
+
+    var notificationError by mutableStateOf<String?>(null)
+        private set
+
+    var notificationSentCount by mutableStateOf<Int?>(null)
         private set
 
     /**
@@ -136,5 +147,77 @@ class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel(
             }
         }
 
+    }
+
+    /**
+     * Sends a notification to entrants on the campsite's lottery waitlist.
+     *
+     * Supports US 02.10.01.
+     *
+     * @param title Tile of the notification
+     * @param message Content of the notification
+     */
+    fun sendWaitlistNotification(
+        title: String,
+        message: String
+    ) {
+
+        if (notificationSending) {
+            return
+        }
+
+        notificationError = null
+        notificationSentCount = null
+
+        val currentLotteryId = lotteryId
+
+        if (currentLotteryId.isNullOrBlank()) {
+            notificationError = "No lottery found"
+            return
+        }
+
+        notificationSending = true
+
+        DeviceIdGetter.getDeviceId(
+
+            onSuccess =  { ownerId ->
+
+                NotificationRepository.getInstance()
+                    .sendWaitlistNotification(
+                        ownerId = ownerId,
+                        campsiteId = campsiteId,
+                        lotteryId = currentLotteryId,
+                        title = title,
+                        message = message,
+
+                        onSuccess = { count ->
+                            notificationSentCount = count
+                            notificationSending = false
+                        },
+
+                        onFail = { exception ->
+                            notificationError = exception.message ?: "Unable to send notification"
+
+                            notificationSending = false
+                        }
+                    )
+            },
+
+            onFail = { exception ->
+                notificationError = exception.message ?: "Unable to identify this device"
+
+                notificationSending = false
+            }
+        )
+    }
+
+    /**
+     * Resets notification status before opening a new announcement.
+     */
+    fun resetNotificationStatus() {
+        if (!notificationSending) {
+            notificationError = null
+            notificationSentCount = null
+        }
     }
 }

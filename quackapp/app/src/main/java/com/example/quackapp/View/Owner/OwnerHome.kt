@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -89,38 +90,58 @@ fun OwnerHome(
         navController = navController,
         topBar = {
             Surface(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column() {
-                        Text(text = "Campsites", fontSize = 36.sp)
-                        Text(
-                            text = "Tap and hold to select",
-                            fontSize = 10.sp,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-                    }
-                    if (requests.isNotEmpty()) {
-                        Button(onClick = { showRequests = true }) {
-                            Text("Requests (${requests.size})")
+                Column {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column() {
+                            Text(text = "Campsites", fontSize = 36.sp)
+                            Text(
+                                text = "Tap and hold to select",
+                                fontSize = 10.sp,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                        if (requests.isNotEmpty()) {
+                            Button(onClick = { showRequests = true }) {
+                                Text("Requests (${requests.size})")
+                            }
+                        }
+                        FloatingActionButton(
+                            containerColor = Color(0xFFFF9800),
+                            contentColor = Color.White,
+                            onClick = { navController.navigate("RegisterCampsite/${viewModel.ownerId}") },
+                            modifier = Modifier
+                                .pointerHoverIcon(PointerIcon.Hand)
+                                .testTag("addCampsiteButton")
+                        ) {
+                            Text("+", fontSize = 18.sp)
                         }
                     }
-                    FloatingActionButton(
-                        containerColor = Color(0xFFFF9800),
-                        contentColor = Color.White,
-                        onClick = { navController.navigate("RegisterCampsite/${viewModel.ownerId}") },
+
+                    TextButton(
+                        onClick = {
+                            navController.navigate("OwnerNotificationHistory")
+                        },
+
                         modifier = Modifier
-                            .pointerHoverIcon(PointerIcon.Hand)
-                            .testTag("addCampsiteButton")
+                            .fillMaxWidth()
+                            .testTag("sentNotificationsButton")
                     ) {
-                        Text("+", fontSize = 18.sp)
+
+                        Text(
+                            text = "Sent Notifications",
+                            color = Color(0xFFF16B00)
+                        )
+
                     }
+
                 }
             }
-
         }
     ) { innerPadding ->
         if (ownedCamps.isEmpty()) {
