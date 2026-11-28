@@ -39,8 +39,8 @@ import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.quackapp.Controller.OwnerEditLotteryController
-import com.example.quackapp.Controller.SaveStatus
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.Model.SaveStatus
 import com.example.quackapp.View.DateRangePickerField
 import com.example.quackapp.View.todayUtcMillis
 

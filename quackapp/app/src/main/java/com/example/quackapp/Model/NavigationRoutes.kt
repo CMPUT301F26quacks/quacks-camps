@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 /**
  * Object used to pass campsiteIds between screens
+ * @property campsiteIds campsite IDs passed to [com.example.quackapp.View.Owner.OwnerCreateLottery] to properly associate those camps to the same lottery
  */
 @Serializable
-data class ListCampInLotteryRoute(val campsiteIds: List<String>)
+data class CreateLotteryRoute(val campsiteIds: List<String>)

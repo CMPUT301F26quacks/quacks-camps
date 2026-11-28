@@ -9,6 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.Model.Reservation
+import com.example.quackapp.Model.ReservationRepository
+import com.example.quackapp.Model.SaveStatus
 import com.example.quackapp.Model.Message
 import com.example.quackapp.Model.NotificationRepository
 import com.google.firebase.Firebase
@@ -18,9 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
-import com.example.quackapp.Model.Reservation
-import com.example.quackapp.Model.ReservationRepository
-
 
 
 /**
@@ -29,7 +29,22 @@ import com.example.quackapp.Model.ReservationRepository
  * Fetches a campsite from Firestore and stores its fields into their
  * respective state variables
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @property campsiteId unique camp ID. This is the camp whose details we grab from Firestore
+ * @property campsiteRef reference to the campsite document in Firestore
+ * @property name campsite's name fetched from the
+ * @property location campsite's location
+ * @property price campsite's price
+ * @property capacity campsite's max capacity
+ * @property features campsite's amenities/features
+ * @property rules campsite's rules
+ * @property cancellationPolicy campsite's cancellation policy
+ * @property selectedTags campsite's tags
+ * @property latitude campsite's map latitude
+ * @property longitude campsite's map longitude
+ * @property isLoading status of loading the campsite from Firestore
+ * @property _status private status of loading info from Firestore. Holds error messages too
+ * @property status public status of loading info from Firestore. Holds error messages too
  */
 class OwnerCampDetailsController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])

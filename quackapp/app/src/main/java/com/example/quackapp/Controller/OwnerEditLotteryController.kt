@@ -7,7 +7,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quackapp.Model.Campsite
+import com.example.quackapp.Model.CreateLotteryRoute
 import com.example.quackapp.Model.Lottery
+import com.example.quackapp.Model.SaveStatus
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +24,26 @@ import kotlin.coroutines.cancellation.CancellationException
  * Holds some state variables to display on the form.
  * Contains logic to edit the [Lottery] containing the [Campsite]
  *
- * @property savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @param savedStateHandle a map used to access outside data. Used to get campsiteId in this case
+ * @property campsiteId the camp ID involved in the lottery
+ * @property db Firestore reference
+ * @property campsiteRef Firestore reference to the campsites collection
+ * @property lotteryRef Firestore reference to the lottery collection
+ * @property registrationStart timestamp for the start of registration period
+ * @property registrationEnd timestamp for the end of registration period
+ * @property bookingStart timestamp for the start of booking period
+ * @property bookingEnd timestamp for the end of booking period
+ * @property names names of the campsites involved in the lottery being edited
+ * @property numWinners number of entrants this lottery will notify to make their reservation
+ * @property waitlistCap max number of entrants allowed in the waitlist (optional field)
+ * @property newAvailability List of Long to show which days are currently available
+ * @property availabilityStart timestamp for the start of the camp's available dates
+ * @property availabilityEnd timestamp for the end of the camp's available dates
+ * @property isLoading status of loading the campsite from Firestore
+ * @property _status private status of loading info from Firestore. Holds error messages too
+ * @property status public status of loading info from Firestore. Holds error messages too
+ * @property campsites List of [Campsite]s in the lottery being edited
+ * @property lotteryId unique ID of the lottery
  */
 class OwnerEditLotteryController(savedStateHandle: SavedStateHandle): ViewModel() {
     val campsiteId: String = checkNotNull(savedStateHandle["campsiteId"])

@@ -56,7 +56,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerEditCampController
-import com.example.quackapp.Controller.SaveStatus
+import com.example.quackapp.Model.SaveStatus
 import com.example.quackapp.View.LocationPicker
 import com.google.android.gms.maps.model.LatLng
 

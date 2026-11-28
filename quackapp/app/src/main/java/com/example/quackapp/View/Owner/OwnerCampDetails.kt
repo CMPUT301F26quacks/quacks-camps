@@ -47,7 +47,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.quackapp.Controller.OwnerCampDetailsController
-import com.example.quackapp.Model.ListCampInLotteryRoute
 import com.example.quackapp.View.MapPreviewCard
 import com.example.quackapp.View.toDisplayDate
 import com.google.android.gms.maps.model.LatLng
@@ -265,7 +264,8 @@ fun OwnerCampDetails(
                     if (currentLottery != null) {
                         Button(
                             modifier = Modifier.testTag("editLotteryButton"),
-                            onClick = {navController.navigate("editLottery/${viewModel.campsiteId}")}
+                            onClick = {navController.navigate("editLottery/${viewModel.campsiteId}")},
+                            colors = ButtonDefaults.buttonColors(Color(0xFFFFC107))
                         ) {
                             Text("Edit details")
                         }

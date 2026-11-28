@@ -8,7 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.quackapp.View.Entrant.EntrantHome
 import androidx.navigation.navArgument
 import com.example.quackapp.View.Entrant.EntrantDetailedCampsite
-import com.example.quackapp.Model.ListCampInLotteryRoute
+import com.example.quackapp.Model.CreateLotteryRoute
 import com.example.quackapp.View.Entrant.EntrantActiveCampsites
 import com.example.quackapp.View.Admin.AdminHome
 import com.example.quackapp.View.Admin.AdminImageGallery
@@ -77,7 +77,7 @@ fun QuackApp() {
             arguments = listOf(navArgument("campsiteId") { type = NavType.StringType })
         ) { OwnerEditCamp(navController) }
 
-        composable<ListCampInLotteryRoute> { entry ->
+        composable<CreateLotteryRoute> { entry ->
             OwnerCreateLottery(navController)
         }
 
